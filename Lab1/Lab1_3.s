@@ -111,7 +111,7 @@ DESENHA:
 	FIM_LOOP_DESENHA: # todas as casas desenhadas
 		ret
 
-###################################################
+#######################################################
 #	Calcular distancias e desenhar rotas
 # a0 = numero de casas
 # a1 = ponteiro para as casas
@@ -121,6 +121,7 @@ ROTAS:
 	mv s0,a0 # copia a0 para s0. s0 = n
 	mv s1,a1 # copia a1 para s1. s1 = C
 	li s2,0 # contador para loop. i = 0
+	la s9,D # matriz de posicoes
 	
 	LOOP_CASAS:
 		beq s2,s0,FIM_LOOP_CASAS # se i == n, sai do loop
@@ -132,8 +133,8 @@ ROTAS:
 		addi s6,s1,8 # ponteiro para casas que i se liga (ligacao i para j. se i > 0, ligacao j para i ja foi feita)
 		
 		LOOP2_CASAS: # estando na casa i, percorrer todas as casas n-i restantes
-			li t0,1
-			beq s3,t0,FIM_LOOP2_CASAS
+			li t0,1 # determina o ponto de parada do loop, que por ser decrescente, é 1
+			beq s3,t0,FIM_LOOP2_CASAS # s3 == 1 ? fim do loop : continua loop
 			mv a0,s4 # posicao X da casa i
 			mv a1,s5 # posicao Y da casa i
 			lw a2,0(s6) # carrega a posicao X da casa j
@@ -143,8 +144,23 @@ ROTAS:
 			li a7,147
 			ecall # desenha a linha entre as casas i e j
 			
-			# todo: gravar distancias entre as casas i e j na matriz
+			# gravar distancias entre as casas i e j na matriz
+			sub t0,a0,a2 # (x1-x2)
+			sub t1,a1,a3 # (y1-y2)
+			mul t0,t0,t0 # (x1-x2)*(x1-x2)
+			mul t1,t1,t1 # (y1-y2)*(y1-y2)
+			fcvt.s.w ft0,t0 # converte o quadrado das diferencas dos x para float
+			fcvt.s.w ft1,t1 # converte o quadrado das diferencas dos y para float
+			fadd.s ft0,ft0,ft1 # faz a soma dos quadrados
+			fsqrt.s ft0,ft0 # faz a raiz quadrada
+			fsw ft0,0(s9) # salva o resultado na matriz
+			#
+			# TO-DO: gravar outro lado da matriz
+			# atualmente, soh eh gravado o lado acima da diagonal principal
+			# gravar diagonal principal = 0, gravar abaixo (i x j = j x i)
+			# atencao: codigo acima (distancias na matriz) nao testado. fazer script para printar, e testar
 			
+			addi s9,s9,4 # passa o ponteiro de s9 (D) para o proximo byte
 			addi s3,s3,-1 # decrementa o j
 			addi s6,s6,8 # incrementa o proximo endereco para rota
 			j LOOP2_CASAS
