@@ -143,8 +143,7 @@ ROTAS:
 			li a7,147
 			ecall # desenha a linha entre as casas i e j
 			
-			# gravar distancias entre as casas i e j na matriz
-			
+			# todo: gravar distancias entre as casas i e j na matriz
 			
 			addi s3,s3,-1 # decrementa o j
 			addi s6,s6,8 # incrementa o proximo endereco para rota
