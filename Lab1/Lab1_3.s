@@ -63,33 +63,7 @@ SORTEIO:
 		addi s2,s2,1 # incrementa o i
 		j LOOP_SORTEIO
 	FIM_LOOP_SORTEIO: # numeros sorteados, retornar
-	
-		li s2,1 # reseta contador, i = 0
-		la s1,C # reseta ponteiro para o comeco
-		LOOP2: # loop de teste para printar vetor
-			beq s2,s0,FIMLOOP2
-			lw a0,0(s1) # printa x
-			li a7,1
-			ecall
-			
-			la a0,blank_line
-			li a7,4
-			ecall
-			
-			lw a0,4(s1) # printa y
-			li a7,1
-			ecall
-			
-			la t0,next_line # printa \n
-			lw a0,0(t0)
-			li a7,11
-			ecall
-			
-			addi s1,s1,8
-			addi,s2,s2,1
-			j LOOP2
-		FIMLOOP2:
-			ret
+		ret
 			
 #######################################################
 #	Desenha as casas e as rotas no bitmap display
@@ -137,7 +111,7 @@ ROTAS:
 		
 		slli t0,s2,2 # t0 = 4*i
 		add s9,s9,t0 # pula o end da matriz para o end i x i
-		sw zero,0(s9) # adiciona 0 de distancia em i x i
+		#sw zero,0(s9) # adiciona 0 de distancia em i x i
 		addi s9,s9,4 # pula o end da matriz para a proxima posicao (para ja gravar i x j)
 		
 		addi s3,s2,1 # contador para loop. j = i + 1
@@ -163,32 +137,19 @@ ROTAS:
 			fcvt.s.w ft0,t0 # converte o quadrado das diferencas dos x para float
 			fcvt.s.w ft1,t1 # converte o quadrado das diferencas dos y para float
 			fadd.s ft0,ft0,ft1 # faz a soma dos quadrados
-			fsqrt.s fs0,ft0 # faz a raiz quadrada
-			fsw fs0,0(s9) # salva o resultado na matriz
+			fsqrt.s ft0,ft0 # faz a raiz quadrada
+			fsw ft0,0(s9) # salva o resultado na matriz
 			
 			# gravar distancias entre as casas j e i na matriz
 			# distancia ja salva previamente em ft0, basta calcular posicao do j x i correspondente
 			mv t0,s2 # t0 = i
 			mv t1,s3 # t1 = j
-			mul t1,s0,t1 # j = j * n
+			mul t1,t1,s0 # j = j * n
 			add t1,t1,t0 # j = (j * n) + i
 			slli t1,t1,2 # j * 4 bytes
 			la t2,D
 			add t2,t2,t1 # calcula qual o endereco de j x i na matriz a partir do end base
-			fsw fs0,0(t2) # grava o resultado em j x i
-			
-			#mv a0,t1 # testando se a posicao gerada pelo i e j esta correta
-			#li a7,1
-			#ecall
-			#la a0,blank_line
-			#li a7,4
-			#ecall
-			
-			#
-			# TO-DO: gravar outro lado da matriz
-			# atualmente, soh eh gravado o lado acima da diagonal principal
-			# gravar diagonal principal = 0, gravar abaixo (i x j = j x i)
-			# atencao: codigo acima (distancias na matriz) nao testado. fazer script para printar, e testar
+			fsw ft0,0(t2) # grava o resultado em j x i
 			
 			addi s9,s9,4 # passa o ponteiro de s9 (D) para o proximo byte
 			addi s3,s3,1 # incrementa o j
@@ -198,7 +159,6 @@ ROTAS:
 		FIM_LOOP2_CASAS:
 			addi s1,s1,8 # incrementa o endereco para proxima leitura em 2 words (2*4 bytes)
 			addi s2,s2,1 # incrementa o i
-			addi s9,s9,4 # incrementa contador da matriz
 			j LOOP_CASAS
 		
 	FIM_LOOP_CASAS:
@@ -208,8 +168,10 @@ PRINT_MATRIZ:
 	mv s0,a0 # s0 = n
 	la s1,D
 	li s2,0 # i = 0
-
-	
+	la a0,next_line
+	li a7,4
+	ecall
+			
 	FOR1:
 		beq s2,s0,FIMFOR1
 		li s3,0 # j = 0
@@ -234,7 +196,6 @@ PRINT_MATRIZ:
 			ecall
 			
 			addi s2,s2,1
-			addi s1,s1,4
 			j FOR1
 		
 	FIMFOR1:
