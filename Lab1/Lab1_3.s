@@ -6,7 +6,9 @@ N: .word 6 # numero de casas. pode ser mudado
 D: .space 1600 # matriz das distancias entre as casas
 
 next_line: .string "\n"
-blank_line: .string "x"
+blank_line: .string " "
+
+pi: .float 3.141592
 
 .text
 	M_SetEcall(exceptionHandling)
@@ -27,6 +29,10 @@ blank_line: .string "x"
 	lw a0,0(t0)
 	la a1,C
 	jal DESENHA
+	
+	la t0,N
+	lw a0,0(t0)
+	jal PRINT_MATRIZ
 	
 	j FIMPROG
 
@@ -57,6 +63,7 @@ SORTEIO:
 		addi s2,s2,1 # incrementa o i
 		j LOOP_SORTEIO
 	FIM_LOOP_SORTEIO: # numeros sorteados, retornar
+	
 		li s2,1 # reseta contador, i = 0
 		la s1,C # reseta ponteiro para o comeco
 		LOOP2: # loop de teste para printar vetor
@@ -128,13 +135,17 @@ ROTAS:
 		lw s4,0(s1) # coord X da casa i
 		lw s5,4(s1) # coord Y da casa i
 		
-		sub s3,s0,s2 # contador para loop. j = n - i, e o loop decresce (mais rapido, nao precisa de mais instrucoes)
+		slli t0,s2,2 # t0 = 4*i
+		add s9,s9,t0 # pula o end da matriz para o end i x i
+		sw zero,0(s9) # adiciona 0 de distancia em i x i
+		addi s9,s9,4 # pula o end da matriz para a proxima posicao (para ja gravar i x j)
 		
-		addi s6,s1,8 # ponteiro para casas que i se liga (ligacao i para j. se i > 0, ligacao j para i ja foi feita)
+		addi s3,s2,1 # contador para loop. j = i + 1
 		
-		LOOP2_CASAS: # estando na casa i, percorrer todas as casas n-i restantes
-			li t0,1 # determina o ponto de parada do loop, que por ser decrescente, é 1
-			beq s3,t0,FIM_LOOP2_CASAS # s3 == 1 ? fim do loop : continua loop
+		addi s6,s1,8 # ponteiro para casas que i se liga (ligacao i para j. se i > 0, ligacao j para i ja foi feita no display)
+		
+		LOOP2_CASAS: # estando na casa i, percorrer todas as n-i casas restantes
+			beq s3,s0,FIM_LOOP2_CASAS # s3 == n ? fim do loop : continua loop
 			mv a0,s4 # posicao X da casa i
 			mv a1,s5 # posicao Y da casa i
 			lw a2,0(s6) # carrega a posicao X da casa j
@@ -152,8 +163,27 @@ ROTAS:
 			fcvt.s.w ft0,t0 # converte o quadrado das diferencas dos x para float
 			fcvt.s.w ft1,t1 # converte o quadrado das diferencas dos y para float
 			fadd.s ft0,ft0,ft1 # faz a soma dos quadrados
-			fsqrt.s ft0,ft0 # faz a raiz quadrada
-			fsw ft0,0(s9) # salva o resultado na matriz
+			fsqrt.s fs0,ft0 # faz a raiz quadrada
+			fsw fs0,0(s9) # salva o resultado na matriz
+			
+			# gravar distancias entre as casas j e i na matriz
+			# distancia ja salva previamente em ft0, basta calcular posicao do j x i correspondente
+			mv t0,s2 # t0 = i
+			mv t1,s3 # t1 = j
+			mul t1,s0,t1 # j = j * n
+			add t1,t1,t0 # j = (j * n) + i
+			slli t1,t1,2 # j * 4 bytes
+			la t2,D
+			add t2,t2,t1 # calcula qual o endereco de j x i na matriz a partir do end base
+			fsw fs0,0(t2) # grava o resultado em j x i
+			
+			#mv a0,t1 # testando se a posicao gerada pelo i e j esta correta
+			#li a7,1
+			#ecall
+			#la a0,blank_line
+			#li a7,4
+			#ecall
+			
 			#
 			# TO-DO: gravar outro lado da matriz
 			# atualmente, soh eh gravado o lado acima da diagonal principal
@@ -161,17 +191,55 @@ ROTAS:
 			# atencao: codigo acima (distancias na matriz) nao testado. fazer script para printar, e testar
 			
 			addi s9,s9,4 # passa o ponteiro de s9 (D) para o proximo byte
-			addi s3,s3,-1 # decrementa o j
+			addi s3,s3,1 # incrementa o j
 			addi s6,s6,8 # incrementa o proximo endereco para rota
 			j LOOP2_CASAS
 		
 		FIM_LOOP2_CASAS:
 			addi s1,s1,8 # incrementa o endereco para proxima leitura em 2 words (2*4 bytes)
 			addi s2,s2,1 # incrementa o i
+			addi s9,s9,4 # incrementa contador da matriz
 			j LOOP_CASAS
 		
 	FIM_LOOP_CASAS:
-		ret	
+		ret
+
+PRINT_MATRIZ:
+	mv s0,a0 # s0 = n
+	la s1,D
+	li s2,0 # i = 0
+
+	
+	FOR1:
+		beq s2,s0,FIMFOR1
+		li s3,0 # j = 0
+		
+		FOR2:
+			beq s3,s0,FIMFOR2
+			flw fa0,0(s1)
+			li a7,2
+			ecall
+			
+			la a0,blank_line
+			li a7,4
+			ecall
+			
+			addi s1,s1,4
+			addi s3,s3,1
+			j FOR2
+			
+		FIMFOR2:
+			la a0,next_line
+			li a7,4
+			ecall
+			
+			addi s2,s2,1
+			addi s1,s1,4
+			j FOR1
+		
+	FIMFOR1:
+		ret
+	
 
 LIMPA_TELA: # fundo de tela branco, para melhor visualizacao/nao esquecer de dar clean
 	li a0,0xff
