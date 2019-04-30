@@ -33,7 +33,7 @@ int caixeiro(){
 	int menor_caminho = 1e9;
 	int casas[] = {1,2,3,4,5};
 	// permutar casas
-	next_permutation(casas, casas+4);
+	next_permutation(casas, casas+(N-1));
 
 	int qtd_perm = fat(N-1);
 
