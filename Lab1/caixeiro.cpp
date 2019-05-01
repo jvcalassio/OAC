@@ -1,5 +1,4 @@
 #include <iostream>
-#include <algorithm>
 #include <cstring>
 
 using namespace std;
@@ -30,6 +29,8 @@ int distancias[][N] = {  {0,10,20,30,40,20},
 
 // visitados com N x 2 ^ N posicoes
 int visitados[N][1 << N];
+// matriz auxiliar para salvar o caminho percorrido. N x 2^N posicoes tbm
+int savePath[N][1 << N];
 
 // i = casa a verificar se ja foi visitada
 // S = bitmask do vetor de casas
@@ -48,6 +49,15 @@ bool completou(int S){
 	return S == (1 << N)-1;
 }
 
+void binprintf(int v)
+{
+    unsigned int mask=1<<((1<<3)-1);
+    while(mask) {
+        printf("%d", (v&mask ? 1 : 0));
+        mask >>= 1;
+    }
+}
+
 // v = vertice atual
 // S = bitmask de casas visitadas
 int caixeiro(int v, int S){
@@ -58,15 +68,16 @@ int caixeiro(int v, int S){
 		return visitados[v][S];
 
 	int menor_caminho = 1e9;
+	int chosen_i = 0;
 	for(int i=0;i<N;i++){
 		if(!visitada(i, S)){
-			menor_caminho = min(
-					menor_caminho,
-					caixeiro(i, add_visitadas(i, S)) + distancias[v][i]
-				);
+			int q = caixeiro(i, add_visitadas(i, S)) + distancias[v][i];
+			if(menor_caminho > q){
+				menor_caminho = q;
+				savePath[v][S] = i;
+			}
 		}
 	}
-
 	visitados[v][S] = menor_caminho;
 	return menor_caminho;
 }
@@ -99,6 +110,18 @@ int caixeiro(){
 
 int main(){
 	memset(visitados, -1, sizeof(visitados));
-	printf("%d\n", caixeiro(0, 1));
+	printf("Distancia: %d\n", caixeiro(0, 1));
+	
+	int casa_atual = 0;
+	int bitmask = 1;
+	int qtd = 0;
+	printf("Caminho: 0 ");
+	do {
+		casa_atual = savePath[casa_atual][bitmask];
+		printf("%d ", casa_atual);
+		bitmask = add_visitadas(casa_atual, bitmask);
+		qtd++;
+	} while(qtd < 6);
+	printf("\n");
 	return 0;
 }
