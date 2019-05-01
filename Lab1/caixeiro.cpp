@@ -16,26 +16,30 @@ No fim, volta a casa 0
 * Fazer modificacao para funcao manual de permutacoes (sem uso da STL) 
 * Desnecessario. Funcao com dp mais rapida e mais facil de implementar
 
+Utiliza bitmask para simular as casas ja visitadas na dfs
+Sendo S[6] = { S[0], S[1], S[2], S[3], S[4], S[5], S[6] }, com S[i] = 0 ou 1, indicando se foi visitado ou nao
+
 Distancias dos caminhos:
 */
-int distancias[][N] = { 	 {0,10,20,30,40,20},
+int distancias[][N] = {  {0,10,20,30,40,20},
 						 {10,0,15,19,12,10},
 						 {20,15,0,25,14,17},
 						 {30,19,25,0,11,9},
 						 {40,12,14,11,0,10},
 					 	 {20,10,17,9,10,0}};
 
+// visitados com N x 2 ^ N posicoes
 int visitados[N][1 << N];
 
-// i = casa a verificar pertencimento
+// i = casa a verificar se ja foi visitada
 // S = bitmask do vetor de casas
-bool pertence(int i, int S){
+bool visitada(int i, int S){
 	return (S & (1 << i));
 }
 
-// incluir casa i (bit i) no bitmask
+// incluir casa i (bit i = 1) no bitmask
 // retorna novo S
-int incluir(int i, int S){
+int add_visitadas(int i, int S){
 	return (S | (1 << i));
 }
 
@@ -55,10 +59,10 @@ int caixeiro(int v, int S){
 
 	int menor_caminho = 1e9;
 	for(int i=0;i<N;i++){
-		if(!pertence(i, S)){
+		if(!visitada(i, S)){
 			menor_caminho = min(
 					menor_caminho,
-					caixeiro(i, incluir(i, S)) + distancias[v][i]
+					caixeiro(i, add_visitadas(i, S)) + distancias[v][i]
 				);
 		}
 	}
