@@ -32,6 +32,7 @@ int savePath[N][1 << N];
 // i = casa a verificar se ja foi visitada
 // S = bitmask do vetor de casas
 bool visitada(int i, int S){
+	printf("%d\n",(S & (1 << i)));	
 	return (S & (1 << i));
 }
 
@@ -82,7 +83,7 @@ int main(){
 		printf("%d ", casa_atual);
 		bitmask = add_visitadas(casa_atual, bitmask);
 		qtd++;
-	} while(qtd < 6);
+	} while(qtd < N);
 	printf("\n");
 	return 0;
 }
