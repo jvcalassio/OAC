@@ -17,12 +17,18 @@ Sendo S[6] = { S[0], S[1], S[2], S[3], S[4], S[5], S[6] }, com S[i] = 0 ou 1, in
 
 Distancias dos caminhos:
 */
-int distancias[][N] = {  {0,10,20,30,40,20},
+/*int distancias[][N] = {  {0,10,20,30,40,20},
 						 {10,0,15,19,12,10},
 						 {20,15,0,25,14,17},
 						 {30,19,25,0,11,9},
 						 {40,12,14,11,0,10},
-					 	 {20,10,17,9,10,0}};
+					 	 {20,10,17,9,10,0}};*/
+int distancias[][N] = {	{0,36,54,104,30,43},
+						{36,0,18,134,6,65},
+						{54,18,0,320,112,278},
+						{104,134,320,0,118,68},
+						{30,6,112,118,0,116},
+						{43,65,278,68,166,0}};
 
 // caminhos visitados com N x 2 ^ N posicoes
 int dp[N][1 << N];
@@ -31,8 +37,7 @@ int savePath[N][1 << N];
 
 // i = casa a verificar se ja foi visitada
 // S = bitmask do vetor de casas
-bool visitada(int i, int S){
-	printf("%d\n",(S & (1 << i)));	
+int visitada(int i, int S){
 	return (S & (1 << i));
 }
 
@@ -87,3 +92,11 @@ int main(){
 	printf("\n");
 	return 0;
 }
+
+/*
+
+0001011111
+0001000000
+
+
+*/
