@@ -31,7 +31,7 @@
 
 .data
 C: .space 160 # alocar 160 espacos na memoria 2 coord(x,y) * max casas (20) * 4 bytes cada coord
-N: .word 6 # numero de casas
+N: .word 4 # numero de casas
 D: .space 1600 # matriz das distancias entre as casas 20 * 20 * 4 bytes de tamanho max
 
 dp: .space 0xa000 # caminhos visitados 20 casas max * 2^10 bits (bitmask, 1 bit = 1 casa) * 4 bytes
@@ -78,6 +78,10 @@ minus1float: .float -1
 	la a1,C
 	la a2,D
 	jal ORDENA
+	
+	#la t0,N
+	#lw a0,0(t0)
+	#jal PRINT_SAVEPATH
 	
 	li a7,2
 	ecall # printa min_dists
@@ -304,12 +308,15 @@ ORDENA:
 	CAIXEIRO:
 		# a0 = v
 		# a1 = S
+		save_stack(a0)
+		save_stack(a1)
 		li t0,1
 		sll t0,t0,s0 # (1 << N)
 		addi t0,t0,-1 # (1 << N)-1
 		
 		# prepara retorno em fa0. carrega D[v][0]
-		slli t1,a0,2 # t1 = (v * 4 bytes)
+		mul t1,s0,a0 # t1 = (n * v)
+		slli t1,t1,2 # t1 = (n * v * 4 bytes)
 		add t1,s2,t1 # t1 = end de D[v][0]
 		flw fa0,0(t1) # fa0 = D[v][0]
 		beq a1,t0,RETURN_RA # se S == ((1 << N)-1)
@@ -366,8 +373,7 @@ ORDENA:
 				flt.s t0,ft0,fs0 # t0 = (ft0 < fs0)
 				beq t0,zero,CONTLOOP_CALCROTA # se (ft0 > fs0), so continua e nao muda menor_caminho
 					# do contrario, muda valor salvo em menor_caminho
-					fcvt.s.w ft1,zero
-					fadd.s fs0,ft0,ft1 # fs0 = ft0
+					fmv.s fs0,ft0 # fs0 = ft0
 					
 					# faz savepath[v][S] = i
 					la t1,savepath
@@ -380,16 +386,56 @@ ORDENA:
 			
 		FIMLOOP_CALCROTA:
 			# ao acabar o loop, salvar novo menor caminho em dp[v][S]
+			free_stack(a1)
+			free_stack(a0)
 			la t1,dp
 			get_pointer(s0,t1,a0,a1) # t1 = ponteiro para dp[v][S]
 			fsw fs0,0(t1) # salva menor caminho em dp[v][S]
-			fcvt.s.w ft0,zero
-			fadd.s fa0,fs0,ft0 # return = menor_caminho
-			j RETURN_RA
+			fmv.s fa0,fs0 # return = menor_caminho
+			ret
 	
 	RETURN_RA:
+		free_stack(a1)
+		free_stack(a0)
 		# retorna fa0 = menor distancia
 		ret
+
+PRINT_SAVEPATH:
+	mv s0,a0 # s0 = n
+	la s1,savepath
+	
+	# posicoes: savepath[n][1 << n]
+	# iterar n * (1 << n) vezes. a cada N vezes, printar \n
+	li s5,1
+	sll s5,s5,s0 # 1 << n
+	mul s2,s5,s0 # N * (1 << n) vezes. max iterations
+	
+	li s3,0 # i = 0
+	li s4,0 # j = 0
+	LOOP1_SPP:
+		beq s3,s2,END_PRINT
+		bne s4,s5,DONTPRINTNL
+			la a0,next_line
+			li a7,4
+			ecall
+			li s4,0
+		DONTPRINTNL:
+			lw a0,0(s1)
+			li a7,1
+			ecall
+			
+			la a0,blank_line
+			li a7,4
+			ecall
+			
+			addi s1,s1,4
+			addi s3,s3,1
+			addi s4,s4,1
+			j LOOP1_SPP
+	
+	END_PRINT:
+		ret
+
 PRINTORDENADOS:
 	la t0,N
 	lw s0,0(t0) # s0 = n
@@ -409,10 +455,14 @@ PRINTORDENADOS:
 	addi s6,s6,8 # inicia em printvet[1]
 	
 	LOOPPO:
-		mul t0,s0,s2 # t0 = casa atual * n
-		add t0,t0,s3 # t0 = (casa atual*n) + bitmask
-		slli t0,t0,2
-		add t0,s1,t0 # t0 = savepath[casa_atual][bitmask]
+		#mul t0,s0,s2 # t0 = casa atual * n
+		#add t0,t0,s3 # t0 = (casa atual*n) + bitmask
+		#slli t0,t0,2
+		#add t0,s1,t0 # t0 = end de savepath[casa_atual][bitmask]
+		mv t1,s1
+		get_pointer(s0,t1,s2,s3)
+		mv t0,t1
+		
 		lw s2,0(t0)
 		lw a0,0(t0)
 		li a7,1
@@ -533,44 +583,6 @@ PRINT_REDLINE:
 		li a7,147
 		ecall
 		
-		ret
-
-PRINT_MATRIZ_INT:
-	mv s0,a0 # s0 = n
-	mv s1,a1 # s1 = matriz a ser impressa
-	li s2,0 # i = 0
-	
-	la a0,next_line
-	li a7,4
-	ecall
-			
-	FOR1INT:
-		beq s2,s0,FIMFOR1INT
-		li s3,0 # j = 0
-		
-		FOR2INT:
-			beq s3,s0,FIMFOR2INT
-			lw a0,0(s1)
-			li a7,1
-			ecall
-			
-			la a0,blank_line
-			li a7,4
-			ecall
-			
-			addi s1,s1,4
-			addi s3,s3,1
-			j FOR2INT
-			
-		FIMFOR2INT:
-			la a0,next_line
-			li a7,4
-			ecall
-			
-			addi s2,s2,1
-			j FOR1INT
-		
-	FIMFOR1INT:
 		ret
 
 LIMPA_TELA: # fundo de tela branco, para melhor visualizacao/nao esquecer de dar clean

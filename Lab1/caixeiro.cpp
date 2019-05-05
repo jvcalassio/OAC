@@ -3,7 +3,7 @@
 
 using namespace std;
 
-#define N 6
+#define N 5
 
 /*
 Resumo:
@@ -23,13 +23,18 @@ Distancias dos caminhos:
 						 {30,19,25,0,11,9},
 						 {40,12,14,11,0,10},
 					 	 {20,10,17,9,10,0}};*/
-int distancias[][N] = {	{0,36,54,104,30,43},
-						{36,0,18,134,6,65},
-						{54,18,0,320,112,278},
-						{104,134,320,0,118,68},
-						{30,6,112,118,0,116},
-						{43,65,278,68,166,0}};
-
+/*int distancias[][N] = {	{0,258,172,105,250,108},
+						{258,0,30,54,145,52},
+						{172,30,0,24,176,22},
+						{105,54,24,0,245,2},
+						{250,145,176,245,0,93},
+						{108,52,22,2,93,0}};
+*/
+int distancias[][N] =  {{0,283,159,84,192},
+						{283,0,189,87,212},
+						{159,189,0,90,43},
+						{84,87,90,0,43},
+						{192,212,43,164,0}};
 // caminhos visitados com N x 2 ^ N posicoes
 int dp[N][1 << N];
 // matriz auxiliar para salvar o caminho percorrido. N x 2^N posicoes tbm
@@ -90,6 +95,14 @@ int main(){
 		qtd++;
 	} while(qtd < N);
 	printf("\n");
+
+	for(int i=0;i<N;i++){
+		for(int j=0;j<(1<<N);j++){
+			printf("%d ",savePath[i][j]);
+		}
+		printf("\n");
+	}
+
 	return 0;
 }
 

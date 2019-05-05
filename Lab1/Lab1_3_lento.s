@@ -5,20 +5,11 @@
 	sw %reg,0(sp)
 .end_macro
 
-.macro save_stackf(%reg)
-	addi sp,sp,-4
-	fsw %reg,0(sp)
-.end_macro
-
 .macro free_stack(%reg)
 	lw %reg,0(sp)
 	addi sp,sp,4
 .end_macro
 
-.macro free_stackf(%reg)
-	flw %reg,0(sp)
-	addi sp,sp,4
-.end_macro
 
 .macro get_pointer(%n,%vet,%y,%x) # nao usar t0 como ponteiro para o vet !
 	save_stack(t0)
