@@ -56,23 +56,9 @@ minus1float: .float -1
 	
 	la t0,N
 	lw a0,0(t0)
-	la a1,D
-	jal PRINT_MATRIZ
-	
-	la t0,N
-	lw a0,0(t0)
 	la a1,C
 	la a2,D
 	jal ORDENA
-	
-	fmv.s fa0,fs0
-	li a7,2
-	ecall # printa min_dists
-	la a0,next_line
-	li a7,4
-	ecall
-	
-	jal PRINTORDENADOS
 	
 	la t0,N
 	lw a0,0(t0)
@@ -213,44 +199,6 @@ ROTAS:
 	FIM_LOOP_CASAS:
 		ret
 
-# TEMPORARY:
-PRINT_MATRIZ:
-	mv s0,a0 # s0 = n
-	mv s1,a1 # s1 = matriz a ser impressa
-	li s2,0 # i = 0
-	la a0,next_line
-	li a7,4
-	ecall
-			
-	FOR1:
-		beq s2,s0,FIMFOR1
-		li s3,0 # j = 0
-		
-		FOR2:
-			beq s3,s0,FIMFOR2
-			flw fa0,0(s1)
-			li a7,2
-			ecall
-			
-			la a0,blank_line
-			li a7,4
-			ecall
-			
-			addi s1,s1,4
-			addi s3,s3,1
-			j FOR2
-			
-		FIMFOR2:
-			la a0,next_line
-			li a7,4
-			ecall
-			
-			addi s2,s2,1
-			j FOR1
-		
-	FIMFOR1:
-		ret
-
 ###################################################
 #	Acha menores caminhos entre casas
 # a0 = numero de casas
@@ -379,33 +327,6 @@ ORDENA:
 			free_stack(ra)
 			
 	FIM_LOOP_PERMUTA:
-		ret
-
-# TEMPORARY:
-# printa casas na melhor ordem		
-PRINTORDENADOS:
-	la s0,N
-	lw s0,0(s0) # s0 = n
-	la s1,vet_permut_final # s1 = vetor ordenado na melhor ordem
-	
-	li s2,0 # i = 0
-	LOOPPO:
-		beq s2,s0,VOLTAPO
-		lw a0,0(s1)
-		li a7,1
-		ecall # printa num
-		la a0,blank_line
-		li a7,4
-		ecall # printa espaco
-		
-		addi s1,s1,4
-		addi s2,s2,1
-		j LOOPPO
-	
-	VOLTAPO:
-		la a0,next_line
-		li a7,4
-		ecall
 		ret
 		
 ####################################################
