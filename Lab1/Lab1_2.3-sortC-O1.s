@@ -3,7 +3,10 @@
 .LC0:  .string "\t"
   
 .text
-	j main
+	jal main
+	li a7,10
+	ecall
+	
 show: # a0 = ponteiro para .LANCHOR 0, a1 = N = 10
   addi sp,sp,-16
   sw ra,12(sp)
