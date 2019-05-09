@@ -22,7 +22,7 @@
 
 .data
 C: .space 160 # alocar 160 espacos na memoria 2 coord(x,y) * max casas (20) * 4 bytes cada coord
-N: .word 9 # numero de casas
+N: .word 6 # numero de casas
 D: .space 1600 # matriz das distancias entre as casas 20 * 20 * 4 bytes de tamanho max
 
 vet_permut: .space 80 # vetor dos numeros das casas (para permutar)
@@ -32,7 +32,6 @@ printvet: .space 160 # vetor a ser impresso (C ordenado)
 
 next_line: .string "\n"
 blank_line: .string " "
-minus1float: .float -1
 
 .text
 	M_SetEcall(exceptionHandling)
@@ -59,15 +58,6 @@ minus1float: .float -1
 	la a1,C
 	la a2,D
 	jal ORDENA
-	
-	la t0,N
-	lw a0,0(t0)
-	la a1,C
-	jal MAKE_PRINTVET
-	
-	la t0,N
-	lw a0,0(t0)
-	jal PRINT_REDLINE
 	
 	j FIMPROG
 
@@ -221,11 +211,19 @@ ORDENA:
 			j LOOP_SETVET
 		
 	FIM_LOOP_SETVET:
-	# global: fs0 = menor custo
+	# semiglobal: fs0 = menor custo
 	li t0,10000
 	fcvt.s.w fs0,t0
 	li a0,0
-	j PERMUTA
+	save_stack(ra)
+	jal PERMUTA
+	mv a0,s0
+	mv a1,s1
+	jal MAKE_PRINTVET
+	mv a0,s0
+	jal PRINT_REDLINE
+	free_stack(ra)
+	ret
 	# faz o calculo de melhor rota, testando todas as possibilidades
 	
 	# sem argumentos. apenas testa se a permutacao atual tem a menor rota e seta fs0

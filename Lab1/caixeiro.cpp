@@ -6,7 +6,7 @@ using namespace std;
 
 int a[] = {0, 1, 2, 3, 4, 5};
 int best[N];
-int c = 0, cost = 1e9;
+int cost = 1e9;
 int distancias[][N] = {{0, 192, 116, 26, 84, 184},
                        {192, 0, 122, 101, 9, 40},
                        {116, 122, 0, 21, 171, 110},
@@ -47,8 +47,8 @@ void permute(int i) {
 }
 int main() {
     int i, j;
-    permute(0); // arg0 = casa inicial
-    printf("Custo: %d\n", cost)
+    permute(0   ); // arg0 = casa inicial
+    printf("Custo: %d\n", cost);
     printf("Melhor rota: \n");
     for (int i = 0; i < N; i++) {
         printf("%d ", best[i]);
