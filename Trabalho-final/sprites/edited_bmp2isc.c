@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
 
     // FILE *aout, *aoutbin;
     FILE *aouts; /* the bitmap file 24 bits */
-    char name[30];
+    char name[35];
     int i, j, k, index;
     unsigned char r, g, b;
 
@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    sprintf(name, "%s.bmp", argv[1]);
+    sprintf(name, "bmp/%s.bmp", argv[1]);
     readBmp(name);
 
     printf("size:%d x %d\n", width, height);
@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
     //    sprintf(name,"%s.bin",argv[1]);
     //    aoutbin=fopen(name,"wb");
 
-    sprintf(name, "%s.s", argv[1]);
+    sprintf(name, "bin/%s.s", argv[1]);
     aouts = fopen(name, "w");
 
     //   fprintf(aout,"DEPTH = %d;\nWIDTH = 32;\nADDRESS_RADIX =

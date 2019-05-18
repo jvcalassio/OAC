@@ -1,12 +1,7 @@
 .data
-.LANCHOR0: .word 9,2,5,1,8,2,4,3,6,7
-.LC0: .string "\t"
-
+.LANCHOR0: .word 5,8,3,4,7,6,8,0,1,9
+.LC1: .string "\t"
 .text
-	jal main # chama main
-	li a7,10
-	ecall # finaliza execucao
-	
 show:
   addi sp,sp,-32
   sw s0,24(sp)
@@ -14,19 +9,19 @@ show:
   sw s2,16(sp)
   sw s3,12(sp)
   sw ra,28(sp)
-  mv s3,a1
-  mv s0,a0
+  mv s3,a0
+  mv s0,a1
   li s1,0
-  lui s2,%hi(.LC0)
+  lui s2,%hi(.LC1)
 .L3:
   bge s1,s3,.L2
   lw a0,0(s0)
   li a7,1
-  ecall # print numero
+  ecall
   
-  addi a0,s2,%lo(.LC0)
+  addi a0,s2,%lo(.LC1)
   li a7,4
-  ecall # print \t
+  ecall
   
   addi s1,s1,1
   addi s0,s0,4
@@ -38,10 +33,9 @@ show:
   lw s2,16(sp)
   lw s3,12(sp)
   li a0,10
-  addi sp,sp,32
   li a7,11
-  ecall # print \n
-  ret
+  ecall
+  addi sp,sp,32
 swap:
   slli a1,a1,2
   add a5,a0,a1
@@ -95,21 +89,23 @@ sort:
   addi sp,sp,32
   jr ra
 main:
-  addi sp,sp,-16
-  sw s0,8(sp)
-  lui s0,%hi(.LANCHOR0)
-  addi a0,s0,%lo(.LANCHOR0)
+  addi sp,sp,-64
+  lui a1,%hi(.LANCHOR0)
+  li a2,40
+  addi a1,a1,%lo(.LANCHOR0)
+  addi a0,sp,8
+  sw ra,60(sp)
+  #call memcpy
+  addi a0,sp,8
   li a1,10
-  sw ra,12(sp)
   call show
-  addi a0,s0,%lo(.LANCHOR0)
+  addi a0,sp,8
   li a1,10
   call sort
-  addi a0,s0,%lo(.LANCHOR0)
+  addi a0,sp,8
   li a1,10
   call show
-  lw ra,12(sp)
-  lw s0,8(sp)
+  lw ra,60(sp)
   li a0,0
-  addi sp,sp,16
+  addi sp,sp,64
   jr ra

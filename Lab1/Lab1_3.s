@@ -22,7 +22,7 @@
 
 .data
 C: .space 160 # alocar 160 espacos na memoria 2 coord(x,y) * max casas (20) * 4 bytes cada coord
-N: .word 6 # numero de casas
+N: .word 7 # numero de casas
 D: .space 1600 # matriz das distancias entre as casas 20 * 20 * 4 bytes de tamanho max
 
 vet_permut: .space 80 # vetor dos numeros das casas (para permutar)
@@ -53,12 +53,13 @@ blank_line: .string " "
 	la a1,C
 	jal DESENHA
 	
+	ebreak
 	la t0,N
 	lw a0,0(t0)
 	la a1,C
 	la a2,D
 	jal ORDENA
-	
+	ebreak
 	j FIMPROG
 
 ######################################
