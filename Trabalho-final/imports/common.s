@@ -59,6 +59,56 @@ PRINT_OBJ:
 		free_stack(s1)
 		free_stack(s0)
 		ret
+		
+####################################################
+# Imprime um objeto espelhado no bitmap display
+# a0 = X desejado
+# a1 = Y desejado
+# a2 = end base (dependendo do display atual)
+# a3 = endereco do objeto
+###################################################
+PRINT_OBJ_MIRROR:
+	save_stack(s0)
+	save_stack(s1)
+	save_stack(s2)
+	save_stack(ra)
+	lw s0,0(a3) # carrega X do objeto
+	lw s1,4(a3) # carrega Y do objeto
+	mv s2,a3 # salva endereco inicial do objeto
+	jal GET_POSITION # a0 = posicao inicial desejada para imprimir
+	addi a3,a3,8 # pula enderecos do tamanho do objeto
+	add a3,a3,s0 # pula o endereco do objeto em X bytes. Assim, comeca a printar do ultimo px da linha
+	
+	POBJ_MIRROR_LOOP0: # imprime nas colunas
+		beq s0,zero,POBJ_MIRROR_LOOP1 # se chegar no (N)esimo pixel, pula para linha de baixo
+		lb t0,0(a3) # carrega em t0 byte correspondente da imagem
+		sb t0,0(a0) # imprime imagem no bitmap display
+		addi s0,s0,-1 # decrementa j
+		addi a3,a3,-1 # passa para prox endereco (que vem antes, pq eh espelhado)
+		addi a0,a0,1 # passa para prox endereco no display
+		j POBJ_MIRROR_LOOP0
+		
+		POBJ_MIRROR_LOOP1: 
+			beq s1,zero,FIM_POBJ_MIRROR # se chegar no fim das linhas, termina execucao do procedimento
+			addi s1,s1,-1 # decrementa i
+			lw t0,0(s2)
+			li t1,320
+			sub t1,t1,t0
+			add a0,a0,t1 # pula (320 - x) pixels no endereco do bitmap, para prox impressao
+			# atualizar a3
+			# preciso pular agora (n-i) * x posicoes no endereco do objeto
+			mv s0,t0 # reseta j
+			slli t0,t0,1 # t0 = n * 2
+			add a3,a3,t0 # a3 = end do objeto atual + (2 * n), ou seja, volta para px inicial da prox linha
+			
+			j POBJ_MIRROR_LOOP0
+			
+	FIM_POBJ_MIRROR:
+		free_stack(ra)
+		free_stack(s2)
+		free_stack(s1)
+		free_stack(s0)
+		ret
 
 ######################################
 # Faz leitura das teclas do teclado

@@ -197,6 +197,118 @@ MOVE_MARIO_DIREITA:
 		j MAINLOOP
 	
 MOVE_MARIO_ESQUERDA:
+	save_stack(a0)
+	la t0,mario_state
+	lb t0,0(t0)
+	
+	MVME_P1: # faz passo 1
+		la t0,pos_mario # pega posicao do mario
+		lh a0,0(t0)
+		lh a1,2(t0)
+		
+		la a2,display
+		lw a2,0(a2)
+		la a3,fase1
+		la a4,mario_parado
+		jal CLEAR_OBJPOS # imprime mapa na pos do mario
+		
+		la t0,pos_mario # pega posicao do mario novamente
+		lh a0,0(t0)     # pois a funcao anterior modifica os valores
+		lh a1,2(t0)
+		
+		addi a0,a0,-1 # adiciona -1 no X
+		sh a0,0(t0)
+		la t0,display 
+		lw a2,0(t0) 
+		la a3,mario_andando_p1
+		jal PRINT_OBJ_MIRROR # printa mario passo 1 na tela
+	
+		# sleep entre os passos (20ms)
+		li a0,20
+		li a7,32
+		ecall
+	
+	MVME_P2: # faz passo 2
+		la t0,pos_mario # pega posicao do mario
+		lh a0,0(t0)
+		lh a1,2(t0)
+		
+		la a2,display
+		lw a2,0(a2)
+		la a3,fase1
+		la a4,mario_andando_p1
+		jal CLEAR_OBJPOS # imprime mapa na pos do mario
+		
+		la t0,pos_mario # pega posicao do mario
+		lh a0,0(t0)
+		lh a1,2(t0)
+		
+		addi a0,a0,-1 # adiciona -1 no X
+		sh a0,0(t0)
+		la t0,display
+		lw a2,0(t0)
+		la a3,mario_andando_p2
+		jal PRINT_OBJ_MIRROR # printa mario passo 2 na tela
+		
+		# sleep entre os passos (20ms)
+		li a0,20
+		li a7,32
+		ecall
+	
+	MVME_P3: # faz passo 3
+		la t0,pos_mario # pega posicao do mario
+		lh a0,0(t0)
+		lh a1,2(t0)
+		
+		la a2,display
+		lw a2,0(a2)
+		la a3,fase1
+		la a4,mario_andando_p2
+		jal CLEAR_OBJPOS # imprime mapa no lugar do mario
+		
+		la t0,pos_mario # pega posicao do mario
+		lh a0,0(t0)
+		lh a1,2(t0)
+		
+		addi a0,a0,-1 # adiciona -1 no X
+		sh a0,0(t0)
+		la t0,display
+		lw a2,0(t0)
+		la a3,mario_andando_p3
+		jal PRINT_OBJ_MIRROR # printa mario passo 3 na tela
+	
+		# sleep entre os passos (20ms)
+		li a0,20
+		li a7,32
+		ecall
+	
+	MVME_P0: # faz mario parado novamente
+		la t0,pos_mario # pega posicao do mario
+		lh a0,0(t0)
+		lh a1,2(t0)
+		
+		la a2,display
+		lw a2,0(a2)
+		la a3,fase1
+		la a4,mario_andando_p3
+		jal CLEAR_OBJPOS
+		
+		la t0,pos_mario # pega posicao do mario
+		lh a0,0(t0)
+		lh a1,2(t0)
+		
+		addi a0,a0,-1 # adiciona -1 no X
+		sh a0,0(t0)
+		la t0,display
+		lw a2,0(t0)
+		la a3,mario_parado
+
+		jal PRINT_OBJ_MIRROR # printa mario passo final na tela
+	
+	# com isso, o mario se movimentou um total de 4px
+	FIM_MVME:
+		free_stack(a0) # devolve valor de a0
+		j MAINLOOP
 
 MARIO_PULO_UP:
 
