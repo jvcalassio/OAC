@@ -95,8 +95,6 @@ PRINT_OBJ_MIRROR:
 			li t1,320
 			sub t1,t1,t0
 			add a0,a0,t1 # pula (320 - x) pixels no endereco do bitmap, para prox impressao
-			# atualizar a3
-			# preciso pular agora (n-i) * x posicoes no endereco do objeto
 			mv s0,t0 # reseta j
 			slli t0,t0,1 # t0 = n * 2
 			add a3,a3,t0 # a3 = end do objeto atual + (2 * n), ou seja, volta para px inicial da prox linha
@@ -151,9 +149,7 @@ CLEAR_OBJPOS:
 	jal GET_POSITION # retorna endereco no mapa, para imprimir
 	mv a3,a0 # salva endereco no mapa em s2
 	mv a0,s1
-	
-	#li s0,18 # i, para iterar no Y
-	#li s1,18
+
 	lw s0,0(a4) # carrega tamanho horizontal do objeto
 	lw s1,4(a4) # carrega tamanho vertical do objeto
 	
@@ -174,10 +170,6 @@ CLEAR_OBJPOS:
 			sub t1,t1,t0
 			add a0,a0,t1 # pula (320 - n) pixel no display
 			add a3,a3,t1 # pula (320 - n) pixels no mapa
-			
-			#addi a0,a0,302 # pula 302 pixels no target
-			#addi a3,a3,302 # pula 302 pixels no mapa
-			#li s0,18 # reseta j
 			mv s0,t0 # reseta j
 			j PCOP_LOOP0
 			
