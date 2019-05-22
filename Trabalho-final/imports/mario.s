@@ -312,6 +312,7 @@ MV_1PXDW:
 
 # faz movimento do mario pra cima, na escada
 MOVE_MARIO_CIMA:
+	save_stack(ra)
 	# verifica escadas
 	la t0,pos_mario
 	lh t0,0(t0)
@@ -319,14 +320,40 @@ MOVE_MARIO_CIMA:
 	la t1,map_ladder
 	add t1,t1,t0 # posicao atual do mario
 	lb t0,0(t1) # pega byte da posicao pra ver se tem escada
-	mv a0,t0
-	li a7,34
-	ecall
+	li t1,0x02
+	bne t0,t1,FIM_MOVE_MARIO_CIMA # se nao for escada, nao faz nada
 	# fim verif escada
 	
-	ret
+	MARIO_SOBE_ESCADA: # se for escada, sobe
+		mv a0,t0
+		li a7,34
+		ecall
+		
+		la t0,pos_mario
+		lh a0,0(t0) # carrega X
+		lh a1,2(t0) # carrega y
+		li a2,DISPLAY0
+		la a3,fase1
+		la a4,mario_parado
+		jal CLEAR_OBJPOS # limpa mario na posicao atual
+		
+		la t0,pos_mario
+		lh a0,0(t0)
+		lh a1,2(t0)
+		addi a1,a1,-4
+		sh a1,2(t0)
+		li a2,DISPLAY0
+		la a3,mario_parado
+		jal PRINT_OBJ # printa mario na posicao acima
+		
+	
+	FIM_MOVE_MARIO_CIMA:
+		free_stack(ra)
+		j MAINLOOP
 
 # faz movimento do mario pra baixo, na escada
 MOVE_MARIO_BAIXO:
+	j MAINLOOP
 
 MARIO_PULO_UP:
+	j MAINLOOP
