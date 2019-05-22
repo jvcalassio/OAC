@@ -12,7 +12,6 @@
 .include "../sprites/bin/mario_pulando.s"
 .include "../sprites/bin/mario_pulando_queda.s" 
 display: .word 0xff000000
-black_obj: .space 324
 # Estados do mario
 # 0 = parado
 # 1 = p1-direita
@@ -22,7 +21,7 @@ black_obj: .space 324
 # 5 = pulo completo
 # 6 = pulo incompleto descida
 mario_state: .byte 0
-pos_mario: .half 83,199 # (x,y)
+pos_mario: .half 84,200 # (x,y)
 .text
 	jal PRINT_BG
 	j INITGM
@@ -93,8 +92,10 @@ MOVE_MARIO_DIREITA:
 		lh a0,0(t0)
 		lh a1,2(t0)
 		
-		li a2,DISPLAY0
+		la a2,display
+		lw a2,0(a2)
 		la a3,fase1
+		la a4,mario_parado
 		jal CLEAR_OBJPOS # imprime mapa na pos do mario
 		
 		la t0,pos_mario # pega posicao do mario novamente
@@ -118,8 +119,10 @@ MOVE_MARIO_DIREITA:
 		lh a0,0(t0)
 		lh a1,2(t0)
 		
-		li a2,DISPLAY0
+		la a2,display
+		lw a2,0(a2)
 		la a3,fase1
+		la a4,mario_andando_p1
 		jal CLEAR_OBJPOS # imprime mapa na pos do mario
 		
 		la t0,pos_mario # pega posicao do mario
@@ -143,8 +146,10 @@ MOVE_MARIO_DIREITA:
 		lh a0,0(t0)
 		lh a1,2(t0)
 		
-		li a2,DISPLAY0
+		la a2,display
+		lw a2,0(a2)
 		la a3,fase1
+		la a4,mario_andando_p2
 		jal CLEAR_OBJPOS # imprime mapa no lugar do mario
 		
 		la t0,pos_mario # pega posicao do mario
@@ -168,8 +173,10 @@ MOVE_MARIO_DIREITA:
 		lh a0,0(t0)
 		lh a1,2(t0)
 		
-		li a2,DISPLAY0
+		la a2,display
+		lw a2,0(a2)
 		la a3,fase1
+		la a4,mario_andando_p3
 		jal CLEAR_OBJPOS
 		
 		la t0,pos_mario # pega posicao do mario

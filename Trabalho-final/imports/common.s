@@ -76,17 +76,16 @@ KEYBIND:
 		li a0,0
 		ret
 
-##############################################
-# Limpa 18 x 18px na posicao desejada
-# Utilizado para desenhar objetos/mario,
-# sem apagar o cenario
-# Basicamenta, a funcao coloca o que estava
-# no cenario, na posicao especificada
+##################################################################
+# Limpa objeto na posicao desejada
+# Utilizado para desenhar objetos/mario, sem apagar o cenario
+# Basicamenta, a funcao coloca o que estava no cenario, na posicao especificada
 # a0 = x
 # a1 = y
 # a2 = end base (dependendo do display)
 # a3 = end mapa atual
-##############################################
+# a4 = end do objeto a ser apagado (para pegar o tamanho)
+################################################################
 CLEAR_OBJPOS:
 	save_stack(s0)
 	save_stack(s1)
@@ -103,12 +102,14 @@ CLEAR_OBJPOS:
 	mv a3,a0 # salva endereco no mapa em s2
 	mv a0,s1
 	
-	li s0,18 # i, para iterar no Y
-	li s1,18
+	#li s0,18 # i, para iterar no Y
+	#li s1,18
+	lw s0,0(a4) # carrega tamanho horizontal do objeto
+	lw s1,4(a4) # carrega tamanho vertical do objeto
 	
 	PCOP_LOOP0: # imprime nas colunas
-		beq s0,zero,PCOP_LOOP1 # se chegar no 18o pixel, pula para linha de baixo
-		lb t0,0(a3) # carrega em t0 byte correspondente da imagem
+		beq s0,zero,PCOP_LOOP1 # se chegar no (N)esimo pixel, pula para linha de baixo
+		lb t0,0(a3) # carrega em t0 byte correspondente do mapa
 		sb t0,0(a0) # imprime imagem no bitmap display
 		addi s0,s0,-1 # decrementa j
 		addi a3,a3,1 # passa para prox endereco
@@ -118,9 +119,16 @@ CLEAR_OBJPOS:
 		PCOP_LOOP1: 
 			beq s1,zero,FIM_PCOP # se chegar no fim das linhas, termina execucao do procedimento
 			addi s1,s1,-1 # decrementa i
-			addi a0,a0,302 # pula 302 pixels no target
-			addi a3,a3,302
-			li s0,18 # reseta j
+			lw t0,0(a4) # carrega tamanho vertical
+			li t1,320
+			sub t1,t1,t0
+			add a0,a0,t1 # pula (320 - n) pixel no display
+			add a3,a3,t1 # pula (320 - n) pixels no mapa
+			
+			#addi a0,a0,302 # pula 302 pixels no target
+			#addi a3,a3,302 # pula 302 pixels no mapa
+			#li s0,18 # reseta j
+			mv s0,t0 # reseta j
 			j PCOP_LOOP0
 			
 	FIM_PCOP:
