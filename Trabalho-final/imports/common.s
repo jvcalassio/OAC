@@ -1,5 +1,5 @@
 ##########################################################
-#  Arquivo com funcoes e comuns a todo o jogo  
+#  Arquivo com funcoes comuns a todo o jogo  
 #########################################################
 .text
 

@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
 
     sprintf(name, "bmp/%s.bmp", argv[1]);
     readBmp(name);
-
+    height--;
     printf("size:%d x %d\n", width, height);
 
     /*    printf("\nMatrix = \n");

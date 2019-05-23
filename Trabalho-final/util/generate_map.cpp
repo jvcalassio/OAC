@@ -32,3 +32,68 @@ int main(){
 	}
 	return 0;
 }
+
+/*
+
+martelo escada     esquerda andando pulando = 1
+normal  nao-escada direita  parado  chao    = 0
+
+or
+00001
+
+and
+00100
+00100
+00000
+
+parado direita:
+	00000
+
+parado esquerda:
+	00100
+
+andando direita:
+	00010
+
+andando esquerda:
+	00110
+
+pulando direita:
+	00011
+
+pulando esquerda:
+	00111
+
+pulando cima esquerda:
+	00101
+
+pulando cima direita:
+	00001
+
+escada:
+	01XXX
+
+parado martelo direita:
+	10000
+
+parado martelo esquerda:
+	10100
+
+andando martelo direita:
+	10010
+
+andando martelo esquerda:
+	10110
+
+
+
+
+
+
+
+
+
+
+
+
+*/
