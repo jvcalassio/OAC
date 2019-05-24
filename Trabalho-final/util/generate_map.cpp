@@ -66,6 +66,16 @@ normal  nao-escada direita  parado  chao    = 0
 00000 = andou pra direita
 00100 = andou pra esquerda
 
+----------------------------------
+
+00X01 = pulo up
+00010
+
+00011 = pulo dir
+00111 = pulo esq
+
+----------------------------------
+
 unicos estados possiveis para iniciar pulo
 and 00100 > 00000 (direita) ou 00100 (esquerda)
 fazer or com

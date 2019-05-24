@@ -62,12 +62,22 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	#sw t1,0(t0) # seta display
 	
 	# fim mudar display
-	la t0,pulo_px
-	lb t1,0(t0) # se ta descendo
-	lb t0,1(t0) # se ta subindo
-	bnez t0,MPUP # se o status do pulo de descida nao estiver em 0, precisa descer
-	bnez t1,MPUP # se o status do pulo de subida nao estiver em 0, precisa subir
 	
+	la t0,mario_state
+	lb t1,0(t0)
+	andi t2,t1,0x01 # verifica se esta pulando
+	beqz t2,MAINLOOP_KEYBIND # se nao estiver pulando, vai pro keybind
+	# se estiver pulando, verifica se eh pra cima ou direcionado
+	andi t2,t1,0x02 # verifica se eh direcionado
+	beqz t2,MPUP # se nao for, faz pulo pra cima
+	# se for direcionado, verifica qual direcao
+	andi t2,t1,0x04
+	beqz t2,MPDIR # se for pra direita, faz pulo pra direita
+	li t2,0x07
+	beq t2,t1,MPESQ # se for pra esquerda, faz pulo pra esquerda
+	
+	
+	MAINLOOP_KEYBIND:
 	jal KEYBIND
 	beqz a0,SEMKEY # se nenhuma tecla, faz nada
 		li t0,109
@@ -87,8 +97,17 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		
 		li t0,115 # S = baixo
 		beq a0,t0,MOVE_MARIO_BAIXO
+		
+		li t0,101 # E = pulo dir
+		beq a0,t0,MARIO_PULO_DIR
+		
+		li t0,113 # Q = pulo esq
+		beq a0,t0,MARIO_PULO_ESQ
+		
 	SEMKEY: j MAINLOOP
 	MPUP: j MARIO_PULO_UP
+	MPDIR: j MARIO_PULO_DIR
+	MPESQ: j MARIO_PULO_ESQ
 
 FIM:
 	li a7,10

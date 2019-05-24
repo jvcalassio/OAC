@@ -284,8 +284,6 @@ MARIO_PULO_UP:
 	bgt t2,zero,MARIO_PULO_UP_SOBE # se subida tiver > 0 e < 12, sobe 1px
 	
 	MARIO_PULO_UP_INIT_SUBIDA:
-		set_mario_move(0,-8,mario_pulando) # se move 8px pra cima
-	
 		la t0,mario_state
 		lb t1,0(t0)
 		andi t1,t1,0x04 # verifica se esta pulando pra esquerda ou direita
@@ -298,20 +296,22 @@ MARIO_PULO_UP:
 		addi t1,t1,8
 		sb t1,1(t0) # salva que ele subiu 8px no byte de pulo
 		
+		set_mario_move(0,-8,mario_pulando) # se move 8px pra cima
+		
 		beqz t2,PULO_UP_PDIR
 		j PULO_UP_PESQ
 		
 	MARIO_PULO_UP_SOBE:
-		set_mario_move(0,-1,mario_pulando) # se move 1px pra cima
+		la t0,pulo_px
+		lb t1,1(t0)
+		addi t1,t1,1 # sobe 1px no pulopx
+		sb t1,1(t0)
 		
 		la t0,mario_state
 		lb t1,0(t0)
 		andi t2,t1,0x04 # verificador de qual o lado do mario
 		
-		la t0,pulo_px
-		lb t1,1(t0)
-		addi t1,t1,1 # sobe 1px no pulopx
-		sb t1,1(t0)
+		set_mario_move(0,-1,mario_pulando) # se move 1px pra cima
 		
 		beqz t2,PULO_UP_PDIR
 		j PULO_UP_PESQ
@@ -323,42 +323,43 @@ MARIO_PULO_UP:
 		sb t1,1(t0) # faz o subida = 13, assim nao conflita nos beqs la em cima
 		lb t1,0(t0)
 		addi t1,t1,8
-		sb t1,0(t0) # adiciona 1 na descida
-		
-		set_mario_move(0,0,mario_pulando)
+		sb t1,0(t0) # adiciona 8 na descida
 		
 		la t0,mario_state
 		lb t1,0(t0)
 		andi t2,t1,0x04 # verificador de qual o lado do mario
 		
+		set_mario_move(0,0,mario_pulando) # nao se move nesse frame
+		
 		beqz t2,PULO_UP_PDIR
 		j PULO_UP_PESQ
 	
 	MARIO_PULO_UP_DESCE:
-		set_mario_move(0,1,mario_pulando) # se move 1px pra baixo
-		
-		la t0,mario_state
-		lb t1,0(t0)
-		andi t2,t1,0x04
-		
 		la t0,pulo_px
 		lb t1,0(t0)
 		addi t1,t1,1 # desce 1px no pulopx
 		sb t1,0(t0)
+		
+		la t0,mario_state
+		lb t1,0(t0)
+		andi t2,t1,0x04 # pega para qual lado o mario esta virado
+		
+		set_mario_move(0,1,mario_pulando) # se move 1px pra baixo
+		
 		beqz t2,PULO_UP_PDIR
-		beq zero,zero,PULO_UP_PESQ
+		j PULO_UP_PESQ
 	
 	MARIO_PULO_UP_RESET:
 		la t0,pulo_px
 		sb zero,0(t0)
 		sb zero,1(t0) # reseta pulopx
 		
-		set_mario_move(0,8,mario_parado) # se move 8px pra baixo
-		
 		la t0,mario_state
 		lb t1,0(t0)
 		andi t1,t1,0x04
 		sb t1,0(t0) # salva estado do mario no chao, virado pro lado onde ja estava
+		
+		set_mario_move(0,8,mario_parado) # se move 8px pra baixo
 		
 		beqz t1,PULO_UP_PDIR
 		
@@ -369,4 +370,167 @@ MARIO_PULO_UP:
 		jal PRINT_OBJ
 	
 	FIM_PULO_UP:
+		j MAINLOOP
+
+# realiza mario pulando pra direita em movimento
+MARIO_PULO_DIR:
+	li a0,26
+	li a7,32
+	ecall # sleep de 26ms, entre cada movimento para cima, para ficar mais fluido
+	
+	rmv_mario(mario_pulando) # remove mario na posicao atual
+	
+	la t0,pulo_px
+	lb t1,0(t0) # carrega estado de descida do pulo do mario
+	lb t2,1(t0) # carrega estado de subida do pulo do mario
+	li t3,12
+	beq t2,t3,MARIO_PULO_DIR_INIT_DESCIDA # se ja tiver chegado no ponto maximo, inicia descida
+	beq t1,t3,MARIO_PULO_DIR_RESET # se ambos tiverem em 12, termina pulo
+	bgt t1,zero,MARIO_PULO_DIR_DESCE # se descida tiver > 0 e < 12, faz movimento de descer
+	bgt t2,zero,MARIO_PULO_DIR_SOBE # se subida tiver > 0 e < 12, sobe 1px
+	
+	MARIO_PULO_DIR_INIT_SUBIDA:
+		la t0,mario_state
+		li t1,0x03
+		sb t1,0(t0) # grava mario state de pulando pra direita
+		
+		# verificar se tem degrau
+		
+		la t0,pulo_px
+		lb t1,1(t0)
+		addi t1,t1,8
+		sb t1,1(t0) # salva que ele subiu 8px no byte de pulo
+		
+		set_mario_move(4,-8,mario_pulando) # se move 8px pra cima, 4px pra direita p/ iniciar pulo
+		
+		j PULO_DIR_ANIM
+		
+	MARIO_PULO_DIR_SOBE:
+		la t0,pulo_px
+		lb t1,1(t0)
+		addi t1,t1,1 # sobe 1px no pulopx
+		sb t1,1(t0)
+		
+		set_mario_move(1,-1,mario_pulando) # se move 1px pra cima, 1px pra direita
+		
+		j PULO_DIR_ANIM
+		
+	MARIO_PULO_DIR_INIT_DESCIDA:
+		la t0,pulo_px
+		lb t1,1(t0)
+		addi t1,t1,1
+		sb t1,1(t0) # faz o subida = 13, assim nao conflita nos beqs la em cima
+		lb t1,0(t0)
+		addi t1,t1,8
+		sb t1,0(t0) # adiciona 8 pra descida
+		
+		set_mario_move(1,0,mario_pulando) # se move apenas 1px pra direita, sem subir nem descer
+		
+		j PULO_DIR_ANIM
+	
+	MARIO_PULO_DIR_DESCE:
+		la t0,pulo_px
+		lb t1,0(t0)
+		addi t1,t1,1 # desce 1px no pulopx
+		sb t1,0(t0)
+		
+		set_mario_move(1,1,mario_pulando) # se move 1px pra baixo, 1px pra direita
+		
+		j PULO_DIR_ANIM
+	
+	MARIO_PULO_DIR_RESET:
+		la t0,pulo_px
+		sb zero,0(t0)
+		sb zero,1(t0) # reseta pulopx
+		
+		la t0,mario_state
+		sb zero,0(t0) # salva estado do mario no chao, virado pra direita
+		
+		set_mario_move(4,8,mario_parado) # se move 8px pra baixo, 4px pra direita p/ finalizar pulo
+		
+	PULO_DIR_ANIM: # pula pra direita em movimento
+		jal PRINT_OBJ
+	
+	FIM_PULO_DIR:
+		j MAINLOOP
+
+# realiza mario pulando pra esquerda em movimento
+MARIO_PULO_ESQ:
+	li a0,26
+	li a7,32
+	ecall # sleep de 26ms, entre cada movimento para cima, para ficar mais fluido
+	
+	rmv_mario(mario_pulando) # remove mario na posicao atual
+	
+	la t0,pulo_px
+	lb t1,0(t0) # carrega estado de descida do pulo do mario
+	lb t2,1(t0) # carrega estado de subida do pulo do mario
+	li t3,12
+	beq t2,t3,MARIO_PULO_ESQ_INIT_DESCIDA # se ja tiver chegado no ponto maximo, inicia descida
+	beq t1,t3,MARIO_PULO_ESQ_RESET # se ambos tiverem em 12, termina pulo
+	bgt t1,zero,MARIO_PULO_ESQ_DESCE # se descida tiver > 0 e < 12, faz movimento de descer
+	bgt t2,zero,MARIO_PULO_ESQ_SOBE # se subida tiver > 0 e < 12, sobe 1px
+	
+	MARIO_PULO_ESQ_INIT_SUBIDA:
+		la t0,mario_state
+		li t1,0x07
+		sb t1,0(t0) # grava mario state de pulando pra direita
+		
+		la t0,pulo_px
+		lb t1,1(t0)
+		addi t1,t1,8
+		sb t1,1(t0) # salva que ele subiu 8px no byte de pulo
+		
+		set_mario_move(-4,-8,mario_pulando) # se move 8px pra cima, 4px pra esquerda p/ iniciar pulo
+		
+		j PULO_ESQ_ANIM
+		
+	MARIO_PULO_ESQ_SOBE:
+		la t0,pulo_px
+		lb t1,1(t0)
+		addi t1,t1,1 # sobe 1px no pulopx
+		sb t1,1(t0)
+		
+		set_mario_move(-1,-1,mario_pulando) # se move 1px pra cima, 1px pra esquerda
+		
+		j PULO_ESQ_ANIM
+		
+	MARIO_PULO_ESQ_INIT_DESCIDA:
+		la t0,pulo_px
+		lb t1,1(t0)
+		addi t1,t1,1
+		sb t1,1(t0) # faz o subida = 13, assim nao conflita nos beqs la em cima
+		lb t1,0(t0)
+		addi t1,t1,8
+		sb t1,0(t0) # adiciona 8 pra descida
+		
+		set_mario_move(-1,0,mario_pulando) # se move apenas 1px pra esquerda, sem subir nem descer
+		
+		j PULO_ESQ_ANIM
+	
+	MARIO_PULO_ESQ_DESCE:
+		la t0,pulo_px
+		lb t1,0(t0)
+		addi t1,t1,1 # desce 1px no pulopx
+		sb t1,0(t0)
+		
+		set_mario_move(-1,1,mario_pulando) # se move 1px pra baixo, 1px pra esquerda
+		
+		j PULO_ESQ_ANIM
+	
+	MARIO_PULO_ESQ_RESET:
+		la t0,pulo_px
+		sb zero,0(t0)
+		sb zero,1(t0) # reseta pulopx
+		
+		la t0,mario_state
+		li t1,0x04
+		sb t1,0(t0) # salva estado do mario no chao, virado pra esquerda
+		
+		set_mario_move(-4,8,mario_parado) # se move 8px pra baixo, 4px pra esquerda p/ finalizar pulo
+		
+	PULO_ESQ_ANIM: # pula pra esquerda em movimento
+		jal PRINT_OBJ_MIRROR
+	
+	FIM_PULO_ESQ:
 		j MAINLOOP
