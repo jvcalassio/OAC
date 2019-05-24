@@ -17,6 +17,9 @@ Esquemas do mapa:
 0101 = fim escada 			= T
 1000 = parede				= P
 
+0000_0100
+1111_1011
+
 4 msb = relativos a alguns coletaveis
 
 0000 = nada
@@ -30,7 +33,8 @@ Esquemas do mapa:
 int main(){
 	printf(".data\n");
 	printf("map_positions: .byte ");
-	char mapa[81] = "PPPPPPPPPPPPPPPPPPPPP.........EE........................EE.........PPPPPPPPPPPPP";
+	//char mapa[81] = "PPPPPPPPPPPPPPPPPPPPP.........EE........................EE.........PPPPPPPPPPPPP";
+	char mapa[81] = "PPPPPPPPPPPPPPPPCCCCCCCCCCCCCCCCCCCCCCCCCDCCCCCDCCCCCDCCCCCDCCCCCDCCCCPPPPPPPPPP";
 	int i = 0;
 	while(mapa[i]!='\0'){
 		if(mapa[i] == 'P'){
@@ -40,10 +44,10 @@ int main(){
 			printf("0x01,");
 		}
 		if(mapa[i] == 'D'){
-			printf("0x11,");
+			printf("0x02,");
 		}
 		if(mapa[i] == 'E'){
-			printf("0x02,");
+			printf("0x04,");
 		}
 		if(mapa[i] == '.'){
 			printf("0x00,");
@@ -58,5 +62,28 @@ int main(){
 Status do mario (cada coluna é um bit no byte)
 martelo escada     esquerda andando pulando = 1
 normal  nao-escada direita  parado  chao    = 0
+
+00000 = andou pra direita
+00100 = andou pra esquerda
+
+unicos estados possiveis para iniciar pulo
+and 00100 > 00000 (direita) ou 00100 (esquerda)
+fazer or com
+00001 pra setar pulo = 1
+
+sempre:
+00001 = pulando direita
+ou
+00101 = pulando esquerda
+
+andi 00100 > 00000 ou 00100
+
+no reset:
+
+00001 > 00000
+00101 > 00100
+
+andi 00100 > 00000
+andi 00100 > 00100
 
 */

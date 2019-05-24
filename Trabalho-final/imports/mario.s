@@ -4,6 +4,33 @@
 .eqv START_MARIO_X_FASE1 84
 .eqv START_MARIO_Y_FASE1 199
 
+# move o mario +x px, +y px, usando o sprite desejado
+.macro set_mario_move(%x,%y,%sprite)
+	la t0,pos_mario # pega posicao do mario novamente
+	lh a0,0(t0)     # pois a funcao anterior modifica os valores
+	lh a1,2(t0)
+	addi a0,a0,%x # adiciona +x no X
+	addi a1,a1,%y # adiciona +y no Y
+	sh a0,0(t0) # grava X
+	sh a1,2(t0) # grava y
+	la t0,display
+	lw a2,0(t0) # carrega qual display usar 
+	la a3,%sprite # label do sprite a ser utilizado
+.end_macro
+
+# remove um sprite do mario nas posicoes atuais
+.macro rmv_mario(%sprite)
+	la t0,pos_mario # carrega posicao do mario
+	lh a0,0(t0) # carrega x
+	lh a1,2(t0) # carrega y
+	la a2,display
+	lw a2,0(a2) # carrega display atual
+	la a3,fase
+	lw a3,0(a3) # carrega fase atual
+	la a4,%sprite # carrega sprite
+	jal CLEAR_OBJPOS # limpa mario na posicao atual
+.end_macro
+
 .data
 .include "../sprites/bin/mario_parado.s"
 .include "../sprites/bin/mario_andando_p1.s"
@@ -11,9 +38,9 @@
 .include "../sprites/bin/mario_andando_p3.s"
 .include "../sprites/bin/mario_pulando.s"
 .include "../sprites/bin/mario_pulando_queda.s" 
-mario_state: .byte 0x00 # salva estado atual do mario
-pulo_px: .byte 0x00, 0x00 # salva pixels movidos no pulo
-pos_mario: .half 84,199 # salva posicao atual do mario (x,y)
+mario_state: .byte 0 # salva estado atual do mario
+pulo_px: .byte 0,0 # salva pixels movidos no pulo
+pos_mario: .half 0,0 # salva posicao atual do mario (x,y)
 .text
 
 # Printa o Mario na posicao inicial
@@ -27,19 +54,11 @@ INIT_MARIO:
 	j FIM_INIT_MARIO
 	
 	INIT_MARIO_F1:
-		la t0,pos_mario
-		li a0,START_MARIO_X_FASE1
-		li a1,START_MARIO_Y_FASE1 # seta posicao x e y inicial do mario na fase 1
-		sh a0,0(t0)
-		sh a1,2(t0) # salva na memoria, na variavel de posicao do mario
-		la t0,display
-		lw a2,0(t0) # printa no display correto
-		la a3,mario_parado
+		set_mario_move(START_MARIO_X_FASE1,START_MARIO_Y_FASE1,mario_parado)
+		jal PRINT_OBJ # printa mario na posicao inicial
 		
 		la t0,mario_state # seta mario_state como 0
 		sh zero,0(t0) # seta 00000 no mario state (parado no chao virado pra direita)
-		
-		jal PRINT_OBJ # printa o mario no display
 	
 	FIM_INIT_MARIO:
 		free_stack(ra)
@@ -61,29 +80,13 @@ MOVE_MARIO_DIREITA:
 	li t1,0x08
 	beq t0,t1,FIM_MVMD # caso prox byte seja parede, faz nada
 	# caso prox byte seja seja degrau:
+	
 	jal MV_1PXUP # move mario 1px acima
 	
 	MVMD_P1: # faz passo 1
-		la t0,pos_mario # pega posicao do mario
-		lh a0,0(t0)
-		lh a1,2(t0)
+		rmv_mario(mario_parado)
 		
-		la a2,display
-		lw a2,0(a2)
-		la t0,fase
-		lw a3,0(t0) # carrega endereco da fase atual
-		la a4,mario_parado
-		jal CLEAR_OBJPOS # imprime mapa da fase atual na pos do mario
-		
-		la t0,pos_mario # pega posicao do mario novamente
-		lh a0,0(t0)     # pois a funcao anterior modifica os valores
-		lh a1,2(t0)
-		
-		addi a0,a0,1 # adiciona +1 no X
-		sh a0,0(t0)
-		la t0,display 
-		lw a2,0(t0) 
-		la a3,mario_andando_p1
+		set_mario_move(1,0,mario_andando_p1) # se move 1px pra direita
 		jal PRINT_OBJ # printa mario passo 1 na tela
 	
 		# sleep entre os passos (20ms)
@@ -92,26 +95,9 @@ MOVE_MARIO_DIREITA:
 		ecall
 	
 	MVMD_P2: # faz passo 2
-		la t0,pos_mario # pega posicao do mario
-		lh a0,0(t0)
-		lh a1,2(t0)
+		rmv_mario(mario_andando_p1)
 		
-		la a2,display
-		lw a2,0(a2)
-		la t0,fase
-		lw a3,0(t0)
-		la a4,mario_andando_p1
-		jal CLEAR_OBJPOS # imprime mapa na pos do mario
-		
-		la t0,pos_mario # pega posicao do mario
-		lh a0,0(t0)
-		lh a1,2(t0)
-		
-		addi a0,a0,1 # adiciona +1 no X
-		sh a0,0(t0)
-		la t0,display
-		lw a2,0(t0)
-		la a3,mario_andando_p2
+		set_mario_move(1,0,mario_andando_p2) # se move 1px pra direita
 		jal PRINT_OBJ # printa mario passo 2 na tela
 		
 		# sleep entre os passos (20ms)
@@ -120,26 +106,9 @@ MOVE_MARIO_DIREITA:
 		ecall
 	
 	MVMD_P3: # faz passo 3
-		la t0,pos_mario # pega posicao do mario
-		lh a0,0(t0)
-		lh a1,2(t0)
+		rmv_mario(mario_andando_p2)
 		
-		la a2,display
-		lw a2,0(a2)
-		la t0,fase
-		lw a3,0(t0)
-		la a4,mario_andando_p2
-		jal CLEAR_OBJPOS # imprime mapa no lugar do mario
-		
-		la t0,pos_mario # pega posicao do mario
-		lh a0,0(t0)
-		lh a1,2(t0)
-		
-		addi a0,a0,1 # adiciona +1 no X
-		sh a0,0(t0)
-		la t0,display
-		lw a2,0(t0)
-		la a3,mario_andando_p3
+		set_mario_move(1,0,mario_andando_p3) # se move 1px pra direita
 		jal PRINT_OBJ # printa mario passo 3 na tela
 	
 		# sleep entre os passos (20ms)
@@ -148,27 +117,9 @@ MOVE_MARIO_DIREITA:
 		ecall
 	
 	MVMD_P0: # faz mario parado novamente
-		la t0,pos_mario # pega posicao do mario
-		lh a0,0(t0)
-		lh a1,2(t0)
+		rmv_mario(mario_andando_p3)
 		
-		la a2,display
-		lw a2,0(a2)
-		la t0,fase
-		lw a3,0(t0)
-		la a4,mario_andando_p3
-		jal CLEAR_OBJPOS
-		
-		la t0,pos_mario # pega posicao do mario
-		lh a0,0(t0)
-		lh a1,2(t0)
-		
-		addi a0,a0,1 # adiciona +1 no X
-		sh a0,0(t0)
-		la t0,display
-		lw a2,0(t0)
-		la a3,mario_parado
-
+		set_mario_move(1,0,mario_parado) # se move 1px pra direita
 		jal PRINT_OBJ # printa mario passo final na tela
 	
 	# com isso, o mario se movimentou um total de 4px
@@ -200,26 +151,9 @@ MOVE_MARIO_ESQUERDA:
 	jal MV_1PXDW
 	
 	MVME_P1: # faz passo 1
-		la t0,pos_mario # pega posicao do mario
-		lh a0,0(t0)
-		lh a1,2(t0)
+		rmv_mario(mario_parado)
 		
-		la a2,display
-		lw a2,0(a2) # carrega endereco do display atual
-		la t0,fase
-		lw a3,0(t0) # carrega endereco da imagem do mapa atual
-		la a4,mario_parado
-		jal CLEAR_OBJPOS # imprime mapa na pos do mario
-		
-		la t0,pos_mario # pega posicao do mario novamente
-		lh a0,0(t0)     # pois a funcao anterior modifica os valores
-		lh a1,2(t0)
-		
-		addi a0,a0,-1 # adiciona -1 no X
-		sh a0,0(t0)
-		la t0,display 
-		lw a2,0(t0) 
-		la a3,mario_andando_p1
+		set_mario_move(-1,0,mario_andando_p1) # se move 1px pra esquerda
 		jal PRINT_OBJ_MIRROR # printa mario passo 1 na tela
 	
 		# sleep entre os passos (20ms)
@@ -228,26 +162,9 @@ MOVE_MARIO_ESQUERDA:
 		ecall
 	
 	MVME_P2: # faz passo 2
-		la t0,pos_mario # pega posicao do mario
-		lh a0,0(t0)
-		lh a1,2(t0)
+		rmv_mario(mario_andando_p1)
 		
-		la a2,display
-		lw a2,0(a2)
-		la t0,fase
-		lw a3,0(t0)
-		la a4,mario_andando_p1
-		jal CLEAR_OBJPOS # imprime mapa na pos do mario
-		
-		la t0,pos_mario # pega posicao do mario
-		lh a0,0(t0)
-		lh a1,2(t0)
-		
-		addi a0,a0,-1 # adiciona -1 no X
-		sh a0,0(t0)
-		la t0,display
-		lw a2,0(t0)
-		la a3,mario_andando_p2
+		set_mario_move(-1,0,mario_andando_p2) # se move 1px pra esquerda
 		jal PRINT_OBJ_MIRROR # printa mario passo 2 na tela
 		
 		# sleep entre os passos (20ms)
@@ -256,26 +173,9 @@ MOVE_MARIO_ESQUERDA:
 		ecall
 	
 	MVME_P3: # faz passo 3
-		la t0,pos_mario # pega posicao do mario
-		lh a0,0(t0)
-		lh a1,2(t0)
+		rmv_mario(mario_andando_p2)
 		
-		la a2,display
-		lw a2,0(a2)
-		la t0,fase
-		lw a3,0(t0)
-		la a4,mario_andando_p2
-		jal CLEAR_OBJPOS # imprime mapa no lugar do mario
-		
-		la t0,pos_mario # pega posicao do mario
-		lh a0,0(t0)
-		lh a1,2(t0)
-		
-		addi a0,a0,-1 # adiciona -1 no X
-		sh a0,0(t0)
-		la t0,display
-		lw a2,0(t0)
-		la a3,mario_andando_p3
+		set_mario_move(-1,0,mario_andando_p3) # se move 1px pra esquerda
 		jal PRINT_OBJ_MIRROR # printa mario passo 3 na tela
 	
 		# sleep entre os passos (20ms)
@@ -284,27 +184,9 @@ MOVE_MARIO_ESQUERDA:
 		ecall
 	
 	MVME_P0: # faz mario parado novamente
-		la t0,pos_mario # pega posicao do mario
-		lh a0,0(t0)
-		lh a1,2(t0)
+		rmv_mario(mario_andando_p3)
 		
-		la a2,display
-		lw a2,0(a2)
-		la t0,fase
-		lw a3,0(t0)
-		la a4,mario_andando_p3
-		jal CLEAR_OBJPOS
-		
-		la t0,pos_mario # pega posicao do mario
-		lh a0,0(t0)
-		lh a1,2(t0)
-		
-		addi a0,a0,-1 # adiciona -1 no X
-		sh a0,0(t0)
-		la t0,display
-		lw a2,0(t0)
-		la a3,mario_parado
-
+		set_mario_move(-1,0,mario_parado) # se move 1px pra esquerda
 		jal PRINT_OBJ_MIRROR # printa mario passo final na tela
 	
 	# com isso, o mario se movimentou um total de -4px
@@ -346,7 +228,7 @@ MOVE_MARIO_CIMA:
 	la t1,map_ladder
 	add t1,t1,t0 # posicao x atual do mario
 	lb t0,0(t1) # pega byte da posicao pra ver se tem escada
-	li t1,0x02
+	li t1,0x04
 	bne t0,t1,FIM_MOVE_MARIO_CIMA # se nao for escada, nao faz nada
 	# fim verif escada
 	
@@ -386,20 +268,11 @@ MOVE_MARIO_BAIXO:
 # o mesmo virado pra direita
 # sprite de pulo sempre o mesmo do ponto de subida ate o topo, ate voltar ao ponto inicial de subida e muda pro fim_pulo
 MARIO_PULO_UP:
-	# mover mario 8px acima
 	li a0,26
 	li a7,32
 	ecall # sleep de 26ms, entre cada movimento para cima, para ficar mais fluido
 	
-	la t0,pos_mario
-	lh a0,0(t0)
-	lh a1,2(t0)
-	la a2,display
-	lw a2,0(a2)
-	la a3,fase
-	lw a3,0(a3)
-	la a4,mario_pulando
-	jal CLEAR_OBJPOS # limpa mario na posicao atual
+	rmv_mario(mario_pulando) # remove mario na posicao atual
 	
 	la t0,pulo_px
 	lb t1,0(t0) # carrega estado de descida do pulo do mario
@@ -411,20 +284,14 @@ MARIO_PULO_UP:
 	bgt t2,zero,MARIO_PULO_UP_SOBE # se subida tiver > 0 e < 12, sobe 1px
 	
 	MARIO_PULO_UP_INIT_SUBIDA:
-		la t0,pos_mario
-		lh a0,0(t0) # carrega X atual do mario
-		lh a1,2(t0) # carrega Y atual do mario
-		addi a1,a1,-8 # move 8px acima
-		sh a1,2(t0) # salva nova posicao do mario
-		la a2,display
-		lw a2,0(a2) # carrega end do display atual
-		la a3,mario_pulando # carrega end do mario pulando
+		set_mario_move(0,-8,mario_pulando) # se move 8px pra cima
 	
 		la t0,mario_state
 		lb t1,0(t0)
-		andi t1,t1,0x05
-		ori t1,t1,0x01 # seta mario status como pulando pra esquerda ou direita
-		andi t2,t1,0x04
+		andi t1,t1,0x04 # verifica se esta pulando pra esquerda ou direita
+		ori t1,t1,0x01 # seta mario status como pulando
+		sb t1,0(t0) # grava mario state
+		andi t2,t1,0x04 # verificador de qual lado o mario esta
 		
 		la t0,pulo_px
 		lb t1,1(t0)
@@ -432,30 +299,22 @@ MARIO_PULO_UP:
 		sb t1,1(t0) # salva que ele subiu 8px no byte de pulo
 		
 		beqz t2,PULO_UP_PDIR
-		beq zero,zero,PULO_UP_PESQ
+		j PULO_UP_PESQ
 		
 	MARIO_PULO_UP_SOBE:
-		la t0,pos_mario
-		lh a0,0(t0)
-		lh a1,2(t0)
-		addi a1,a1,-1
-		sh a1,2(t0)
-		la a2,display
-		lw a2,0(a2)
-		la a3,mario_pulando
+		set_mario_move(0,-1,mario_pulando) # se move 1px pra cima
 		
 		la t0,mario_state
 		lb t1,0(t0)
-		andi t1,t1,0x05
-		ori t1,t1,0x01 # seta mario status como pulando pra esquerda ou direita
-		andi t2,t1,0x04
+		andi t2,t1,0x04 # verificador de qual o lado do mario
 		
 		la t0,pulo_px
 		lb t1,1(t0)
-		addi t1,t1,1 # sobe 1px
+		addi t1,t1,1 # sobe 1px no pulopx
 		sb t1,1(t0)
+		
 		beqz t2,PULO_UP_PDIR
-		beq zero,zero,PULO_UP_PESQ
+		j PULO_UP_PESQ
 		
 	MARIO_PULO_UP_INIT_DESCIDA:
 		la t0,pulo_px
@@ -466,40 +325,25 @@ MARIO_PULO_UP:
 		addi t1,t1,8
 		sb t1,0(t0) # adiciona 1 na descida
 		
-		la t0,pos_mario
-		lh a0,0(t0)
-		lh a1,2(t0) # ele nao se move nessa iteracao
-		la a2,display
-		lw a2,0(a2)
-		la a3,mario_pulando
+		set_mario_move(0,0,mario_pulando)
 		
 		la t0,mario_state
 		lb t1,0(t0)
-		andi t1,t1,0x05
-		ori t1,t1,0x01 # seta mario status como pulando pra esquerda ou direita
-		andi t2,t1,0x04
+		andi t2,t1,0x04 # verificador de qual o lado do mario
+		
 		beqz t2,PULO_UP_PDIR
-		beq zero,zero,PULO_UP_PESQ
+		j PULO_UP_PESQ
 	
 	MARIO_PULO_UP_DESCE:
-		la t0,pos_mario
-		lh a0,0(t0)
-		lh a1,2(t0)
-		addi a1,a1,1
-		sh a1,2(t0)
-		la a2,display
-		lw a2,0(a2)
-		la a3,mario_pulando
+		set_mario_move(0,1,mario_pulando) # se move 1px pra baixo
 		
 		la t0,mario_state
 		lb t1,0(t0)
-		andi t1,t1,0x05
-		ori t1,t1,0x01 # seta mario status como pulando pra esquerda ou direita
 		andi t2,t1,0x04
 		
 		la t0,pulo_px
 		lb t1,0(t0)
-		addi t1,t1,1 # desce 1px
+		addi t1,t1,1 # desce 1px no pulopx
 		sb t1,0(t0)
 		beqz t2,PULO_UP_PDIR
 		beq zero,zero,PULO_UP_PESQ
@@ -509,22 +353,14 @@ MARIO_PULO_UP:
 		sb zero,0(t0)
 		sb zero,1(t0) # reseta pulopx
 		
-		la t0,pos_mario
-		lh a0,0(t0)
-		lh a1,2(t0)
-		addi a1,a1,8
-		sh a1,2(t0)
-		la a2,display
-		lw a2,0(a2)
-		la a3,mario_parado
+		set_mario_move(0,8,mario_parado) # se move 8px pra baixo
 		
 		la t0,mario_state
 		lb t1,0(t0)
-		andi t1,t1,0x05
-		ori t1,t1,0x01 # seta mario status como pulando pra esquerda ou direita
-		andi t2,t1,0x04
+		andi t1,t1,0x04
+		sb t1,0(t0) # salva estado do mario no chao, virado pro lado onde ja estava
 		
-		beqz t2,PULO_UP_PDIR
+		beqz t1,PULO_UP_PDIR
 		
 	PULO_UP_PESQ: # pula pra cima parado, virado pra esquerda
 		jal PRINT_OBJ_MIRROR
