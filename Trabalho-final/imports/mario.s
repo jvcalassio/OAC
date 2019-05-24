@@ -87,7 +87,7 @@ MOVE_MARIO_DIREITA:
 		jal PRINT_OBJ # printa mario passo 1 na tela
 	
 		# sleep entre os passos (20ms)
-		li a0,20
+		li a0,30
 		li a7,32
 		ecall
 	
@@ -115,7 +115,7 @@ MOVE_MARIO_DIREITA:
 		jal PRINT_OBJ # printa mario passo 2 na tela
 		
 		# sleep entre os passos (20ms)
-		li a0,20
+		li a0,30
 		li a7,32
 		ecall
 	
@@ -143,7 +143,7 @@ MOVE_MARIO_DIREITA:
 		jal PRINT_OBJ # printa mario passo 3 na tela
 	
 		# sleep entre os passos (20ms)
-		li a0,20
+		li a0,30
 		li a7,32
 		ecall
 	
@@ -186,7 +186,7 @@ MOVE_MARIO_ESQUERDA:
 	# colisao com as paredes
 	la t0,pos_mario
 	lh t0,0(t0) # t0 = x do mario
-	addi t0,t0,12
+	addi t0,t0,12 # add +12 pra saber a posicao do pe do mario na descida de degrau
 	srli t0,t0,2 # t0 / 4
 	la t1,map_positions
 	add t1,t1,t0 # endereco do byte da posicao atual, no mapa
@@ -197,9 +197,7 @@ MOVE_MARIO_ESQUERDA:
 	li t1,0x08
 	beq t0,t1,FIM_MVME # caso prox byte seja parede, faz nada
 	# caso prox byte seja degrau:
-	save_stack(ra)
 	jal MV_1PXDW
-	free_stack(ra)
 	
 	MVME_P1: # faz passo 1
 		la t0,pos_mario # pega posicao do mario
@@ -225,7 +223,7 @@ MOVE_MARIO_ESQUERDA:
 		jal PRINT_OBJ_MIRROR # printa mario passo 1 na tela
 	
 		# sleep entre os passos (20ms)
-		li a0,20
+		li a0,30
 		li a7,32
 		ecall
 	
@@ -253,7 +251,7 @@ MOVE_MARIO_ESQUERDA:
 		jal PRINT_OBJ_MIRROR # printa mario passo 2 na tela
 		
 		# sleep entre os passos (20ms)
-		li a0,20
+		li a0,30
 		li a7,32
 		ecall
 	
@@ -281,7 +279,7 @@ MOVE_MARIO_ESQUERDA:
 		jal PRINT_OBJ_MIRROR # printa mario passo 3 na tela
 	
 		# sleep entre os passos (20ms)
-		li a0,20
+		li a0,30
 		li a7,32
 		ecall
 	

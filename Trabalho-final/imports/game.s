@@ -66,8 +66,8 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	la t0,pulo_px
 	lb t1,0(t0) # se ta descendo
 	lb t0,1(t0) # se ta subindo
-	bnez t0,MPUP
-	bnez t1,MPUP
+	bnez t0,MPUP # se o status do pulo de descida nao estiver em 0, precisa descer
+	bnez t1,MPUP # se o status do pulo de subida nao estiver em 0, precisa subir
 	
 	jal KEYBIND
 	beqz a0,SEMKEY # se nenhuma tecla, faz nada
