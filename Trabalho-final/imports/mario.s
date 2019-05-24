@@ -50,7 +50,7 @@ MOVE_MARIO_DIREITA:
 	save_stack(a0)
 	la t0,pos_mario
 	lh t0,0(t0) # t0 = x do mario
-	addi t0,t0,20
+	addi t0,t0,16 # adiciona +16 para saber posicao do pe do mario
 	srli t0,t0,2 # t0 / 4
 	la t1,map_positions
 	add t1,t1,t0 # endereco do byte da posicao atual
@@ -61,10 +61,7 @@ MOVE_MARIO_DIREITA:
 	li t1,0x08
 	beq t0,t1,FIM_MVMD # caso prox byte seja parede, faz nada
 	# caso prox byte seja seja degrau:
-	
-	save_stack(ra)
 	jal MV_1PXUP # move mario 1px acima
-	free_stack(ra)
 	
 	MVMD_P1: # faz passo 1
 		la t0,pos_mario # pega posicao do mario
@@ -189,7 +186,7 @@ MOVE_MARIO_ESQUERDA:
 	# colisao com as paredes
 	la t0,pos_mario
 	lh t0,0(t0) # t0 = x do mario
-	#addi t0,t0,-20
+	addi t0,t0,12
 	srli t0,t0,2 # t0 / 4
 	la t1,map_positions
 	add t1,t1,t0 # endereco do byte da posicao atual, no mapa
@@ -394,7 +391,7 @@ MARIO_PULO_UP:
 	# mover mario 8px acima
 	li a0,26
 	li a7,32
-	ecall
+	ecall # sleep de 26ms, entre cada movimento para cima, para ficar mais fluido
 	
 	la t0,pos_mario
 	lh a0,0(t0)
@@ -411,7 +408,6 @@ MARIO_PULO_UP:
 	lb t2,1(t0) # carrega estado de subida do pulo do mario
 	li t3,12
 	beq t2,t3,MARIO_PULO_UP_INIT_DESCIDA # se ja tiver chegado no ponto maximo, inicia descida
-	li t3,5
 	beq t1,t3,MARIO_PULO_UP_RESET # se ambos tiverem em 12, termina pulo
 	bgt t1,zero,MARIO_PULO_UP_DESCE # se descida tiver > 0 e < 12, faz movimento de descer
 	bgt t2,zero,MARIO_PULO_UP_SOBE # se subida tiver > 0 e < 12, sobe 1px
@@ -439,13 +435,6 @@ MARIO_PULO_UP:
 		
 		beqz t2,PULO_UP_PDIR
 		beq zero,zero,PULO_UP_PESQ
-	
-	PULO_UP_PESQ: # pula pra cima parado, virado pra esquerda
-		jal PRINT_OBJ_MIRROR
-		j FIM_PULO_UP
-	PULO_UP_PDIR: # pula pra cima parado, virado pra direita
-		jal PRINT_OBJ
-		j FIM_PULO_UP
 		
 	MARIO_PULO_UP_SOBE:
 		la t0,pos_mario
@@ -476,7 +465,7 @@ MARIO_PULO_UP:
 		addi t1,t1,1
 		sb t1,1(t0) # faz o subida = 13, assim nao conflita nos beqs la em cima
 		lb t1,0(t0)
-		addi t1,t1,1
+		addi t1,t1,8
 		sb t1,0(t0) # adiciona 1 na descida
 		
 		la t0,pos_mario
@@ -538,7 +527,12 @@ MARIO_PULO_UP:
 		andi t2,t1,0x04
 		
 		beqz t2,PULO_UP_PDIR
-		beq zero,zero,PULO_UP_PESQ
+		
+	PULO_UP_PESQ: # pula pra cima parado, virado pra esquerda
+		jal PRINT_OBJ_MIRROR
+		j FIM_PULO_UP
+	PULO_UP_PDIR: # pula pra cima parado, virado pra direita
+		jal PRINT_OBJ
 	
 	FIM_PULO_UP:
 		j MAINLOOP
