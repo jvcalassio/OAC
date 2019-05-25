@@ -12,7 +12,7 @@ barran: .string "\n"
 
 .text
 	jal PRINT_FASE1
-	jal INIT_MARIO
+	call INIT_MARIO
 	j MAINLOOP
 
 # Imprime fase 1 na t ela, e salva no indicador de fase atual
@@ -20,9 +20,7 @@ PRINT_FASE1:
 	la t0,display
 	lw s0,0(t0)
 	li s2,DISPLAY1
-	lui s1,%hi(fase1)
-	addi s1,s1,%lo(fase1)
-	#la s1,fase1
+	la s1,fase1
 	la t0,fase
 	sw s1,0(t0) # salva o endereco do mapa da fase atual
 	addi s1,s1,8 # pula as words que indicam o tamanho da imagem
@@ -77,9 +75,9 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	
 	
 	MAINLOOP_KEYBIND:
-	jal KEYBIND
+	call KEYBIND
 	beqz a0,SEMKEY # se nenhuma tecla, faz nada
-		jal PRINT_ACT_POS
+		call PRINT_ACT_POS
 		li t0,109
 		beq a0,t0,FIM # se tecla == M, sair
 		
@@ -105,9 +103,9 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		beq a0,t0,MARIO_PULO_ESQ
 		
 	SEMKEY: j MAINLOOP
-	MPUP: j MARIO_PULO_UP
-	MPDIR: j MARIO_PULO_DIR
-	MPESQ: j MARIO_PULO_ESQ
+	MPUP: tail MARIO_PULO_UP
+	MPDIR: tail MARIO_PULO_DIR
+	MPESQ: tail MARIO_PULO_ESQ
 
 FIM:
 	li a7,10
