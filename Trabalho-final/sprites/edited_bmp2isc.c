@@ -88,7 +88,6 @@ int main(int argc, char **argv) {
 
     sprintf(name, "bmp/%s.bmp", argv[1]);
     readBmp(name);
-    height--;
     printf("size:%d x %d\n", width, height);
 
     /*    printf("\nMatrix = \n");
@@ -114,7 +113,7 @@ int main(int argc, char **argv) {
     //   fprintf(aout,"DEPTH = %d;\nWIDTH = 32;\nADDRESS_RADIX =
     //   HEX;\nDATA_RADIX = HEX;\nCONTENT\nBEGIN\n",(width>>2)*height);
 
-    fprintf(aouts, "%s: .word %d, %d\n.byte ", argv[1], width, height);
+    fprintf(aouts, "%s: .word %d, %d\n.byte ", argv[1], width, height-1);
 
     int cont = 0;
     unsigned int hexi;

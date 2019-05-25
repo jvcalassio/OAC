@@ -1,4 +1,6 @@
-#include <bits/stdc++.h>
+#include <iostream>
+#include <string>
+#include <fstream>
 
 using namespace std;
 
@@ -32,6 +34,57 @@ Esquemas do mapa:
 */
 int main(){
 	printf(".data\n");
+	printf("fase1_obj: .byte ");
+	string mapa;
+	ifstream map_in;
+	map_in.open("map.txt");
+	for(int j=0;j<60;j++){
+		map_in >> mapa;
+		for(int i=0;i<80;i++){
+			int t = 0;
+			if(mapa[i] == '.'){
+				t = 1;
+				printf("0x00");
+			}
+			if(mapa[i] == 'C'){
+				t = 1;
+				printf("0x01");
+			}
+			if(mapa[i] == 'A'){
+				t = 1;
+				printf("0x02");
+			}
+			if(mapa[i] == 'D'){
+				t = 1;
+				printf("0x03");
+			}
+			if(mapa[i] == 'E'){
+				t = 1;
+				printf("0x04");
+			}
+			if(mapa[i] == 'T'){
+				t = 1;
+				printf("0x05");
+			}
+			if(mapa[i] == 'P'){
+				t = 1;
+				printf("0x08");
+			}
+			if(j == 59 && t == 1){
+				if(i != 79){
+					printf(",");
+				}
+			} else if(t == 1){
+				printf(",");
+			}
+		}
+		printf("\n");
+	}
+
+	map_in.close();
+	/*  old version:
+		mantida para fazer debug de linhas especificas
+	printf(".data\n");
 	printf("map_positions: .byte ");
 	//char mapa[81] = "PPPPPPPPPPPPPPPPPPPPP.........EE........................EE.........PPPPPPPPPPPPP";
 	char mapa[81] = "PPPPPPPPPPPPPPPPCCCCCCCCCCCCCCCCCCCCCCCCCDCCCCCDCCCCCDCCCCCDCCCCCDCCCCPPPPPPPPPP";
@@ -53,47 +106,6 @@ int main(){
 			printf("0x00,");
 		}
 		i++;
-	}
+	}*/
 	return 0;
 }
-
-/*
-
-Status do mario (cada coluna é um bit no byte)
-martelo escada     esquerda andando pulando = 1
-normal  nao-escada direita  parado  chao    = 0
-
-00000 = andou pra direita
-00100 = andou pra esquerda
-
-----------------------------------
-
-00X01 = pulo up
-00010
-
-00011 = pulo dir
-00111 = pulo esq
-
-----------------------------------
-
-unicos estados possiveis para iniciar pulo
-and 00100 > 00000 (direita) ou 00100 (esquerda)
-fazer or com
-00001 pra setar pulo = 1
-
-sempre:
-00001 = pulando direita
-ou
-00101 = pulando esquerda
-
-andi 00100 > 00000 ou 00100
-
-no reset:
-
-00001 > 00000
-00101 > 00100
-
-andi 00100 > 00000
-andi 00100 > 00100
-
-*/

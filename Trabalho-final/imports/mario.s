@@ -38,6 +38,10 @@
 .include "../sprites/bin/mario_andando_p3.s"
 .include "../sprites/bin/mario_pulando.s"
 .include "../sprites/bin/mario_pulando_queda.s" 
+.include "../sprites/bin/mario_escada.s"
+.include "../sprites/bin/mario_escada_p1.s"
+.include "../sprites/bin/mario_escada_p2.s"
+
 mario_state: .byte 0 # salva estado atual do mario
 pulo_px: .byte 0,0 # salva pixels movidos no pulo
 pos_mario: .half 0,0 # salva posicao atual do mario (x,y)
@@ -67,21 +71,24 @@ INIT_MARIO:
 # Faz o movimento do mario para a direita
 MOVE_MARIO_DIREITA:
 	save_stack(a0)
-	la t0,pos_mario
-	lh t0,0(t0) # t0 = x do mario
-	addi t0,t0,16 # adiciona +16 para saber posicao do pe do mario
-	srli t0,t0,2 # t0 / 4
-	la t1,map_positions
-	add t1,t1,t0 # endereco do byte da posicao atual
-	addi t1,t1,1 # endereco do byte na posicao a direita
-	lb t0,0(t1) # pega byte desejado
-	li t1,0x01
-	beq t0,t1,MVMD_P1 # caso prox byte seja normal, faz movimento
-	li t1,0x08
-	beq t0,t1,FIM_MVMD # caso prox byte seja parede, faz nada
-	# caso prox byte seja seja degrau:
 	
-	jal MV_1PXUP # move mario 1px acima
+	li a0,1
+	jal MARIO_COLLISIONS # verifica permissao do movimento
+	beqz a0,FIM_MVMD_RET # se nao for permitido, so retorna
+	
+	# verificacao de degraus
+	jal MARIO_VERIF_DEGRAU
+	beqz a0,MVMD_P1 # se nao tiver degrau, nao faz nada
+	li t0,0x03
+	beq a0,t0,DDIR_TIPO_D # se tiver degrau do tipo D
+	# se tiver degrau do tipo A, desce
+	jal MV_1PXDW
+	j MVMD_P1
+	
+	DDIR_TIPO_D: # se tiver degrau do tipo D, desce
+	jal MV_1PXUP
+	
+	#jal MV_1PXUP # move mario 1px acima
 	
 	MVMD_P1: # faz passo 1
 		rmv_mario(mario_parado)
@@ -128,27 +135,30 @@ MOVE_MARIO_DIREITA:
 		lb t1,0(t0)
 		andi t1,t1,0x10
 		sb t1,0(t0) # salva o estado atual do mario
-		
+	FIM_MVMD_RET:
 		free_stack(a0) # devolve valor de a0
 		j MAINLOOP
 	
 MOVE_MARIO_ESQUERDA:
 	save_stack(a0)
-	# colisao com as paredes
-	la t0,pos_mario
-	lh t0,0(t0) # t0 = x do mario
-	addi t0,t0,12 # add +12 pra saber a posicao do pe do mario na descida de degrau
-	srli t0,t0,2 # t0 / 4
-	la t1,map_positions
-	add t1,t1,t0 # endereco do byte da posicao atual, no mapa
-	addi t1,t1,1 # endereco do byte na posicao a direita
-	lb t0,0(t1) # pega byte desejado
-	li t1,0x01
-	beq t0,t1,MVME_P1 # caso prox byte seja normal, faz movimento
-	li t1,0x08
-	beq t0,t1,FIM_MVME # caso prox byte seja parede, faz nada
-	# caso prox byte seja degrau:
+	
+	li a0,2
+	jal MARIO_COLLISIONS # verifica permissao do movimento
+	beq a0,zero,FIM_MVME_RET # se nao for permitido, retorna
+	
+	# verificacao de degraus
+	jal MARIO_VERIF_DEGRAU
+	beqz a0,MVME_P1 # se nao tiver degrau, nao faz nada
+	li t0,0x03
+	beq a0,t0,DESQ_TIPO_D # se tiver degrau do tipo D
+	# se tiver degrau do tipo A, sobe
+	jal MV_1PXUP
+	j MVME_P1
+	
+	DESQ_TIPO_D: # se tiver degrau do tipo D, desce
 	jal MV_1PXDW
+	
+	# colisao com as paredes (missing)
 	
 	MVME_P1: # faz passo 1
 		rmv_mario(mario_parado)
@@ -196,7 +206,7 @@ MOVE_MARIO_ESQUERDA:
 		andi t1,t1,0x14
 		ori t1,t1,0x04
 		sb t1,0(t0) # salva o estado atual do mario (parado virado pra esquerda)
-		
+	FIM_MVME_RET:
 		free_stack(a0) # devolve valor de a0
 		j MAINLOOP
 
@@ -214,29 +224,41 @@ MV_1PXDW:
 	addi t1,t1,1
 	sh t1,2(t0) # faz mario descer 1px
 	ret
-
+	
 # faz movimento do mario pra cima, na escada
 # a ser editado
 # temporario, apenas para debug do mapeamento
 # reescrever tudo!
 MOVE_MARIO_CIMA:
-	save_stack(ra)
-	# verifica escadas
-	la t0,pos_mario
-	lh t0,0(t0) # t0 = x do mario
-	srli t0,t0,2 # t0 = x / 4, para alinhar com mapa
-	la t1,map_ladder
-	add t1,t1,t0 # posicao x atual do mario
-	lb t0,0(t1) # pega byte da posicao pra ver se tem escada
-	li t1,0x04
-	bne t0,t1,FIM_MOVE_MARIO_CIMA # se nao for escada, nao faz nada
-	# fim verif escada
-	
-	MARIO_SOBE_ESCADA: # se for escada, sobe
-		mv a0,t0
-		li a7,34
-		ecall
+	MARIO_SOBE_ESCADA: # enquanto o mario esta subindo a escada
+		rmv_mario(mario_parado) # retira o mario na posicao atual
+		set_mario_move(0,-4,mario_escada) # seta impressao do mario
 		
+		# pega emprestado pulo_px pra fazer os passos do mario na escada
+		# se 0, faz passo normal, se 1, faz passo espelhado
+		la t0,pulo_px
+		lb t0,0(t0)
+		beqz t0,MSE_P1
+		j MSE_P2
+		
+		MSE_P1:
+			jal PRINT_OBJ
+			li t0,1
+			la t1,pulo_px
+			sb t0,0(t1) # salva como fez p1
+			j FIM_MOVE_MARIO_CIMA
+		MSE_P2:
+			jal PRINT_OBJ_MIRROR
+			la t0,pulo_px
+			sb zero,0(t0) # salva como fez p2
+			#j FIM_MOVE_MARIO_CIMA
+	
+	FIM_MOVE_MARIO_CIMA:
+		j MAINLOOP
+
+# faz movimento do mario pra baixo, na escada
+MOVE_MARIO_BAIXO:
+	MARIO_DESCE_ESCADA: # se for escada, sobe
 		la t0,pos_mario
 		lh a0,0(t0) # carrega X
 		lh a1,2(t0) # carrega y
@@ -248,20 +270,15 @@ MOVE_MARIO_CIMA:
 		la t0,pos_mario
 		lh a0,0(t0)
 		lh a1,2(t0)
-		addi a1,a1,-4
+		addi a1,a1,4
 		sh a1,2(t0)
 		li a2,DISPLAY0
 		la a3,mario_parado
 		jal PRINT_OBJ # printa mario na posicao acima
 		
 	
-	FIM_MOVE_MARIO_CIMA:
-		free_stack(ra)
+	FIM_MOVE_MARIO_BAIXO:
 		j MAINLOOP
-
-# faz movimento do mario pra baixo, na escada
-MOVE_MARIO_BAIXO:
-	j MAINLOOP
 
 # faz o pulo do mario pra cima (parado)
 # precisa printar o mario na posicao atual, ou seja, se tiver virado pra esquerda, printar pra esquerda
@@ -534,3 +551,129 @@ MARIO_PULO_ESQ:
 	
 	FIM_PULO_ESQ:
 		j MAINLOOP
+
+#####################################################
+# Verifica colisao do mario
+# a0 = movimento desejado
+# 	1 = andar direita	2 = andar esquerda
+#	3 = pular		4 = pular direita
+#	5 = pular esquerda	6 = subir escada
+#	7 = descer escada	8 = subir andar de cima
+# retorna a0 = 0 (nao permitido), 1 (permitido)
+#####################################################
+MARIO_COLLISIONS:
+	save_stack(s0)
+	# considereando a mario position e state atual, verificar se o movimento desejado eh permitido
+	la t0,pos_mario
+	lh t1,0(t0) # x do mario
+	lh t2,2(t0) # y do mario
+	
+	addi t1,t1,16 # +16 para saber posicao do pe direito do mario
+	addi t2,t2,20 # +16 --
+	srli t1,t1,2 # x / 4 para alinhar com mapeamento
+	srli t2,t2,2 # y / 4 para alinhar com mapeamento
+	
+	la t0,fase1_obj
+	li t3,80
+	mul t3,t2,t3 # (y * 80)
+	add t3,t3,t1 # (y * 80) + n
+	add s0,t0,t3 # s0 = endereco da posicao desejada no map
+	
+	li t0,1
+	beq a0,t0,VERIF_MV_DIR
+	li t0,2
+	beq a0,t0,VERIF_MV_ESQ
+	j MARIO_COLLISIONS_FIM
+	
+	VERIF_MV_DIR: # verifica se movimento de andar pra direita eh permitido
+		addi s0,s0,1 # posicao a frente
+		la t0,mario_state
+		lb t1,0(t0) # carrega byte de status
+		andi t1,t1,0x08 # verifica bit de escada no status
+		lb t0,0(s0)
+		andi t0,t0,0x08 # verifica bit de parede no mapa
+		or t0,t1,t0 # junta os dois bytes
+		andi t0,t0,0x0C # se der 1100, nao passa
+		bne t0,zero,MARIO_CL_DENY
+		j MARIO_CL_ALLOW # se der zero, permite
+		
+	VERIF_MV_ESQ:
+		addi s0,s0,-1 # posicao atras
+		la t0,mario_state
+		lb t1,0(t0) # carrega byte de status
+		andi t1,t1,0x08 # verifica bit de escada no status
+		lb t0,0(s0)
+		andi t0,t0,0x08 # verifica bit de parede no mapa
+		or t0,t1,t0 # junta os dois bytes
+		andi t0,t0,0x0c # se der 1100, nao passa
+		bne t0,zero,MARIO_CL_DENY
+		j MARIO_CL_ALLOW # se der zero, passa
+	
+	MARIO_CL_ALLOW:
+		li a0,1
+		j MARIO_COLLISIONS_FIM
+	MARIO_CL_DENY:
+		li a0,0
+	MARIO_COLLISIONS_FIM:
+		free_stack(s0)
+		ret
+	
+##################################################
+# Verifica se ha degrau na pos atual. Retorna:
+# a0 = degrau tipo A, degrau tipo D, 0 (sem degrau)
+##################################################
+MARIO_VERIF_DEGRAU:
+	la t0,pos_mario
+	lh t1,0(t0) # x do mario
+	lh t2,2(t0) # y do mario
+	
+	addi t1,t1,16 # +16 para saber posicao do pe direito do mario
+	addi t2,t2,20 # +16 --
+	srli t1,t1,2 # x / 4 para alinhar com mapeamento
+	srli t2,t2,2 # y / 4 para alinhar com mapeamento
+	
+	la t0,fase1_obj
+	li t3,80
+	mul t3,t2,t3 # (y * 80)
+	add t3,t3,t1 # (y * 80) + n
+	add t0,t0,t3 # endereco da posicao desejada
+	
+	lb t1,0(t0) # carrega byte da posicao
+	li t0,0x03
+	beq t0,t1,MV_DEGRAU_D # se byte == D, retorna D
+	li t0,0x02
+	beq t0,t1,MV_DEGRAU_A # se byte == A, retorna A
+	li a0,0x00
+	j FIM_MVDDEGRAU # se nao tiver nenhum, retorna 0
+	
+	MV_DEGRAU_D:
+		li a0,0x03
+		ret
+	MV_DEGRAU_A:
+		li a0,0x02
+	FIM_MVDDEGRAU:
+		ret
+	
+# temporario
+PRINT_ACT_POS:
+	la t0,pos_mario
+	lh t1,0(t0) # x do mario
+	lh t2,2(t0) # y do mario
+	
+	addi t1,t1,16 # +16 para saber posicao do pe direito do mario
+	addi t2,t2,20 # +16 --
+	srli t1,t1,2 # x / 4 para alinhar com mapeamento
+	srli t2,t2,2 # y / 4 para alinhar com mapeamento
+	
+	la t0,fase1_obj
+	li t3,80
+	mul t3,t2,t3 # (y * 80)
+	add t3,t3,t1 # (y * 80) + n
+	add t0,t0,t3 # endereco da posicao desejada
+	
+	mv t1,a0
+	lb a0,0(t0)
+	li a7,34
+	ecall
+	mv a0,t1
+	ret
