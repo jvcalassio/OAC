@@ -2,25 +2,53 @@
 .include "../sprites/bin/dk_1.s"
 .include "../sprites/bin/dk_2.s"
 .include "../sprites/bin/dk_3.s"
+var_dk: .word 0,0,0,0
+
 
 .text
 INIT_DK_DANCA:
-	mv	s8, zero
-	li	s9, 10000
-	li	s10, 20000
-	li	s11, 30000
+	
+	la	t4, var_dk
+	sw	zero, 0(t4)	#var_i = 0
+	li	t0, 10000
+	sw	t0, 4(t4)	#var0 = 10000
+	li	t0, 20000
+	sw	t0, 8(t4)	#var1 = 20000
+	li	t0, 30000
+	sw	t0, 12(t4)	#var_2 = 30000
 	ret
 
 DK_DANCA_LOOP:
-	beq	s8, zero, DK_DANCA_FRAME0
-	beq	s8, s9, DK_DANCA_FRAME1
-	beq	s8, s10, DK_DANCA_FRAME2
-	bge	s8, s11, DK_DANCA_RESET
-	addi 	s8, s8, 1
+	
+	la	t4, var_dk
+	lw	t0, 0(t4)	#i
+	beq	t0, zero, DK_DANCA_FRAME0 #i==0? goto FRAME0
+	
+	la	t4, var_dk
+	lw	t0, 0(t4)	#i
+	lw	t1, 4(t4)	#10000
+	beq	t0, t1, DK_DANCA_FRAME1	#i==10000? goto FRAME1
+	
+	la	t4, var_dk
+	lw	t0, 0(t4)	#i
+	lw	t2, 8(t4)	#20000
+	beq	t0, t2, DK_DANCA_FRAME2	#i==20000? goto FRAME2
+	
+	la	t4, var_dk
+	lw	t0, 0(t4)	#i
+	lw	t3, 12(t4)	#30000
+	bge	t0, t3, DK_DANCA_RESET	#i>=30000? goto RESETi
+	
+	la	t4, var_dk
+	lw	t0, 0(t4)
+	addi 	t0, t0, 1	#i++
+	sw	t0, 0(t4)
+	
 	tail 	MAINLOOP
 
 DK_DANCA_RESET:
-	mv	s8, zero
+	la	t4, var_dk
+	sw	zero, 0(t4)	#i=0
 	tail	MAINLOOP
 
 DK_DANCA_FRAME0:
@@ -38,7 +66,10 @@ DK_DANCA_FRAME0:
 	la	a3, dk_1
 	call 	PRINT_OBJ
 	
-	addi	s8, s8, 1
+	la	t4, var_dk
+	lw	t0, 0(t4)
+	addi 	t0, t0, 1	#i++
+	sw	t0, 0(t4)
 
 	tail	MAINLOOP
 
@@ -57,7 +88,10 @@ DK_DANCA_FRAME1:
 	la	a3, dk_2
 	call 	PRINT_OBJ
 	
-	addi	s8, s8, 1
+	la	t4, var_dk
+	lw	t0, 0(t4)
+	addi 	t0, t0, 1	#i++
+	sw	t0, 0(t4)
 	
 	tail	MAINLOOP
 	
@@ -75,6 +109,9 @@ DK_DANCA_FRAME2:
 	la	a3, dk_3
 	call 	PRINT_OBJ
 	
-	addi	s8, s8, 1
+	la	t4, var_dk
+	lw	t0, 0(t4)
+	addi 	t0, t0, 1	#i++
+	sw	t0, 0(t4)
 	
 	tail	MAINLOOP
