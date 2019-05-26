@@ -13,6 +13,7 @@ barran: .string "\n"
 .text
 	jal PRINT_FASE1
 	call INIT_MARIO
+	call INIT_DK_DANCA
 	j MAINLOOP
 
 # Imprime fase 1 na t ela, e salva no indicador de fase atual
@@ -102,7 +103,8 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		li t0,113 # Q = pulo esq
 		beq a0,t0,MARIO_PULO_ESQ
 		
-	SEMKEY: j MAINLOOP
+	SEMKEY:	tail DK_DANCA_LOOP
+		j MAINLOOP
 	MPUP: tail MARIO_PULO_UP
 	MPDIR: tail MARIO_PULO_DIR
 	MPESQ: tail MARIO_PULO_ESQ
@@ -113,3 +115,4 @@ FIM:
 	
 .include "common.s"
 .include "mario.s"
+.include "environment.s"
