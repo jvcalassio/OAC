@@ -108,6 +108,51 @@ PRINT_OBJ_MIRROR:
 		free_stack(s0)
 		ret
 
+###############################################################
+# Printa um objeto de cabeca para baixo (espelhado em y)
+# a0 = X desejado
+# a1 = Y desejado
+# a2 = end base (dependendo do display atual)
+# a3 = endereco do objeto
+###################################################
+PRINT_OBJ_MIRRORY:
+	save_stack(s0)
+	save_stack(s1)
+	save_stack(s2)
+	save_stack(ra)
+	lw s0,0(a3) # carrega X do objeto
+	lw s1,4(a3) # carrega Y do objeto
+	mv s2,a3 # salva endereco inicial do objeto
+	jal GET_POSITION # a0 = posicao inicial desejada para imprimir
+	addi a3,a3,8 # pula enderecos do tamanho do objeto
+	mul t0,s0,s1 # x * y
+	add a3,a3,t0 # pula para ultima posicao do objeto
+	POBJ_MIRRORY_LOOP0: # imprime nas colunas
+		beq s0,zero,POBJ_MIRRORY_LOOP1 # se chegar no (max X)esimo pixel, pula para linha de baixo
+		lb t0,0(a3) # carrega em t0 byte correspondente da imagem
+		sb t0,0(a0) # imprime imagem no bitmap display
+		addi s0,s0,-1 # decrementa j
+		addi a3,a3,-1 # passa para prox endereco
+		addi a0,a0,1 # passa para prox endereco
+		j POBJ_MIRRORY_LOOP0
+		
+		POBJ_MIRRORY_LOOP1: 
+			beq s1,zero,FIM_POBJ_MIRRORY # se chegar no fim das linhas, termina execucao do procedimento
+			addi s1,s1,-1 # decrementa i
+			lw t0,0(s2)
+			li t1,320
+			sub t1,t1,t0
+			add a0,a0,t1 # pula (320 - x) pixels no endereco do bitmap, para prox impressao
+			mv s0,t0 # reseta j
+			j POBJ_MIRRORY_LOOP0
+			
+	FIM_POBJ_MIRRORY:
+		free_stack(ra)
+		free_stack(s2)
+		free_stack(s1)
+		free_stack(s0)
+		ret
+
 ######################################
 # Faz leitura das teclas do teclado
 # returna a0 = 0 (nenhuma tecla), ou a0 = tecla

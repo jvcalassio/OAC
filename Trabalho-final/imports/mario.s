@@ -61,6 +61,8 @@
 .include "../sprites/bin/mario_escada_p2.s"
 .include "../sprites/bin/mario_costas.s"
 .include "../sprites/bin/mario_morrendo_y.s"
+.include "../sprites/bin/mario_morrendo_x.s"
+.include "../sprites/bin/mario_morto.s"
 
 mario_state: .byte 0 # salva estado atual do mario
 pulo_px: .byte 0,0 # salva pixels movidos no pulo
@@ -78,11 +80,16 @@ INIT_MARIO:
 	j FIM_INIT_MARIO
 	
 	INIT_MARIO_F1:
+		la t0,pos_mario
+		sw zero,0(t0) # zera pos mario
 		set_mario_move(START_MARIO_X_FASE1,START_MARIO_Y_FASE1,mario_parado)
-		call PRINT_OBJ # printa mario na posicao inicial
+		call PRINT_OBJ # printa mario na posicao inicial, reseta pos mario
 		
 		la t0,mario_state # seta mario_state como 0
-		sh zero,0(t0) # seta 00000 no mario state (parado no chao virado pra direita)
+		sb zero,0(t0) # seta 00000 no mario state (parado no chao virado pra direita)
+		la t0,pulo_px
+		sb zero,0(t0)
+		sb zero,1(t0) # reseta pulopx
 	
 	FIM_INIT_MARIO:
 		free_stack(ra)
@@ -831,32 +838,66 @@ MARIO_GRAVITY:
 
 # faz a morte do mario (0 vidas por enquanto)	
 MARIO_DEATH:
-	li a0,500
-	li a7,32
-	ecall # sleep 500ms
-
-	la t0,display
-	lw s0,0(t0)
-	li s2,DISPLAY1
-	li t0,76800 # 320 * 240 pixels, tamanho total da imagem
-	FORDEATH: # tela preta
-		beqz t0,FIMFORDEATH
-		sb zero,0(s0)
-		sb zero,0(s2)
-		addi s0,s0,1
-		addi s2,s2,1
-		addi t0,t0,-1
-		j FORDEATH
-	FIMFORDEATH:
-		la a0,death_text
-		li a1,80
-		li a2,50
-		li a3,0x00ff
-		li a4,0
-		li a7,104
-		ecall
+	# animacao de morte do mario
+	# recebe mario morrendo y inicialmente
+	la a0,mario_morrendo_x
+	jal MARIO_DEATH_ANIM
+	call PRINT_OBJ # faz mario virado pra um lado
+	la a0,mario_morrendo_y
+	jal MARIO_DEATH_ANIM
+	call PRINT_OBJ_MIRRORY # faz mario de cabeca pra baixo
+	la a0,mario_morrendo_x
+	jal MARIO_DEATH_ANIM
+	call PRINT_OBJ_MIRROR # faz mario virado pro outro lado
 	
-	tail FIM
+	la a0,mario_morto
+	jal MARIO_DEATH_ANIM
+	call PRINT_OBJ # print amario no chao
+	# fim da animacao
+
+	# verifica se ainda tem vidas
+	la t0,vidas
+	lb t1,0(t0)	
+	addi t1,t1,-1 # decrementa 1 vida
+	sb t1,0(t0) # salva vida decrementada
+	bltz t1,GAME_OVER # se vidas < 0, game over
+	
+	# se ainda tiver vidas, decrementa e volta para o comeco
+	FASE_RESET:
+		la t0,fase
+		lw t1,0(t0) # carrega qual a fase atual
+		la t0,fase1
+		beq t0,t1,MARIO_DEATH_FASE1 # se tiver na fase 1, reseta na fase1
+		tail GAME_OVER
+		
+		MARIO_DEATH_FASE1:
+			call PRINT_FASE1
+			call INIT_MARIO
+			call INIT_DK_DANCA
+			tail MAINLOOP
+	
+	
+	
+# prepara animacao do mario morrendo
+# a0 = sprite a ser mostrado (para facilitar)
+MARIO_DEATH_ANIM:
+	save_stack(ra)
+	mv s0,a0
+	li a0,300 # sleep de 300ms
+	li a7,32
+	ecall
+	
+	rmv_mario(mario_morrendo_y)
+	la t0,pos_mario
+	lh a0,0(t0) # carrega x
+	lh a1,2(t0) # carrega y
+	la t0,display
+	lw a2,0(t0) # display atual
+	mv a3,s0 # prepara a3
+	
+	FIM_MARIO_DEATH_ANIM:
+		free_stack(ra)
+		ret
 	
 # temporario
 PRINT_ACT_POS:

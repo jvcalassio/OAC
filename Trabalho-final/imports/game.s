@@ -8,9 +8,12 @@
 display: .word DISPLAY0,DISPLAY1 # endereco do display utilizado no momento
 fase: .space 4 # endereco da fase atual
 
+# string do jogo
 victory_text: .string "PARABENS VC VENCEU\n"
-death_text: .string "PARABENS VC MORREU\n"
+gameover_text: .string "GAME OVER\n"
 blank: .string " "
+
+vidas: .byte 0 # quantidade de vidas (inicia em 2, 0 apenas para testes)
 .text
 	M_SetEcall(exceptionHandling)
 	jal PRINT_FASE1
@@ -129,6 +132,8 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	MPDIR: tail MARIO_PULO_DIR
 	MPESQ: tail MARIO_PULO_ESQ
 
+# Imprime tela de vitoria (temporaria)
+# Na definitiva, passa para prox fase
 GAME_VICTORY:
 	la t0,display
 	lw s0,0(t0)
@@ -150,6 +155,40 @@ GAME_VICTORY:
 		li a4,0
 		li a7,104
 		ecall
+	j FIM
+	
+# Imprime a tela de game over e volta para o menu
+GAME_OVER:
+	li a0,100 # x do bloco
+	li a1,100 # y do bloco
+	li a3,DISPLAY0
+	call GET_POSITION
+	mv s0,a0 # endereco p/ comecar a printar
+	li s1,130 # largura
+	li s2,35 # altura
+	FOR_GAMEOVER:
+		beqz s1,FIMF1_GAMEOVER
+		sb zero,0(s0) # coloca cor preta na posicao
+		addi s1,s1,-1
+		addi s0,s0,1
+		j FOR_GAMEOVER
+		FIMF1_GAMEOVER:
+			beqz s2,FIMF2_GAMEOVER
+			addi s0,s0,190
+			li s1,130
+			addi s2,s2,-1
+			j FOR_GAMEOVER
+			
+	FIMF2_GAMEOVER:
+		# fim do bloco preto
+		la a0,gameover_text
+		li a1,130
+		li a2,115
+		li a3,0x00ff
+		li a4,0
+		li a7,104
+		ecall
+		j FIM
 	
 FIM:
 	li a7,10
