@@ -59,6 +59,8 @@
 .include "../sprites/bin/mario_escada.s"
 .include "../sprites/bin/mario_escada_p1.s"
 .include "../sprites/bin/mario_escada_p2.s"
+.include "../sprites/bin/mario_costas.s"
+.include "../sprites/bin/mario_morrendo_y.s"
 
 mario_state: .byte 0 # salva estado atual do mario
 pulo_px: .byte 0,0 # salva pixels movidos no pulo
@@ -298,7 +300,7 @@ MOVE_MARIO_CIMA:
 		ecall # sleep de mais 40ms
 		
 		rmv_mario(mario_escada_p2)
-		set_mario_move(0,-4,mario_parado)
+		set_mario_move(0,-4,mario_costas)
 		call PRINT_OBJ
 		
 		# devolve pulo_px emprestado
@@ -807,17 +809,20 @@ MARIO_GRAVITY:
 	bnez t1,FIM_MARIO_GRAVITY # se for qualquer coisa exceto 0, sai pois tem chao
 	# se for 0, eh ar e tem q cair
 	rmv_mario(mario_parado)
-	set_mario_move(0,4,mario_parado)
-	call PRINT_OBJ # printa mario posicao abaixo
 	
 	addi s0,s0,80 # verificar linha abaixo
 	lb t1,0(s0)
-	beqz t1,FIM_MARIO_GRAVITY # se for ar, cai normal
+	beqz t1,PRINT_FALL_MARIO_GRAVITY # se for ar, cai normal
 	# se for chao, morre
+	set_mario_move(0,4,mario_morrendo_y)
+	call PRINT_OBJ
 	free_stack(s0)
 	free_stack(ra)
 	j MARIO_DEATH
 	
+	PRINT_FALL_MARIO_GRAVITY:
+		set_mario_move(0,4,mario_parado)
+		call PRINT_OBJ # printa mario posicao abaixo
 	
 	FIM_MARIO_GRAVITY:
 		free_stack(s0)
@@ -826,6 +831,10 @@ MARIO_GRAVITY:
 
 # faz a morte do mario (0 vidas por enquanto)	
 MARIO_DEATH:
+	li a0,500
+	li a7,32
+	ecall # sleep 500ms
+
 	la t0,display
 	lw s0,0(t0)
 	li s2,DISPLAY1
