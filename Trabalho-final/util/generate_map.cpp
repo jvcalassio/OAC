@@ -25,10 +25,10 @@ Esquemas do mapa:
 4 msb = relativos a alguns coletaveis
 
 0000 = nada
-0001 = chao quebradico (fase 3)
-0010 = item bonus (500 pts)
-0100 = martelo
-1000 = vitoria
+0001 = chao quebradico (fase 3)	= F
+0010 = item bonus (500 pts)		= B
+0100 = martelo					= M
+1000 = vitoria					= V (ar), W (chao)
 
 
 */
@@ -37,7 +37,7 @@ int main(){
 	printf("fase1_obj: .byte ");
 	string mapa;
 	ifstream map_in;
-	map_in.open("map.txt");
+	map_in.open("fase1_map.txt");
 	for(int j=0;j<60;j++){
 		map_in >> mapa;
 		for(int i=0;i<80;i++){
@@ -69,6 +69,14 @@ int main(){
 			if(mapa[i] == 'P'){
 				t = 1;
 				printf("0x08");
+			}
+			if(mapa[i] == 'V'){
+				t = 1;
+				printf("0x80");
+			}
+			if(mapa[i] == 'W'){
+				t = 1;
+				printf("0x81");
 			}
 			if(j == 59 && t == 1){
 				if(i != 79){

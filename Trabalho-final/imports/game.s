@@ -1,4 +1,5 @@
 .include "macros.s"
+.include "macros2.s"
 .include "fases/fase1_obj.s"
 
 .data
@@ -7,10 +8,10 @@
 display: .word DISPLAY0,DISPLAY1 # endereco do display utilizado no momento
 fase: .space 4 # endereco da fase atual
 
-espaco: .string " "
-barran: .string "\n"
+victory_text: .string "PARABENS VC VENCEU\n"
 
 .text
+	M_SetEcall(exceptionHandling)
 	jal PRINT_FASE1
 	call INIT_MARIO
 	call INIT_DK_DANCA
@@ -60,6 +61,23 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	#sw t1,0(t0) # seta display
 	
 	# fim mudar display
+	la t0,pos_mario
+	lh t1,0(t0) # x do mario
+	lh t2,2(t0) # y do mario
+	
+	addi t1,t1,16 # +16 para saber posicao do pe direito do mario
+	addi t2,t2,16 # +16 --
+	srli t1,t1,2 # x / 4 para alinhar com mapeamento
+	srli t2,t2,2 # y / 4 para alinhar com mapeamento
+	
+	la t0,fase1_obj
+	li t3,80 # largura
+	mul t3,t2,t3 # (y * 80)
+	add t3,t3,t1 # (y * 80) + n
+	add t0,t0,t3 # endereco da posicao desejada
+	lb t0,0(t0) # carrega byte de t0
+	andi t0,t0,0x80
+	bnez t0,GAME_VICTORY # verifica se esta na posicao de vitoria
 	
 	la t0,mario_state
 	lb t1,0(t0)
@@ -110,6 +128,28 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	MPDIR: tail MARIO_PULO_DIR
 	MPESQ: tail MARIO_PULO_ESQ
 
+GAME_VICTORY:
+	la t0,display
+	lw s0,0(t0)
+	li s2,DISPLAY1
+	li t0,76800 # 320 * 240 pixels, tamanho total da imagem
+	FORVICTORY: # tela preta
+		beqz t0,FIMFORVICTORY
+		sb zero,0(s0)
+		sb zero,0(s2)
+		addi s0,s0,1
+		addi s2,s2,1
+		addi t0,t0,-1
+		j FORVICTORY
+	FIMFORVICTORY:
+		la a0,victory_text
+		li a1,80
+		li a2,50
+		li a3,0x00ff
+		li a4,0
+		li a7,104
+		ecall
+	
 FIM:
 	li a7,10
 	ecall
@@ -117,3 +157,4 @@ FIM:
 .include "common.s"
 .include "mario.s"
 .include "environment.s"
+.include "SYSTEMv13.s"

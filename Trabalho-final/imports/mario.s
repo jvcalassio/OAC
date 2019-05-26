@@ -337,7 +337,7 @@ MOVE_MARIO_BAIXO:
 		
 		li a0,30
 		li a7,32
-		ecall # sleep de 40ms
+		ecall # sleep de 30ms
 		
 		rmv_mario(mario_escada_p1)
 		set_mario_move(0,2,mario_escada_p2)
@@ -345,7 +345,7 @@ MOVE_MARIO_BAIXO:
 		
 		li a0,30
 		li a7,32
-		ecall # sleep de mais 40ms
+		ecall # sleep de mais 30ms
 		
 		rmv_mario(mario_escada_p2)
 		set_mario_move(0,4,mario_escada)
