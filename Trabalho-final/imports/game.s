@@ -9,6 +9,7 @@ display: .word DISPLAY0,DISPLAY1 # endereco do display utilizado no momento
 fase: .space 4 # endereco da fase atual
 
 victory_text: .string "PARABENS VC VENCEU\n"
+death_text: .string "PARABENS VC MORREU\n"
 blank: .string " "
 .text
 	M_SetEcall(exceptionHandling)
@@ -93,6 +94,7 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	beq t2,t1,MPESQ # se for pra esquerda, faz pulo pra esquerda
 	
 	MAINLOOP_KEYBIND:
+	call MARIO_GRAVITY
 	call KEYBIND
 	beqz a0,MAINLOOP_RET # se nenhuma tecla, faz nada
 		#call PRINT_ACT_POS

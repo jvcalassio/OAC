@@ -31,6 +31,24 @@
 	call CLEAR_OBJPOS # limpa mario na posicao atual
 .end_macro
 
+# pega a posicao do mario no map
+.macro mario_mappos(%result)
+	la t0,pos_mario
+	lh t1,0(t0) # x do mario
+	lh t2,2(t0) # y do mario
+	
+	addi t1,t1,16 # +16 para saber posicao do pe direito do mario
+	addi t2,t2,20 # +16 --
+	srli t1,t1,2 # x / 4 para alinhar com mapeamento
+	srli t2,t2,2 # y / 4 para alinhar com mapeamento
+	
+	la t0,fase1_obj
+	li t3,80
+	mul t3,t2,t3 # (y * 80)
+	add t3,t3,t1 # (y * 80) + n
+	add %result,t0,t3 # endereco da posicao desejada
+.end_macro
+
 .data
 .include "../sprites/bin/mario_parado.s"
 .include "../sprites/bin/mario_andando_p1.s"
@@ -678,20 +696,7 @@ MARIO_PULO_ESQ:
 MARIO_COLLISIONS:
 	save_stack(s0)
 	# considereando a mario position e state atual, verificar se o movimento desejado eh permitido
-	la t0,pos_mario
-	lh t1,0(t0) # x do mario
-	lh t2,2(t0) # y do mario
-	
-	addi t1,t1,16 # +16 para saber posicao do pe direito do mario
-	addi t2,t2,20 # +16 --
-	srli t1,t1,2 # x / 4 para alinhar com mapeamento
-	srli t2,t2,2 # y / 4 para alinhar com mapeamento
-	
-	la t0,fase1_obj
-	li t3,80
-	mul t3,t2,t3 # (y * 80)
-	add t3,t3,t1 # (y * 80) + n
-	add s0,t0,t3 # s0 = endereco da posicao desejada no map
+	mario_mappos(s0)
 	
 	li t0,1
 	beq a0,t0,VERIF_MV_DIR
@@ -775,20 +780,7 @@ MARIO_COLLISIONS:
 # a0 = degrau tipo A, degrau tipo D, 0 (sem degrau)
 ##################################################
 MARIO_VERIF_DEGRAU:
-	la t0,pos_mario
-	lh t1,0(t0) # x do mario
-	lh t2,2(t0) # y do mario
-	
-	addi t1,t1,16 # +16 para saber posicao do pe direito do mario
-	addi t2,t2,20 # +16 --
-	srli t1,t1,2 # x / 4 para alinhar com mapeamento
-	srli t2,t2,2 # y / 4 para alinhar com mapeamento
-	
-	la t0,fase1_obj
-	li t3,80
-	mul t3,t2,t3 # (y * 80)
-	add t3,t3,t1 # (y * 80) + n
-	add t0,t0,t3 # endereco da posicao desejada
+	mario_mappos(t0)
 	
 	lb t1,0(t0) # carrega byte da posicao
 	li t0,0x03
@@ -805,23 +797,61 @@ MARIO_VERIF_DEGRAU:
 		li a0,0x02
 	FIM_MVDDEGRAU:
 		ret
+
+# faz gravidade do mario
+MARIO_GRAVITY:
+	save_stack(ra)
+	save_stack(s0)
+	mario_mappos(s0)
+	lb t1,0(s0) # carrega posicao do mario atual no map
+	bnez t1,FIM_MARIO_GRAVITY # se for qualquer coisa exceto 0, sai pois tem chao
+	# se for 0, eh ar e tem q cair
+	rmv_mario(mario_parado)
+	set_mario_move(0,4,mario_parado)
+	call PRINT_OBJ # printa mario posicao abaixo
+	
+	addi s0,s0,80 # verificar linha abaixo
+	lb t1,0(s0)
+	beqz t1,FIM_MARIO_GRAVITY # se for ar, cai normal
+	# se for chao, morre
+	free_stack(s0)
+	free_stack(ra)
+	j MARIO_DEATH
+	
+	
+	FIM_MARIO_GRAVITY:
+		free_stack(s0)
+		free_stack(ra)
+		ret
+
+# faz a morte do mario (0 vidas por enquanto)	
+MARIO_DEATH:
+	la t0,display
+	lw s0,0(t0)
+	li s2,DISPLAY1
+	li t0,76800 # 320 * 240 pixels, tamanho total da imagem
+	FORDEATH: # tela preta
+		beqz t0,FIMFORDEATH
+		sb zero,0(s0)
+		sb zero,0(s2)
+		addi s0,s0,1
+		addi s2,s2,1
+		addi t0,t0,-1
+		j FORDEATH
+	FIMFORDEATH:
+		la a0,death_text
+		li a1,80
+		li a2,50
+		li a3,0x00ff
+		li a4,0
+		li a7,104
+		ecall
+	
+	tail FIM
 	
 # temporario
 PRINT_ACT_POS:
-	la t0,pos_mario
-	lh t1,0(t0) # x do mario
-	lh t2,2(t0) # y do mario
-	
-	addi t1,t1,16 # +16 para saber posicao do pe direito do mario
-	addi t2,t2,20 # +16 --
-	srli t1,t1,2 # x / 4 para alinhar com mapeamento
-	srli t2,t2,2 # y / 4 para alinhar com mapeamento
-	
-	la t0,fase1_obj
-	li t3,80
-	mul t3,t2,t3 # (y * 80)
-	add t3,t3,t1 # (y * 80) + n
-	add t0,t0,t3 # endereco da posicao desejada
+	mario_mappos(t0)
 	
 	mv t1,a0
 	lb a0,0(t0)
