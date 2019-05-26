@@ -727,6 +727,15 @@ MARIO_COLLISIONS:
 		
 	VERIF_MV_CIMA:
 		addi s0,s0,-80 # linha acima
+		
+		lb a0,0(s0)
+		li a7,1
+		ecall
+		
+		la a0,blank
+		li a7,4
+		ecall
+		
 		lb a0,0(s0)
 		li t0,0x04
 		beq a0,t0,MARIO_COLLISIONS_FIM # se for escada

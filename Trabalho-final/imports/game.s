@@ -9,7 +9,7 @@ display: .word DISPLAY0,DISPLAY1 # endereco do display utilizado no momento
 fase: .space 4 # endereco da fase atual
 
 victory_text: .string "PARABENS VC VENCEU\n"
-
+blank: .string " "
 .text
 	M_SetEcall(exceptionHandling)
 	jal PRINT_FASE1
@@ -92,17 +92,16 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	li t2,0x07
 	beq t2,t1,MPESQ # se for pra esquerda, faz pulo pra esquerda
 	
-	
 	MAINLOOP_KEYBIND:
 	call KEYBIND
 	beqz a0,MAINLOOP_RET # se nenhuma tecla, faz nada
-		call PRINT_ACT_POS
+		#call PRINT_ACT_POS
 		li t0,109
-		beq a0,t0,FIM # se tecla == M, sair
+		beq a0,t0,FIM # se tecla == M, sair  
 		
 		li t0,100 # D = direita
 		beq a0,t0,MOVE_MARIO_DIREITA
-	
+
 		li t0,97 # A = esquerda
 		beq a0,t0,MOVE_MARIO_ESQUERDA
 	
