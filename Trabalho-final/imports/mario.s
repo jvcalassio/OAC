@@ -97,7 +97,7 @@ MOVE_MARIO_DIREITA:
 		call PRINT_OBJ # printa mario passo 1 na tela
 	
 		# sleep entre os passos (20ms)
-		li a0,30
+		li a0,20
 		li a7,32
 		ecall
 	
@@ -108,7 +108,7 @@ MOVE_MARIO_DIREITA:
 		call PRINT_OBJ # printa mario passo 2 na tela
 		
 		# sleep entre os passos (20ms)
-		li a0,30
+		li a0,20
 		li a7,32
 		ecall
 	
@@ -119,7 +119,7 @@ MOVE_MARIO_DIREITA:
 		call PRINT_OBJ # printa mario passo 3 na tela
 	
 		# sleep entre os passos (20ms)
-		li a0,30
+		li a0,20
 		li a7,32
 		ecall
 	
@@ -137,7 +137,7 @@ MOVE_MARIO_DIREITA:
 		sb t1,0(t0) # salva o estado atual do mario
 	FIM_MVMD_RET:
 		free_stack(a0) # devolve valor de a0
-		tail MAINLOOP
+		tail MAINLOOP_RET
 	
 MOVE_MARIO_ESQUERDA:
 	save_stack(a0)
@@ -167,7 +167,7 @@ MOVE_MARIO_ESQUERDA:
 		call PRINT_OBJ_MIRROR # printa mario passo 1 na tela
 	
 		# sleep entre os passos (20ms)
-		li a0,30
+		li a0,20
 		li a7,32
 		ecall
 	
@@ -178,7 +178,7 @@ MOVE_MARIO_ESQUERDA:
 		call PRINT_OBJ_MIRROR # printa mario passo 2 na tela
 		
 		# sleep entre os passos (20ms)
-		li a0,30
+		li a0,20
 		li a7,32
 		ecall
 	
@@ -189,7 +189,7 @@ MOVE_MARIO_ESQUERDA:
 		call PRINT_OBJ_MIRROR # printa mario passo 3 na tela
 	
 		# sleep entre os passos (20ms)
-		li a0,30
+		li a0,20
 		li a7,32
 		ecall
 	
@@ -208,7 +208,7 @@ MOVE_MARIO_ESQUERDA:
 		sb t1,0(t0) # salva o estado atual do mario (parado virado pra esquerda)
 	FIM_MVME_RET:
 		free_stack(a0) # devolve valor de a0
-		tail MAINLOOP
+		tail MAINLOOP_RET
 
 # move o mario 1px acima, caso encontre um degrau
 MV_1PXUP:
@@ -267,7 +267,7 @@ MOVE_MARIO_CIMA:
 		set_mario_move(0,-2,mario_escada_p1)
 		call PRINT_OBJ # printa sprite de subindo
 		
-		li a0,40
+		li a0,30
 		li a7,32
 		ecall # sleep de 40ms
 		
@@ -275,7 +275,7 @@ MOVE_MARIO_CIMA:
 		set_mario_move(0,-2,mario_escada_p2)
 		call PRINT_OBJ
 		
-		li a0,40
+		li a0,30
 		li a7,32
 		ecall # sleep de mais 40ms
 		
@@ -295,7 +295,7 @@ MOVE_MARIO_CIMA:
 		sb t1,0(t0)
 	
 	FIM_MOVE_MARIO_CIMA:
-		tail MAINLOOP
+		tail MAINLOOP_RET
 
 # Faz movimento do Mario pra baixo, na escada
 MOVE_MARIO_BAIXO:
@@ -335,7 +335,7 @@ MOVE_MARIO_BAIXO:
 		set_mario_move(0,2,mario_escada_p1)
 		call PRINT_OBJ # printa sprite de subindo
 		
-		li a0,40
+		li a0,30
 		li a7,32
 		ecall # sleep de 40ms
 		
@@ -343,7 +343,7 @@ MOVE_MARIO_BAIXO:
 		set_mario_move(0,2,mario_escada_p2)
 		call PRINT_OBJ
 		
-		li a0,40
+		li a0,30
 		li a7,32
 		ecall # sleep de mais 40ms
 		
@@ -375,7 +375,7 @@ MOVE_MARIO_BAIXO:
 		sb t1,0(t0)
 	
 	FIM_MOVE_MARIO_BAIXO:
-		tail MAINLOOP
+		tail MAINLOOP_RET
 
 # faz o pulo do mario pra cima (parado)
 # precisa printar o mario na posicao atual, ou seja, se tiver virado pra esquerda, printar pra esquerda
@@ -387,9 +387,9 @@ MARIO_PULO_UP:
 	andi t1,t1,0x1A # verifica se pode pular
 	bne t1,zero,FIM_PULO_UP # se nao puder pular, sai
 
-	li a0,26
+	li a0,20
 	li a7,32
-	ecall # sleep de 26ms, entre cada movimento para cima, para ficar mais fluido
+	ecall # sleep de 20ms, entre cada movimento para cima, para ficar mais fluido
 	
 	rmv_mario(mario_pulando) # remove mario na posicao atual
 	
@@ -489,7 +489,7 @@ MARIO_PULO_UP:
 		call PRINT_OBJ
 	
 	FIM_PULO_UP:
-		tail MAINLOOP
+		tail MAINLOOP_RET
 
 # realiza mario pulando pra direita em movimento
 MARIO_PULO_DIR:
@@ -498,9 +498,9 @@ MARIO_PULO_DIR:
 	andi t1,t1,0x18 # verifica se pode pular
 	bne t1,zero,FIM_PULO_DIR # se nao puder pular, sai
 
-	li a0,26
+	li a0,20
 	li a7,32
-	ecall # sleep de 26ms, entre cada movimento para cima, para ficar mais fluido
+	ecall # sleep de 20ms, entre cada movimento para cima, para ficar mais fluido
 	
 	rmv_mario(mario_pulando) # remove mario na posicao atual
 	
@@ -576,7 +576,7 @@ MARIO_PULO_DIR:
 		call PRINT_OBJ
 	
 	FIM_PULO_DIR:
-		tail MAINLOOP
+		tail MAINLOOP_RET
 
 # realiza mario pulando pra esquerda em movimento
 MARIO_PULO_ESQ:
@@ -585,9 +585,9 @@ MARIO_PULO_ESQ:
 	andi t1,t1,0x18 # verifica se pode pular
 	bne t1,zero,FIM_PULO_ESQ # se nao puder, sai
 
-	li a0,26
+	li a0,20
 	li a7,32
-	ecall # sleep de 26ms, entre cada movimento para cima, para ficar mais fluido
+	ecall # sleep de 20ms, entre cada movimento para cima, para ficar mais fluido
 	
 	rmv_mario(mario_pulando) # remove mario na posicao atual
 	
@@ -662,7 +662,7 @@ MARIO_PULO_ESQ:
 		call PRINT_OBJ_MIRROR
 	
 	FIM_PULO_ESQ:
-		tail MAINLOOP
+		tail MAINLOOP_RET
 
 #####################################################
 # Verifica colisao do mario

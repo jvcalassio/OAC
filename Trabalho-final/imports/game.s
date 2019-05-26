@@ -77,7 +77,7 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	
 	MAINLOOP_KEYBIND:
 	call KEYBIND
-	beqz a0,SEMKEY # se nenhuma tecla, faz nada
+	beqz a0,MAINLOOP_RET # se nenhuma tecla, faz nada
 		call PRINT_ACT_POS
 		li t0,109
 		beq a0,t0,FIM # se tecla == M, sair
@@ -103,7 +103,8 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		li t0,113 # Q = pulo esq
 		beq a0,t0,MARIO_PULO_ESQ
 		
-	SEMKEY:	tail DK_DANCA_LOOP
+	MAINLOOP_RET:	
+		tail DK_DANCA_LOOP
 		j MAINLOOP
 	MPUP: tail MARIO_PULO_UP
 	MPDIR: tail MARIO_PULO_DIR
