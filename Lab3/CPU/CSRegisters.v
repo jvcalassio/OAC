@@ -4,24 +4,29 @@
 
 
 module CSRegisters (
-    input wire 			iCLK, iRST, iRegWrite, // sinal de clock, sinal de reset, ?
-    input wire  [4:0] 	iReadRegister1, iWriteRegister, // rs1, rd
-    input wire  [31:0] 	iWriteData, // dado a ser escrito no rd
-    output wire [31:0] 	oReadData1 // dado lido do rs1
-
+    input wire 			iCLK, iRST, iRegWrite, // sinal de clock, sinal de reset, se escreve no csreg ou nao
+	 input wire	[3:0]		iReadRegister, // registrador CS a ser lido
+	 input wire [3:0]		iWriteRegister, // registrador CS a ser escrito
+	 input wire [31:0]	iWriteData, // dado a ser escrito no CSR
+	
+	 output wire[31:0]	oReadData // dado lido de CSR
+    // retorna dado CS lido, e substitui o CS por rs1 
     //input wire  [4:0] 	iVGASelect, iRegDispSelect,
     //output reg  [31:0] 	oVGARead, oRegDisp para mostra no display. a ser avaliado
     );
 
 /* Control and Status Register file */
-reg [10:0] registers[31:0];
+reg [69:0] registers[31:0];
 
-reg [5:0] i;
+reg [7:0] i;
 
 initial
 	begin // seta todos os 11 registradores em 0, inicialmente
-		for (i = 0; i <= 10; i = i + 1'b1)
-			registers[i] = 32'b0;
+		for (i = 0; i <= 5; i = i + 1'b1)
+			registers[i] = 32'b1; // seta tudo em 1 pra testes apenas
+			// registers[i] = 32'b0;
+		for (i = 64; i <= 68; i = i + 1'b1)
+			registers[i] = 32'b1;
 	end
 
 
