@@ -10,9 +10,9 @@ module CSRegisters (
 	 input wire [31:0]	iWriteData, // dado a ser escrito no CSR
 	
 	 output wire[31:0]	oReadData // dado lido de CSR
-    // retorna dado CS lido, e substitui o CS por rs1 
+	 
     //input wire  [4:0] 	iVGASelect, iRegDispSelect,
-    //output reg  [31:0] 	oVGARead, oRegDisp para mostra no display. a ser avaliado
+    //output reg  [31:0] 	oVGARead, oRegDisp // para mostrar no display. a ser avaliado
     );
 
 /* Control and Status Register file */
