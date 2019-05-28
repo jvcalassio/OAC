@@ -33,7 +33,6 @@ Esquemas do mapa:
 
 */
 int main(){
-	printf(".data\n");
 	printf("fase1_obj: .byte ");
 	string mapa;
 	ifstream map_in;

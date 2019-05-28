@@ -1,9 +1,8 @@
 .include "macros.s"
 .include "macros2.s"
-.include "fases/fase1_obj.s"
 
 .data
-
+.include "fases/fase1_obj.s"
 .include "../sprites/bin/fase1.s"
 display: .word DISPLAY0,DISPLAY1 # endereco do display utilizado no momento
 fase: .space 4 # endereco da fase atual
@@ -11,9 +10,9 @@ fase: .space 4 # endereco da fase atual
 # string do jogo
 victory_text: .string "PARABENS VC VENCEU\n"
 gameover_text: .string "GAME OVER\n"
-blank: .string " "
+blank: .string "  "
 
-vidas: .byte 0 # quantidade de vidas (inicia em 2, 0 apenas para testes)
+vidas: .byte 0 # quantidade de vidas (inicia em 2, mudar apos testes)
 .text
 	M_SetEcall(exceptionHandling)
 	jal PRINT_FASE1

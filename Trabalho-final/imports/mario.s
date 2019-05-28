@@ -243,6 +243,11 @@ MV_1PXUP:
 	lh t1,2(t0)
 	addi t1,t1,-1
 	sh t1,2(t0) # faz mario subir 1px
+	save_stack(a0)
+	li a0,1
+	li a7,1
+	ecall
+	free_stack(a0)
 	ret
 		
 MV_1PXDW:
@@ -250,6 +255,11 @@ MV_1PXDW:
 	lh t1,2(t0)
 	addi t1,t1,1
 	sh t1,2(t0) # faz mario descer 1px
+	save_stack(a0)
+	li a0,2
+	li a7,1
+	ecall
+	free_stack(a0)
 	ret
 	
 # Faz movimento do Mario pra cima, nas escadas
@@ -520,6 +530,7 @@ MARIO_PULO_UP:
 
 # realiza mario pulando pra direita em movimento
 MARIO_PULO_DIR:
+	save_stack(s0)
 	la t0,mario_state 
 	lb t1,0(t0)
 	andi t1,t1,0x18 # verifica se pode pular
@@ -531,6 +542,9 @@ MARIO_PULO_DIR:
 	
 	rmv_mario(mario_pulando) # remove mario na posicao atual
 	
+	# posicao do mario no map
+	mario_mappos(s0)
+	
 	la t0,pulo_px
 	lb t1,0(t0) # carrega estado de descida do pulo do mario
 	lb t2,1(t0) # carrega estado de subida do pulo do mario
@@ -541,6 +555,23 @@ MARIO_PULO_DIR:
 	bgt t2,zero,MARIO_PULO_DIR_SOBE # se subida tiver > 0 e < 12, sobe 1px
 	
 	MARIO_PULO_DIR_INIT_SUBIDA:
+		# verifica se em algum ponto da trajetoria tem uma parede
+		# se tiver, nao realiza pulo
+		mv t0,s0
+		li t1,6
+		MPDIS_CHECKWALL:
+			beqz t1,MPDIS_CHECKWALL_PASS
+			lb t2,0(t0)
+			li t3,0x08
+			beq t2,t3,MPDIS_CHECKWALL_FAIL # se tiver, nao pula
+			addi t0,t0,1 # passa p/ prox endereco do map
+			addi t1,t1,-1 # decrementa i
+			j MPDIS_CHECKWALL
+		MPDIS_CHECKWALL_FAIL:
+			set_mario_move(0,0,mario_parado)
+			j PULO_DIR_ANIM
+		MPDIS_CHECKWALL_PASS: # se nao tiver nenhuma parede, faz pulo
+	
 		la t0,mario_state
 		li t1,0x03
 		sb t1,0(t0) # grava mario state de pulando pra direita
@@ -597,16 +628,45 @@ MARIO_PULO_DIR:
 		la t0,mario_state
 		sb zero,0(t0) # salva estado do mario no chao, virado pra direita
 		
+		# verifica se em algum dos 24px horizontais anteriores (referentes a dist do pulo) tinha degrau
+		# a cada degrau, adiciona 1 no Y do mario pos
+		save_stack(s1)
+		#mario_mappos(s0) # pega posicao atual do mario
+		addi s0,s0,1 # posicao a frente no x, onde o mario cai apos a prox animacao (no x)
+		addi s0,s0,160 # posicao alinhada no y, onde o mario cai apos a prox animacao
+		li s1,6 # iteracoes
+		VERIFD_PULOD:
+			beqz s1,FIM_VERIFD_PULOD # se t1 == 0, sai do loop
+			lb t2,0(s0) # carrega posicao atual do map
+			li t3,0x03
+			beq t2,t3,ADD_VERIFD_PULOD # verifica se precisa subir
+			li t3,0x02
+			beq t2,t3,RMV_VERIFD_PULOD # verifica se precisa descer
+			j CONT_VERIFD_PULOD
+			ADD_VERIFD_PULOD:
+				call MV_1PXUP
+				j CONT_VERIFD_PULOD
+			RMV_VERIFD_PULOD:
+				call MV_1PXDW
+			CONT_VERIFD_PULOD:
+				addi s1,s1,-1 # decrementa i
+				addi s0,s0,-1 # verifica posicao anterior a atual
+			j VERIFD_PULOD
+		
+		FIM_VERIFD_PULOD:
+		free_stack(s1)
 		set_mario_move(4,8,mario_parado) # se move 8px pra baixo, 4px pra direita p/ finalizar pulo
 		
 	PULO_DIR_ANIM: # pula pra direita em movimento
 		call PRINT_OBJ
 	
 	FIM_PULO_DIR:
+		free_stack(s0)
 		tail MAINLOOP_RET
 
 # realiza mario pulando pra esquerda em movimento
 MARIO_PULO_ESQ:
+	save_stack(s0)
 	la t0,mario_state
 	lb t1,0(t0)
 	andi t1,t1,0x18 # verifica se pode pular
@@ -618,6 +678,8 @@ MARIO_PULO_ESQ:
 	
 	rmv_mario(mario_pulando) # remove mario na posicao atual
 	
+	mario_mappos(s0) # pega posicao atual do mario
+	
 	la t0,pulo_px
 	lb t1,0(t0) # carrega estado de descida do pulo do mario
 	lb t2,1(t0) # carrega estado de subida do pulo do mario
@@ -628,6 +690,23 @@ MARIO_PULO_ESQ:
 	bgt t2,zero,MARIO_PULO_ESQ_SOBE # se subida tiver > 0 e < 12, sobe 1px
 	
 	MARIO_PULO_ESQ_INIT_SUBIDA:
+		# verifica se em algum ponto da trajetoria tem uma parede
+		# se tiver, nao realiza pulo
+		mv t0,s0
+		li t1,6
+		MPEIS_CHECKWALL:
+			beqz t1,MPEIS_CHECKWALL_PASS
+			lb t2,0(t0)
+			li t3,0x08
+			beq t2,t3,MPEIS_CHECKWALL_FAIL # se tiver, nao pula
+			addi t0,t0,-1 # passa p/ prox endereco do map
+			addi t1,t1,-1 # decrementa i
+			j MPEIS_CHECKWALL
+		MPEIS_CHECKWALL_FAIL:
+			set_mario_move(0,0,mario_parado)
+			j PULO_ESQ_ANIM
+		MPEIS_CHECKWALL_PASS: # se nao tiver nenhuma parede, faz pulo
+		
 		la t0,mario_state
 		li t1,0x07
 		sb t1,0(t0) # grava mario state de pulando pra direita
@@ -682,13 +761,39 @@ MARIO_PULO_ESQ:
 		la t0,mario_state
 		li t1,0x04
 		sb t1,0(t0) # salva estado do mario no chao, virado pra esquerda
-		
+	
 		set_mario_move(-4,8,mario_parado) # se move 8px pra baixo, 4px pra esquerda p/ finalizar pulo
+
+		# verifica se em algum dos 24px horizontais anteriores (referentes a dist do pulo) tinha degrau
+		# a cada degrau, adiciona (ou remove) 1 no Y do mario pos
+		save_stack(s1)
+		li s1,6 # iteracoes
+		VERIFD_PULOE:
+			beqz s1,FIM_VERIFD_PULOE # se t1 == 0, sai do loop
+			lb t2,0(s0) # carrega posicao atual do map
+			li t3,0x02
+			beq t2,t3,ADD_VERIFD_PULOE # verifica se precisa subir
+			li t3,0x03
+			beq t2,t3,RMV_VERIFD_PULOE # verifica se precisa descer
+			j CONT_VERIFD_PULOE
+			ADD_VERIFD_PULOE:
+				call MV_1PXUP
+				j CONT_VERIFD_PULOE
+			RMV_VERIFD_PULOE:
+				call MV_1PXDW
+			CONT_VERIFD_PULOE:
+				addi s1,s1,-1 # decrementa i
+				addi s0,s0,1 # verifica posicao q veio antes da atual
+			j VERIFD_PULOE
 		
+		FIM_VERIFD_PULOE:
+		free_stack(s1)
+		set_mario_move(0,0,mario_parado)
 	PULO_ESQ_ANIM: # pula pra esquerda em movimento
 		call PRINT_OBJ_MIRROR
 	
 	FIM_PULO_ESQ:
+		free_stack(s0)
 		tail MAINLOOP_RET
 
 #####################################################
@@ -698,7 +803,6 @@ MARIO_PULO_ESQ:
 # 	1 = andar direita	2 = andar esquerda
 #	3 = pular direita	4 = pular esquerda
 #	5 = subir escada	6 = descer escada
-#	7 = subir andar		8 = descer andar
 # retorna a0 = 0 (nao permitido), 1 (permitido) pras colisoes
 # retorna a0 = bloco, caso seja escadas
 #####################################################
@@ -744,11 +848,11 @@ MARIO_COLLISIONS:
 		
 		lb a0,0(s0)
 		li a7,1
-		ecall
+		#ecall
 		
 		la a0,blank
 		li a7,4
-		ecall
+		#ecall
 		
 		lb a0,0(s0)
 		li t0,0x04
@@ -830,6 +934,9 @@ MARIO_GRAVITY:
 	PRINT_FALL_MARIO_GRAVITY:
 		set_mario_move(0,4,mario_parado)
 		call PRINT_OBJ # printa mario posicao abaixo
+		li a0,20
+		li a7,32
+		ecall # sleep 20ms queda
 	
 	FIM_MARIO_GRAVITY:
 		free_stack(s0)
