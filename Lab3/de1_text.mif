@@ -1,0 +1,14 @@
+DEPTH = 16384;
+WIDTH = 32;
+ADDRESS_RADIX = HEX;
+DATA_RADIX = HEX;
+CONTENT
+BEGIN
+00000000 : 0002d073;   % 4: csrrwi zero,0,5 %
+00000001 : 0012d073;   % 5: csrrwi zero,1,5 %
+00000002 : 0022d073;   % 6: csrrwi zero,2,5 %
+00000003 : 0032d073;   % 7: csrrwi zero,3,5 %
+00000004 : 0042d073;   % 8: csrrwi zero,4,5 %
+00000005 : 0052d073;   % 9: csrrwi zero,5,5 %
+00000006 : 0000006f;   % 10: FIM: j FIM %
+END;
