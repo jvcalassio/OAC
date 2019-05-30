@@ -11,10 +11,10 @@ module CSRegisters (
 		// registradores ucause e uepc vao ser escritos quase sempre
 	 input wire				iUCAUSEWrite, iUEPCWrite,
 	 input wire	[31:0]	iUCAUSEData, iUEPCData,
-	 output wire[31:0]	oCSReadData // dado lido de CSR
+	 output wire[31:0]	oCSReadData, // dado lido de CSR
 	 
-    //input wire  [4:0] 	iVGASelect, iRegDispSelect,
-    //output reg  [31:0] 	oVGARead, oRegDisp // para mostrar no display. a ser avaliado
+    input wire  [4:0] 	iVGASelect, iRegDispSelect,
+    output reg  [31:0] 	oVGARead, oRegDisp // para mostrar no display. a ser avaliado
     );
 
 /* Control and Status Register file */
@@ -24,18 +24,18 @@ reg [6:0] i;
 
 initial
 	begin 
-		for (i = 0; i <= 5; i = i + 1'b1) // seta os registradores 0 a 5
+		for (i = 0; i <= 68; i = i + 1'b1) // seta os registradores 0 a 5
 			registers[i] = 32'b1; // seta tudo em 1 pra testes apenas
 			// registers[i] = 32'b0;
-		for (i = 64; i <= 68; i = i + 1'b1) // seta os registradores 64 a 68
-			registers[i] = 32'b1;
+		//for (i = 64; i <= 68; i = i + 1'b1) // seta os registradores 64 a 68
+		//registers[i] = 32'b1;
 	end
 
 
 assign oCSReadData =	registers[iCSReadRegister];
 
-//assign oRegDisp 	=	registers[iRegDispSelect];
-//assign oVGARead 	=	registers[iVGASelect];
+assign oRegDisp 	=	registers[iRegDispSelect];
+assign oVGARead 	=	registers[iVGASelect];
 
 `ifdef PIPELINE
     always @(negedge iCLK or posedge iRST)
@@ -45,10 +45,10 @@ assign oCSReadData =	registers[iCSReadRegister];
 begin
     if (iRST) // se receber sinal de reset
     begin // reseta o banco de registradores
-        for (i = 0; i <= 5; i = i + 1'b1)
+        for (i = 0; i <= 68; i = i + 1'b1)
             registers[i] <= 32'b0;
-		  for (i = 64; i <= 68; i = i + 1'b1)
-				registers[i] <= 32'b0;
+		  //for (i = 64; i <= 68; i = i + 1'b1)
+			//	registers[i] <= 32'b0;
     end
     else
 	 begin // do contrario, apenas escreve dado desejado no registrador desejado
@@ -57,10 +57,12 @@ begin
 				registers[iCSWriteRegister] <= iCSWriteData;
 				
 		if(iUCAUSEWrite)
-				registers[7'd66] <= iUCAUSEData;
+			// apenas temporario, mudar para 7'd66
+				registers[7'd16] <= iUCAUSEData;
 				
 		if(iUEPCWrite)
-				registers[7'd65] <= iUEPCData + 3'b100;
+			// apenas temporario, mudar para 7'd65
+				registers[7'd17] <= iUEPCData;
 		
 		end
 end
