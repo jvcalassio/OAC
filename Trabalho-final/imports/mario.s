@@ -6,29 +6,16 @@
 
 # move o mario +x px, +y px, usando o sprite desejado
 .macro set_mario_move(%x,%y,%sprite)
-	la t0,pos_mario # pega posicao do mario novamente
-	lh a0,0(t0)     # pois a funcao anterior modifica os valores
-	lh a1,2(t0)
-	addi a0,a0,%x # adiciona +x no X
-	addi a1,a1,%y # adiciona +y no Y
-	sh a0,0(t0) # grava X
-	sh a1,2(t0) # grava y
-	la t0,display
-	lw a2,0(t0) # carrega qual display usar 
-	la a3,%sprite # label do sprite a ser utilizado
+	li a0,%x
+	li a1,%y
+	la a3,%sprite
+	call SET_MARIO_MOVIMENT
 .end_macro
 
 # remove um sprite do mario nas posicoes atuais
 .macro rmv_mario(%sprite)
-	la t0,pos_mario # carrega posicao do mario
-	lh a0,0(t0) # carrega x
-	lh a1,2(t0) # carrega y
-	la a2,display
-	lw a2,0(a2) # carrega display atual
-	la a3,fase
-	lw a3,0(a3) # carrega fase atual
-	la a4,%sprite # carrega sprite
-	call CLEAR_OBJPOS # limpa mario na posicao atual
+	la a4,%sprite
+	call REMOVE_MARIO
 .end_macro
 
 # pega a posicao do mario no map
@@ -53,7 +40,6 @@
 .include "../sprites/bin/mario_parado.s"
 .include "../sprites/bin/mario_andando_p1.s"
 .include "../sprites/bin/mario_andando_p2.s"
-.include "../sprites/bin/mario_andando_p3.s"
 .include "../sprites/bin/mario_pulando.s"
 .include "../sprites/bin/mario_pulando_queda.s" 
 .include "../sprites/bin/mario_escada.s"
@@ -88,12 +74,42 @@ INIT_MARIO:
 		la t0,mario_state # seta mario_state como 0
 		sb zero,0(t0) # seta 00000 no mario state (parado no chao virado pra direita)
 		la t0,pulo_px
-		sb zero,0(t0)
-		sb zero,1(t0) # reseta pulopx
+		sh zero,0(t0) # reseta pulopx
 	
 	FIM_INIT_MARIO:
 		free_stack(ra)
 		ret
+	
+# Remove um sprite do mario na posicao atual
+# a4 = sprite a ser removido (por causa do tamanho)	
+REMOVE_MARIO:
+	save_stack(ra)
+	la t0,pos_mario # carrega posicao do mario
+	lh a0,0(t0) # carrega x
+	lh a1,2(t0) # carrega y
+	la a2,display
+	lw a2,0(a2) # carrega display atual
+	la a3,fase
+	lw a3,0(a3) # carrega fase atual
+	call CLEAR_OBJPOS # limpa mario na posicao atual
+	free_stack(ra)
+	ret
+	
+# Move o mario em +X,+Y pixels
+# a0 = + x
+# a1 = + y
+# a3 = sprite
+SET_MARIO_MOVIMENT:
+	la t0,pos_mario # pega posicao do mario novamente
+	lh t1,0(t0)     # pois a funcao anterior modifica os valores
+	lh t2,2(t0)
+	add a0,a0,t1 # adiciona +x no X
+	add a1,a1,t2 # adiciona +y no Y
+	sh a0,0(t0) # grava X
+	sh a1,2(t0) # grava y
+	la t0,display
+	lw a2,0(t0) # carrega qual display usar
+	ret
 
 # Faz o movimento do mario para a direita
 MOVE_MARIO_DIREITA:
@@ -114,8 +130,6 @@ MOVE_MARIO_DIREITA:
 	
 	DDIR_TIPO_D: # se tiver degrau do tipo D, desce
 	jal MV_1PXUP
-	
-	#jal MV_1PXUP # move mario 1px acima
 	
 	MVMD_P1: # faz passo 1
 		rmv_mario(mario_parado)
@@ -142,7 +156,7 @@ MOVE_MARIO_DIREITA:
 	MVMD_P3: # faz passo 3
 		rmv_mario(mario_andando_p2)
 		
-		set_mario_move(1,0,mario_andando_p3) # se move 1px pra direita
+		set_mario_move(1,0,mario_andando_p1) # se move 1px pra direita
 		call PRINT_OBJ # printa mario passo 3 na tela
 	
 		# sleep entre os passos (20ms)
@@ -151,7 +165,7 @@ MOVE_MARIO_DIREITA:
 		ecall
 	
 	MVMD_P0: # faz mario parado novamente
-		rmv_mario(mario_andando_p3)
+		rmv_mario(mario_andando_p1)
 		
 		set_mario_move(1,0,mario_parado) # se move 1px pra direita
 		call PRINT_OBJ # printa mario passo final na tela
@@ -185,8 +199,6 @@ MOVE_MARIO_ESQUERDA:
 	DESQ_TIPO_D: # se tiver degrau do tipo D, desce
 	jal MV_1PXDW
 	
-	# colisao com as paredes (missing)
-	
 	MVME_P1: # faz passo 1
 		rmv_mario(mario_parado)
 		
@@ -212,7 +224,7 @@ MOVE_MARIO_ESQUERDA:
 	MVME_P3: # faz passo 3
 		rmv_mario(mario_andando_p2)
 		
-		set_mario_move(-1,0,mario_andando_p3) # se move 1px pra esquerda
+		set_mario_move(-1,0,mario_andando_p1) # se move 1px pra esquerda
 		call PRINT_OBJ_MIRROR # printa mario passo 3 na tela
 	
 		# sleep entre os passos (20ms)
@@ -221,7 +233,7 @@ MOVE_MARIO_ESQUERDA:
 		ecall
 	
 	MVME_P0: # faz mario parado novamente
-		rmv_mario(mario_andando_p3)
+		rmv_mario(mario_andando_p1)
 		
 		set_mario_move(-1,0,mario_parado) # se move 1px pra esquerda
 		call PRINT_OBJ_MIRROR # printa mario passo final na tela
@@ -344,7 +356,7 @@ MOVE_MARIO_BAIXO:
 	li t0,0x01
 	beq a0,t0,MARIO_DESCE_SETCHAO # se for o chao, chegou ao fim da escada
 	# se for apenas uma escada, desce normal
-
+	
 	MARIO_DESCE_ESCADA: # enquanto o mario esta subindo a escada
 		rmv_mario(mario_parado) # retira o mario na posicao atual
 		set_mario_move(0,4,mario_escada) # seta impressao do mario
@@ -402,8 +414,7 @@ MOVE_MARIO_BAIXO:
 		call PRINT_OBJ_MIRROR
 		# devolve pulo_px emprestado
 		la t0,pulo_px
-		sb zero,0(t0)
-		sb zero,1(t0)
+		sh zero,0(t0)
 		
 		# reseta mario state
 		la t0,mario_state
@@ -967,7 +978,9 @@ MARIO_DEATH:
 	lb t1,0(t0)	
 	addi t1,t1,-1 # decrementa 1 vida
 	sb t1,0(t0) # salva vida decrementada
-	bltz t1,GAME_OVER # se vidas < 0, game over
+	#bltz t1,GAME_OVER # se vidas < 0, game over
+	bgez t1,FASE_RESET # se vidas >= 0, so reseta
+	tail GAME_OVER
 	
 	# se ainda tiver vidas, decrementa e volta para o comeco
 	FASE_RESET:

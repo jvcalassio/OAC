@@ -10,7 +10,7 @@ fase: .space 4 # endereco da fase atual
 # string do jogo
 victory_text: .string "PARABENS VC VENCEU\n"
 gameover_text: .string "GAME OVER\n"
-blank: .string "  "
+blank: .string " "
 
 vidas: .byte 0 # quantidade de vidas (inicia em 2, mudar apos testes)
 .text
@@ -104,25 +104,25 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		beq a0,t0,FIM # se tecla == M, sair  
 		
 		li t0,100 # D = direita
-		beq a0,t0,MOVE_MARIO_DIREITA
+		beq a0,t0,BCALL_MV_MARIO_DIREITA
 
 		li t0,97 # A = esquerda
-		beq a0,t0,MOVE_MARIO_ESQUERDA
+		beq a0,t0,BCALL_MV_MARIO_ESQUERDA
 	
 		li t0,32 # espaco = pulo
-		beq a0,t0,MARIO_PULO_UP
+		beq a0,t0,BCALL_MV_MARIO_PULO
 		
 		li t0,119 # W = cima
-		beq a0,t0,MOVE_MARIO_CIMA
+		beq a0,t0,BCALL_MV_MARIO_CIMA
 		
 		li t0,115 # S = baixo
-		beq a0,t0,MOVE_MARIO_BAIXO
+		beq a0,t0,BCALL_MV_MARIO_BAIXO
 		
 		li t0,101 # E = pulo dir
-		beq a0,t0,MARIO_PULO_DIR
+		beq a0,t0,BCALL_MV_MARIO_PULO_DIR
 		
 		li t0,113 # Q = pulo esq
-		beq a0,t0,MARIO_PULO_ESQ
+		beq a0,t0,BCALL_MV_MARIO_PULO_ESQ
 		
 	MAINLOOP_RET:	
 		tail DK_DANCA_LOOP
@@ -192,6 +192,22 @@ GAME_OVER:
 FIM:
 	li a7,10
 	ecall
+	
+# calls pra outras funcoes por causa dos 12bit
+BCALL_MV_MARIO_DIREITA:
+	tail MOVE_MARIO_DIREITA
+BCALL_MV_MARIO_ESQUERDA:
+	tail MOVE_MARIO_ESQUERDA
+BCALL_MV_MARIO_CIMA:
+	tail MOVE_MARIO_CIMA
+BCALL_MV_MARIO_BAIXO:
+	tail MOVE_MARIO_BAIXO
+BCALL_MV_MARIO_PULO:	
+	tail MARIO_PULO_UP
+BCALL_MV_MARIO_PULO_DIR:
+	tail MARIO_PULO_DIR
+BCALL_MV_MARIO_PULO_ESQ:
+	tail MARIO_PULO_ESQ
 	
 .include "common.s"
 .include "mario.s"

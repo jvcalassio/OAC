@@ -1,7 +1,6 @@
 .data
 .include "../sprites/bin/dk_1.s"
 .include "../sprites/bin/dk_2.s"
-.include "../sprites/bin/dk_3.s"
 var_dk: .word 0,0,0,0
 
 
@@ -100,14 +99,14 @@ DK_DANCA_FRAME2:
 	li	a1, 28
 	li	a2, DISPLAY0
 	la	a3, fase1
-	la	a4, dk_3
+	la	a4, dk_1
 	call	CLEAR_OBJPOS
 	
 	li	a0, 50
 	li	a1, 28
 	li	a2, DISPLAY0
-	la	a3, dk_3
-	call 	PRINT_OBJ
+	la	a3, dk_1
+	call 	PRINT_OBJ_MIRROR
 	
 	la	t4, var_dk
 	lw	t0, 0(t4)
