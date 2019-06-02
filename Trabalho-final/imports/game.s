@@ -18,6 +18,7 @@ vidas: .byte 0 # quantidade de vidas (inicia em 2, mudar apos testes)
 	jal PRINT_FASE1
 	call INIT_MARIO
 	call INIT_DK_DANCA
+	call INIT_LADY
 	j MAINLOOP
 
 # Imprime fase 1 na t ela, e salva no indicador de fase atual
@@ -124,8 +125,15 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		li t0,113 # Q = pulo esq
 		beq a0,t0,BCALL_MV_MARIO_PULO_ESQ
 		
-	MAINLOOP_RET:	
-		tail DK_DANCA_LOOP
+	MAINLOOP_RET:
+		save_stack(ra)
+		call DK_DANCA_LOOP
+		free_stack(ra)
+		
+		save_stack(ra)
+		call LADY_LOOP
+		free_stack(ra)
+		
 		j MAINLOOP
 	MPUP: tail MARIO_PULO_UP
 	MPDIR: tail MARIO_PULO_DIR

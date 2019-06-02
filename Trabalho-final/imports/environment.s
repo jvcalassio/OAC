@@ -1,7 +1,10 @@
 .data
 .include "../sprites/bin/dk_1.s"
 .include "../sprites/bin/dk_2.s"
+.include "../sprites/bin/lady_p1.s"
+.include "../sprites/bin/lady_p2.s"
 var_dk: .word 0,0,0,0
+var_lady: .word 0
 
 
 .text
@@ -43,74 +46,211 @@ DK_DANCA_LOOP:
 	addi 	t0, t0, 1	#i++
 	sw	t0, 0(t4)
 	
-	tail 	MAINLOOP
+	ret
 
-DK_DANCA_RESET:
-	la	t4, var_dk
-	sw	zero, 0(t4)	#i=0
-	tail	MAINLOOP
+	DK_DANCA_RESET:
 
-DK_DANCA_FRAME0:
+		la	t4, var_dk
+		sw	zero, 0(t4)	#i=0
+		ret
+
+	DK_DANCA_FRAME0:
+		
+		li	a0, 50
+		li	a1, 28
+		li	a2, DISPLAY0
+		la	a3, fase1
+		la	a4, dk_1
+		save_stack(ra)
+		call	CLEAR_OBJPOS
+		free_stack(ra)
+		
+		li	a0, 50
+		li	a1, 28
+		li	a2, DISPLAY0
+		la	a3, dk_1
+		save_stack(ra)
+		call 	PRINT_OBJ
+		free_stack(ra)
+		
+		la	t4, var_dk
+		lw	t0, 0(t4)
+		addi 	t0, t0, 1	#i++
+		sw	t0, 0(t4)
+
+		ret
+
+	DK_DANCA_FRAME1:
+
+		li	a0, 50
+		li	a1, 28
+		li	a2, DISPLAY0
+		la	a3, fase1
+		la	a4, dk_2
+		save_stack(ra)
+		call	CLEAR_OBJPOS
+		free_stack(ra)
+		
+		li	a0, 50
+		li	a1, 28
+		li	a2, DISPLAY0
+		la	a3, dk_2
+		save_stack(ra)
+		call 	PRINT_OBJ
+		free_stack(ra)
+		
+		la	t4, var_dk
+		lw	t0, 0(t4)
+		addi 	t0, t0, 1	#i++
+		sw	t0, 0(t4)
+		
+		ret
+		
+	DK_DANCA_FRAME2:
+
+		li	a0, 50
+		li	a1, 28
+		li	a2, DISPLAY0
+		la	a3, fase1
+		la	a4, dk_1
+		save_stack(ra)
+		call	CLEAR_OBJPOS
+		free_stack(ra)
+		
+		li	a0, 50
+		li	a1, 28
+		li	a2, DISPLAY0
+		la	a3, dk_1
+		save_stack(ra)
+		call 	PRINT_OBJ_MIRROR
+		free_stack(ra)
+		
+		la	t4, var_dk
+		lw	t0, 0(t4)
+		addi 	t0, t0, 1	#i++
+		sw	t0, 0(t4)
+		
+		ret
+
+
+INIT_LADY:
 	
-	li	a0, 50
-	li	a1, 28
-	li	a2, DISPLAY0
-	la	a3, fase1
-	la	a4, dk_1
-	call	CLEAR_OBJPOS
+	la	t4, var_lady
+	sw	zero, 0(t4)
+	ret
 	
-	li	a0, 50
-	li	a1, 28
-	li	a2, DISPLAY0
-	la	a3, dk_1
-	call 	PRINT_OBJ
+LADY_LOOP:
 	
-	la	t4, var_dk
+	la	t4, var_lady
 	lw	t0, 0(t4)
-	addi 	t0, t0, 1	#i++
-	sw	t0, 0(t4)
-
-	tail	MAINLOOP
-
-DK_DANCA_FRAME1:
-
-	li	a0, 50
-	li	a1, 28
-	li	a2, DISPLAY0
-	la	a3, fase1
-	la	a4, dk_2
-	call	CLEAR_OBJPOS
+	beq	t0, zero, LADY_FRAME0
 	
-	li	a0, 50
-	li	a1, 28
-	li	a2, DISPLAY0
-	la	a3, dk_2
-	call 	PRINT_OBJ
-	
-	la	t4, var_dk
+	la	t4, var_lady
 	lw	t0, 0(t4)
-	addi 	t0, t0, 1	#i++
-	sw	t0, 0(t4)
-	
-	tail	MAINLOOP
-	
-DK_DANCA_FRAME2:
-	li	a0, 50
-	li	a1, 28
-	li	a2, DISPLAY0
-	la	a3, fase1
-	la	a4, dk_1
-	call	CLEAR_OBJPOS
-	
-	li	a0, 50
-	li	a1, 28
-	li	a2, DISPLAY0
-	la	a3, dk_1
-	call 	PRINT_OBJ_MIRROR
-	
-	la	t4, var_dk
+	li	t1, 1500
+	beq	t0, t1, LADY_FRAME1
+
+	la	t4, var_lady
 	lw	t0, 0(t4)
-	addi 	t0, t0, 1	#i++
+	li	t1, 3000
+	beq	t0, t1, LADY_FRAME0
+	
+	la	t4, var_lady
+	lw	t0, 0(t4)
+	li	t1, 4500
+	beq	t0, t1, LADY_FRAME1
+	
+	la	t4, var_lady
+	lw	t0, 0(t4)
+	li	t1, 6000
+	beq	t0, t1, LADY_FRAME0
+	
+	la	t4, var_lady
+	lw	t0, 0(t4)
+	li	t1, 7500
+	beq	t0, t1, LADY_FRAME1
+	
+	la	t4, var_lady
+	lw	t0, 0(t4)
+	li	t1, 9000
+	beq	t0, t1, LADY_FRAME0
+	
+	la	t4, var_lady
+	lw	t0, 0(t4)
+	li	t1, 10500
+	beq	t0, t1, LADY_FRAME1
+	
+	la	t4, var_lady
+	lw	t0, 0(t4)
+	li	t1, 12000
+	beq	t0, t1, LADY_FRAME0
+	
+	la	t4, var_lady
+	lw	t0, 0(t4)
+	li	t1, 24000
+	bge	t0, t1, LADY_RESET
+	
+	la	t4, var_lady
+	lw	t0, 0(t4)
+	addi	t0, t0, 1
 	sw	t0, 0(t4)
 	
-	tail	MAINLOOP
+	ret
+	
+	LADY_RESET:
+		
+		la	t4, var_lady
+		sw	zero, 0(t4)
+		ret
+			
+	LADY_FRAME0:
+		
+		li	a0, 113
+		li	a1, 25
+		li	a2, DISPLAY0
+		la	a3, fase1
+		la	a4, lady_p1
+		save_stack(ra)
+		call CLEAR_OBJPOS
+		free_stack(ra)
+		
+		li	a0, 113
+		li	a1, 25
+		li	a2, DISPLAY0
+		la	a3, lady_p1
+		save_stack(ra)
+		call PRINT_OBJ
+		free_stack(ra)
+		
+		la	t4, var_lady
+		lw	t0, 0(t4)
+		addi	t0, t0, 1
+		sw	t0, 0(t4)
+		
+		ret
+		
+	LADY_FRAME1:
+
+		li	a0, 113
+		li	a1, 25
+		li	a2, DISPLAY0
+		la	a3, fase1
+		la	a4, lady_p2
+		save_stack(ra)
+		call CLEAR_OBJPOS
+		free_stack(ra)
+		
+		li	a0, 113
+		li	a1, 25
+		li	a2, DISPLAY0
+		la	a3, lady_p2
+		save_stack(ra)
+		call PRINT_OBJ
+		free_stack(ra)
+		
+		la	t4, var_lady
+		lw	t0, 0(t4)
+		addi	t0, t0, 1
+		sw	t0, 0(t4)
+		
+		ret
