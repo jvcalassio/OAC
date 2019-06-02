@@ -9,11 +9,11 @@ INIT_DK_DANCA:
 	
 	la	t4, var_dk
 	sw	zero, 0(t4)	#var_i = 0
-	li	t0, 10000
+	li	t0, 1000
 	sw	t0, 4(t4)	#var0 = 10000
-	li	t0, 20000
+	li	t0, 2000
 	sw	t0, 8(t4)	#var1 = 20000
-	li	t0, 30000
+	li	t0, 3000
 	sw	t0, 12(t4)	#var_2 = 30000
 	ret
 

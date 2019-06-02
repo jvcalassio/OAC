@@ -12,7 +12,10 @@ victory_text: .string "PARABENS VC VENCEU\n"
 gameover_text: .string "GAME OVER\n"
 blank: .string " "
 
+# variaveis de jogo
 vidas: .byte 0 # quantidade de vidas (inicia em 2, mudar apos testes)
+
+last_key: .word 0,0 # salva ultima tecla e o tempo
 .text
 	M_SetEcall(exceptionHandling)
 	jal PRINT_FASE1
@@ -82,6 +85,8 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	andi t0,t0,0x80
 	bnez t0,GAME_VICTORY # verifica se esta na posicao de vitoria
 	
+	jal MOV_COUNTER_VERIF
+	
 	la t0,mario_state
 	lb t1,0(t0)
 	andi t2,t1,0x01 # verifica se esta pulando
@@ -96,9 +101,20 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	beq t2,t1,MPESQ # se for pra esquerda, faz pulo pra esquerda
 	
 	MAINLOOP_KEYBIND:
-	call MARIO_GRAVITY
+	#call MARIO_GRAVITY
 	call KEYBIND
+	
 	beqz a0,MAINLOOP_RET # se nenhuma tecla, faz nada
+		# se tiver alguma tecla, salva ela junto com o tempo
+		# se na ultima vez q uma tecla foi pressionada, foi a <100ms e foi a tecla do mov atual
+		# continua andando no mov atual
+		mv t0,a0
+		la t1,last_key
+		sw a0,0(t1)
+		li a7,30
+		ecall
+		sw a0,4(t1)
+		mv a0,t0 # restaura tecla
 		#call PRINT_ACT_POS
 		li t0,109
 		beq a0,t0,FIM # se tecla == M, sair  
@@ -124,7 +140,7 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		li t0,113 # Q = pulo esq
 		beq a0,t0,BCALL_MV_MARIO_PULO_ESQ
 		
-	MAINLOOP_RET:	
+	MAINLOOP_RET:
 		tail DK_DANCA_LOOP
 		j MAINLOOP
 	MPUP: tail MARIO_PULO_UP
@@ -195,9 +211,15 @@ FIM:
 	
 # calls pra outras funcoes por causa dos 12bit
 BCALL_MV_MARIO_DIREITA:
-	tail MOVE_MARIO_DIREITA
+	la t0,movement_counter
+	sw zero,0(t0)
+	call MOVE_MARIO_DIREITA
+	j MAINLOOP_RET
 BCALL_MV_MARIO_ESQUERDA:
-	tail MOVE_MARIO_ESQUERDA
+	la t0,movement_counter
+	sw zero,0(t0)
+	call MOVE_MARIO_ESQUERDA
+	j MAINLOOP_RET
 BCALL_MV_MARIO_CIMA:
 	tail MOVE_MARIO_CIMA
 BCALL_MV_MARIO_BAIXO:
@@ -208,6 +230,36 @@ BCALL_MV_MARIO_PULO_DIR:
 	tail MARIO_PULO_DIR
 BCALL_MV_MARIO_PULO_ESQ:
 	tail MARIO_PULO_ESQ
+	
+# verificador do contador de movimento
+# verifica se mario esta se movendo
+# verifica a direcao e se tiver em multiplo de 100, faz movimento
+MOV_COUNTER_VERIF:
+	save_stack(ra)
+	la t0,mario_state
+	lb t1,0(t0)
+	andi t2,t1,0x02 # verifica bit "andando"
+	andi t1,t1,0x01 # verifica bit "pulando"
+	bnez t1,FIM_MOV_COUNTER_VERIF
+	beqz t2,FIM_MOV_COUNTER_VERIF # se nao tiver andando
+	# se tiver andando, faz movimento
+	lb t1,0(t0)
+	andi t2,t1,0x04 # verifica direcao
+	beqz t2,MCV_DIR # se der zero, eh pra direita
+	# se nao der 0, eh pra esquerda
+	j MCV_ESQ
+	MCV_DIR:
+		call MOVE_MARIO_DIREITA
+		free_stack(ra)
+		ret
+	MCV_ESQ:
+		call MOVE_MARIO_ESQUERDA
+		free_stack(ra)
+		ret
+	
+	FIM_MOV_COUNTER_VERIF:
+		free_stack(ra)
+		ret
 	
 .include "common.s"
 .include "mario.s"
