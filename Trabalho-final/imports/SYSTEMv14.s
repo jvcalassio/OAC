@@ -157,7 +157,7 @@ TextErrorInst: .string "Instruction: "
 ########################################################################################
 .text
 
-###### Devem ser colocadas aqui as identificações das interrupções e exceções
+###### Devem ser colocadas aqui as identificaï¿½ï¿½es das interrupï¿½ï¿½es e exceï¿½ï¿½es
 exceptionHandling:	csrrsi t0,16,0 # carrega ucause. 17 apenas temporario, mudar para 66
 			li t1,8
 			beq t0,t1,ecallException # chama ecall se ucause = 8
@@ -543,7 +543,7 @@ goToExit:   	DE1(goToExitDE2)	# se for a DE2
   		li 	a7, 10		# chama o ecall normal do Rars
   		ecall			# exit ecall
   		
-goToExitDE2:	j 	goToExitDE2		# trava o processador : Não tem sistema operacional!
+goToExitDE2:	j 	goToExitDE2		# trava o processador : Nï¿½o tem sistema operacional!
 
 goToPrintInt:	jal     printInt               	# chama printInt
 		j       endEcall

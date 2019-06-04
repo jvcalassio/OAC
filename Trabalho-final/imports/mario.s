@@ -140,7 +140,7 @@ MOVE_MARIO_DIREITA:
 		# sleep entre os passos (20ms)
 		li a0,20
 		li a7,32
-		#ecall
+		ecall
 	
 	MVMD_P2: # faz passo 2
 		rmv_mario(mario_andando_p1)
@@ -206,9 +206,9 @@ MOVE_MARIO_ESQUERDA:
 		call PRINT_OBJ_MIRROR # printa mario passo 1 na tela
 	
 		# sleep entre os passos (20ms)
-		#li a0,20
-		#li a7,32
-		#ecall
+		li a0,20
+		li a7,32
+		ecall
 	
 	MVME_P2: # faz passo 2
 		rmv_mario(mario_andando_p1)
@@ -217,9 +217,9 @@ MOVE_MARIO_ESQUERDA:
 		call PRINT_OBJ_MIRROR # printa mario passo 2 na tela
 		
 		# sleep entre os passos (20ms)
-		#li a0,20
-		#li a7,32
-		#ecall
+		li a0,20
+		li a7,32
+		ecall
 	
 	MVME_P3: # faz passo 3
 		rmv_mario(mario_andando_p2)
@@ -228,9 +228,9 @@ MOVE_MARIO_ESQUERDA:
 		call PRINT_OBJ_MIRROR # printa mario passo 3 na tela
 	
 		# sleep entre os passos (20ms)
-		#li a0,20
-		#li a7,32
-		#ecall
+		li a0,20
+		li a7,32
+		ecall
 	
 	MVME_P0: # faz mario parado novamente
 		rmv_mario(mario_andando_p1)
@@ -430,6 +430,7 @@ MOVE_MARIO_BAIXO:
 # o mesmo virado pra direita
 # sprite de pulo sempre o mesmo do ponto de subida ate o topo, ate voltar ao ponto inicial de subida e muda pro fim_pulo
 MARIO_PULO_UP:
+	save_stack(s0)
 	la t0,mario_state
 	lb t1,0(t0)
 	andi t1,t1,0x1A # verifica se pode pular
@@ -456,7 +457,7 @@ MARIO_PULO_UP:
 		andi t1,t1,0x04 # verifica se esta pulando pra esquerda ou direita
 		ori t1,t1,0x01 # seta mario status como pulando
 		sb t1,0(t0) # grava mario state
-		andi t2,t1,0x04 # verificador de qual lado o mario esta
+		andi s0,t1,0x04 # verificador de qual lado o mario esta
 		
 		la t0,pulo_px
 		lb t1,1(t0)
@@ -465,7 +466,7 @@ MARIO_PULO_UP:
 		
 		set_mario_move(0,-8,mario_pulando) # se move 8px pra cima
 		
-		beqz t2,PULO_UP_PDIR
+		beqz s0,PULO_UP_PDIR
 		j PULO_UP_PESQ
 		
 	MARIO_PULO_UP_SOBE:
@@ -476,11 +477,11 @@ MARIO_PULO_UP:
 		
 		la t0,mario_state
 		lb t1,0(t0)
-		andi t2,t1,0x04 # verificador de qual o lado do mario
+		andi s0,t1,0x04 # verificador de qual o lado do mario
 		
 		set_mario_move(0,-1,mario_pulando) # se move 1px pra cima
 		
-		beqz t2,PULO_UP_PDIR
+		beqz s0,PULO_UP_PDIR
 		j PULO_UP_PESQ
 		
 	MARIO_PULO_UP_INIT_DESCIDA:
@@ -494,11 +495,11 @@ MARIO_PULO_UP:
 		
 		la t0,mario_state
 		lb t1,0(t0)
-		andi t2,t1,0x04 # verificador de qual o lado do mario
+		andi s0,t1,0x04 # verificador de qual o lado do mario
 		
 		set_mario_move(0,0,mario_pulando) # nao se move nesse frame
 		
-		beqz t2,PULO_UP_PDIR
+		beqz s0,PULO_UP_PDIR
 		j PULO_UP_PESQ
 	
 	MARIO_PULO_UP_DESCE:
@@ -509,11 +510,11 @@ MARIO_PULO_UP:
 		
 		la t0,mario_state
 		lb t1,0(t0)
-		andi t2,t1,0x04 # pega para qual lado o mario esta virado
+		andi s0,t1,0x04 # pega para qual lado o mario esta virado
 		
 		set_mario_move(0,1,mario_pulando) # se move 1px pra baixo
 		
-		beqz t2,PULO_UP_PDIR
+		beqz s0,PULO_UP_PDIR
 		j PULO_UP_PESQ
 	
 	MARIO_PULO_UP_RESET:
@@ -522,13 +523,13 @@ MARIO_PULO_UP:
 		sb zero,1(t0) # reseta pulopx
 		
 		la t0,mario_state
-		lb t1,0(t0)
-		andi t1,t1,0x04
-		sb t1,0(t0) # salva estado do mario no chao, virado pro lado onde ja estava
+		lb s0,0(t0)
+		andi s0,s0,0x04
+		sb s0,0(t0) # salva estado do mario no chao, virado pro lado onde ja estava
 		
 		set_mario_move(0,8,mario_parado) # se move 8px pra baixo
 		
-		beqz t1,PULO_UP_PDIR
+		beqz s0,PULO_UP_PDIR
 		
 	PULO_UP_PESQ: # pula pra cima parado, virado pra esquerda
 		call PRINT_OBJ_MIRROR
@@ -537,6 +538,7 @@ MARIO_PULO_UP:
 		call PRINT_OBJ
 	
 	FIM_PULO_UP:
+		free_stack(s0)
 		tail MAINLOOP_RET
 
 # realiza mario pulando pra direita em movimento

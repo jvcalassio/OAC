@@ -6,7 +6,6 @@
 var_dk: .word 0,0,0,0
 var_lady: .word 0
 
-
 .text
 INIT_DK_DANCA:
 	
@@ -56,7 +55,7 @@ DK_DANCA_LOOP:
 
 	DK_DANCA_FRAME0:
 		
-		li	a0, 50
+		li	a0, 62
 		li	a1, 28
 		li	a2, DISPLAY0
 		la	a3, fase1
@@ -65,7 +64,7 @@ DK_DANCA_LOOP:
 		call	CLEAR_OBJPOS
 		free_stack(ra)
 		
-		li	a0, 50
+		li	a0, 62
 		li	a1, 28
 		li	a2, DISPLAY0
 		la	a3, dk_1
@@ -82,7 +81,7 @@ DK_DANCA_LOOP:
 
 	DK_DANCA_FRAME1:
 
-		li	a0, 50
+		li	a0, 62
 		li	a1, 28
 		li	a2, DISPLAY0
 		la	a3, fase1
@@ -91,7 +90,7 @@ DK_DANCA_LOOP:
 		call	CLEAR_OBJPOS
 		free_stack(ra)
 		
-		li	a0, 50
+		li	a0, 62
 		li	a1, 28
 		li	a2, DISPLAY0
 		la	a3, dk_2
@@ -108,7 +107,7 @@ DK_DANCA_LOOP:
 		
 	DK_DANCA_FRAME2:
 
-		li	a0, 50
+		li	a0, 62
 		li	a1, 28
 		li	a2, DISPLAY0
 		la	a3, fase1
@@ -117,7 +116,7 @@ DK_DANCA_LOOP:
 		call	CLEAR_OBJPOS
 		free_stack(ra)
 		
-		li	a0, 50
+		li	a0, 62
 		li	a1, 28
 		li	a2, DISPLAY0
 		la	a3, dk_1
