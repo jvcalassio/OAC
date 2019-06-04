@@ -1,10 +1,16 @@
+.include "../imports/macros2.s"
+
 .data
 # Numero de Notas a tocar
 NUM: .word 7
 # lista de nota,duração,nota,duração,nota,duração,...
-NOTAS: 64,400,0,100,67,400,0,100,55,400,0,100,60,600,
+NOTAS: 64,400,0,100,67,400,0,100,55,400,0,100,60,600
 
 .text
+	la t0,exceptionHandling
+	csrrw zero,5,t0
+	csrrwi zero,0,1
+
 	la s0,NUM		# define o endereço do número de notas
 	lw s1,0(s0)		# le o numero de notas
 	la s0,NOTAS		# define o endereço das notas
@@ -18,6 +24,8 @@ LOOP:	beq t0,s1, FIM		# contador chegou no final? então vá para FIM
 	lw a0,0(s0)		# le o valor da nota
 	bnez a0,LOOP2
 	li a3,0			# zera o volume da nota
+	
+
 	
 LOOP2:	lw a1,4(s0)		# le a duracao da nota
 	li a7,31		# define a chamada de syscall
@@ -36,3 +44,4 @@ FIM:	beq t1,t2,FIM1		# contador chegou no final? então vá para FIM1
 FIM1: 	li a0,10		# saida do programa
 	ecall
 
+.include "../imports/SYSTEMv14.s"

@@ -126,14 +126,8 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		beq a0,t0,BCALL_MV_MARIO_PULO_ESQ
 		
 	MAINLOOP_RET:
-		save_stack(ra)
 		call DK_DANCA_LOOP
-		free_stack(ra)
-		
-		save_stack(ra)
 		call LADY_LOOP
-		free_stack(ra)
-		
 		j MAINLOOP
 	MPUP: tail MARIO_PULO_UP
 	MPDIR: tail MARIO_PULO_DIR
@@ -220,4 +214,4 @@ BCALL_MV_MARIO_PULO_ESQ:
 .include "common.s"
 .include "mario.s"
 .include "environment.s"
-.include "SYSTEMv13.s"
+.include "SYSTEMv14.s"

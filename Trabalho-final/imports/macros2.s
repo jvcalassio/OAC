@@ -9,8 +9,6 @@
  	la t6,%label		# carrega em t6 o endereço base das rotinas do sistema ECALL
  	csrrw zero,5,t6 	# seta utvec (reg 5) para o endereço t6
  	csrrsi zero,0,1 	# seta o bit de habilitação de interrupção em ustatus (reg 0)
- 	la tp,UTVEC		# caso nao tenha csrrw apenas salva o endereco %label em UTVEC
- 	sw t6,0(tp)
  .end_macro
 
 ######### Chamada de Ecall #################

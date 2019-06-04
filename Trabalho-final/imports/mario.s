@@ -140,7 +140,7 @@ MOVE_MARIO_DIREITA:
 		# sleep entre os passos (20ms)
 		li a0,20
 		li a7,32
-		ecall
+		#ecall
 	
 	MVMD_P2: # faz passo 2
 		rmv_mario(mario_andando_p1)
@@ -206,9 +206,9 @@ MOVE_MARIO_ESQUERDA:
 		call PRINT_OBJ_MIRROR # printa mario passo 1 na tela
 	
 		# sleep entre os passos (20ms)
-		li a0,20
-		li a7,32
-		ecall
+		#li a0,20
+		#li a7,32
+		#ecall
 	
 	MVME_P2: # faz passo 2
 		rmv_mario(mario_andando_p1)
@@ -217,9 +217,9 @@ MOVE_MARIO_ESQUERDA:
 		call PRINT_OBJ_MIRROR # printa mario passo 2 na tela
 		
 		# sleep entre os passos (20ms)
-		li a0,20
-		li a7,32
-		ecall
+		#li a0,20
+		#li a7,32
+		#ecall
 	
 	MVME_P3: # faz passo 3
 		rmv_mario(mario_andando_p2)
@@ -228,9 +228,9 @@ MOVE_MARIO_ESQUERDA:
 		call PRINT_OBJ_MIRROR # printa mario passo 3 na tela
 	
 		# sleep entre os passos (20ms)
-		li a0,20
-		li a7,32
-		ecall
+		#li a0,20
+		#li a7,32
+		#ecall
 	
 	MVME_P0: # faz mario parado novamente
 		rmv_mario(mario_andando_p1)
