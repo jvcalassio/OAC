@@ -25,10 +25,7 @@ reg [6:0] i;
 initial
 	begin 
 		for (i = 0; i <= 68; i = i + 1'b1) // seta os registradores 0 a 5
-			registers[i] = 32'b1; // seta tudo em 1 pra testes apenas
-			// registers[i] = 32'b0;
-		//for (i = 64; i <= 68; i = i + 1'b1) // seta os registradores 64 a 68
-		//registers[i] = 32'b1;
+			registers[i] = 32'b0;
 	end
 
 
@@ -47,8 +44,6 @@ begin
     begin // reseta o banco de registradores
         for (i = 0; i <= 68; i = i + 1'b1)
             registers[i] <= 32'b0;
-		  //for (i = 64; i <= 68; i = i + 1'b1)
-			//	registers[i] <= 32'b0;
     end
     else
 	 begin // do contrario, apenas escreve dado desejado no registrador desejado

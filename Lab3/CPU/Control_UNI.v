@@ -40,9 +40,9 @@
 wire [6:0] Opcode = iInstr[ 6: 0];
 wire [2:0] Funct3	= iInstr[14:12];
 wire [6:0] Funct7	= iInstr[31:25];
-`ifdef RV32IMF
+//`ifdef RV32IMF
 wire [4:0] Rs2    = iInstr[24:20]; // Para os converts de ponto flutuante
-`endif
+//`endif
 
 always @(*)
 	case(Opcode)
@@ -833,8 +833,8 @@ always @(*)
 				case(Funct3)
 					FUNCT3_ECALL:
 						begin
-							case(Funct7)
-								FUNCT7_ECALL: // ecall
+							case(Rs2)
+								RS2_ECALL: // ecall
 									begin
 										oCSRegWrite		<= OFF; // nao escreve em CSR alem de UEPC e UCAUSE
 										oCSRWSource  	<= 3'b000;
@@ -846,7 +846,7 @@ always @(*)
 										oOrigPC 			<= 3'b100; // pc vem do csreg
 										oCSType 			<= 2'b01; // tipo excessao
 									end
-								FUNCT7_URET: // uret
+								RS2_URET: // uret
 									begin
 										oCSRegWrite 	<= OFF; // nao escreve nos CSR
 										oCSRWSource  	<= 3'b000;
@@ -862,14 +862,14 @@ always @(*)
 									begin
 										oRegWrite	<= 1'b0;  
 										oMem2Reg 	<= 3'b000;
-										// dispara tratamento de excessao (mas pelo funct7 invalido!)
+										// dispara tratamento de excessao (mas pelo rs2 invalido!)
 										oCSRegWrite  <= ON;
 										oCSRWSource  <= 3'b110; // grava instrucao em uval
 										oUCAUSEWrite <= ON;
 										oUCAUSEData  <= 32'h00000002; // causa = instr invalida
 										oUEPCWrite 	 <= ON;
-										oCSType		 <= 2'b01; // tipo cs excessao
 										oOrigPC		 <= 3'b100; // pc vem do csreg utvec
+										oCSType		 <= 2'b01; // tipo cs excessao
 									end
 							endcase
 						end

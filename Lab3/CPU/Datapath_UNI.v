@@ -94,6 +94,7 @@ assign mDebug				= 32'h000ACE10;	// Ligar onde for preciso
 assign wRegDispSelect 	= mRegDispSelect;
 assign wVGASelect 		= mVGASelect;
 assign mRegDisp			= wRegDisp;
+assign mCSRegDisp			= wCSRegDisp;
 assign mVGARead			= wVGARead;
 assign mCSVGARead			= wCSVGARead;
 
@@ -137,7 +138,6 @@ wire [ 4:0] wRs1			= wInstr[19:15];
 wire [ 4:0] wRs2			= wInstr[24:20];
 wire [ 4:0] wRd			= wInstr[11: 7];
 wire [ 2:0] wFunct3		= wInstr[14:12];
-
 
 
 
@@ -263,9 +263,10 @@ MemStore MEMSTORE0 (
     .iAlignment(wALUresult[1:0]),
     .iFunct3(wFunct3),
     .iData(wWrite2Mem),
+	 .iMemOpType(wMemOpType),
     .oData(wMemDataWrite),
     .oByteEnable(wMemEnable),
-    .oException()
+	 .oException()
 	);
 
 	
@@ -286,6 +287,7 @@ MemLoad MEMLOAD0 (
     .iAlignment(wALUresult[1:0]),
     .iFunct3(wFunct3),
     .iData(wReadData),
+	 .iMemOpType(wMemOpType),
     .oData(wMemLoad),
     .oException()
 	);
@@ -307,39 +309,6 @@ BranchControl BC0 (
 
 // ******************************************************
 // multiplexadores	
-
-wire [6:0] wCSReadRegister, wCSWriteRegister;
-// numero do csr a ser lido, numero do csr a ser escrito
-always @(*)
-	begin
-		case(wCSType)
-			2'b00: // nenhum tipo (fica o espaco se necessario)
-				begin
-					wCSReadRegister	<= 7'b0000000;
-					wCSWriteRegister	<= 7'b0000000;
-				end
-			2'b01: // se for ecall ou qlqr outra excessao com ucause, le CSR UTVEC = 7'd5
-				begin
-					wCSReadRegister	<= 7'd5; 
-					wCSWriteRegister	<= 7'd18; // mudar para utval = 7'd67
-				end
-			2'b10: // se for uret, le CSR UEPC = 7'd65
-				begin
-					wCSReadRegister	<= 7'd17; 
-					wCSWriteRegister	<= 7'b0000000;
-				end
-			2'b11: // se for instrucao, le o CSR vindo do imediato
-				begin
-					wCSReadRegister	<= wImmediate; 
-					wCSWriteRegister	<= wImmediate;
-				end
-			default: 
-				begin
-					wCSReadRegister	<= 7'b0000000;
-					wCSWriteRegister	<= 7'b0000000;
-				end
-		endcase
-	end
 	
 // fonte do dado a ser escrito no CSR
 wire [31:0] wCSWriteData;
@@ -355,6 +324,39 @@ always @(*)
 			3'b110: 	wCSWriteData <= wInstr;
 			3'b111: 	wCSWriteData <= PC;
 			default: wCSWriteData <= wRead1;
+		endcase
+	end
+
+// numero do csr a ser lido, numero do csr a ser escrito
+wire [6:0] wCSReadRegister, wCSWriteRegister;
+always @(*)
+	begin
+		case(wCSType)
+			2'b00: // nenhum tipo (fica o espaco se necessario)
+				begin
+					wCSReadRegister	<= 7'b0000000;
+					wCSWriteRegister	<= 7'b0000000;
+				end
+			2'b01: // se for ecall ou qlqr outra excessao com ucause, le UTVEC, escreve UTVAL
+				begin
+					wCSReadRegister	<= 7'b0000101;
+					wCSWriteRegister	<= 7'd18; // mudar para utval = 7'd67
+				end
+			2'b10: // se for uret, le CSR UEPC = 7'd65
+				begin
+					wCSReadRegister	<= 7'd17;
+					wCSWriteRegister	<= 7'b0000000;
+				end
+			2'b11: // se for instrucao, le e escreve o CSR vindo do imediato
+				begin
+					wCSReadRegister	<= wImmediate; 
+					wCSWriteRegister	<= wImmediate;
+				end
+			default: 
+				begin
+					wCSReadRegister	<= 7'b0000000;
+					wCSWriteRegister	<= 7'b0000000;
+				end
 		endcase
 	end
 						  						 
@@ -382,8 +384,8 @@ always @(*)
     case(wCMem2Reg)
         2'b000:     wRegWrite <= wALUresult;		// Tipo-R e Tipo-I
         2'b001:     wRegWrite <= wPC4;				// jalr e jal
-        3'b010:     wRegWrite <= wMemLoad;			// Loads
-		  3'b100:	  wRegWrite <= wCSRead;		// csr instruction
+        3'b010:     wRegWrite <= wMemLoad;		// Loads
+		  3'b100:	  wRegWrite <= wCSRead;			// csr instruction
         default:    wRegWrite <= ZERO;
     endcase 
 `else
@@ -404,9 +406,9 @@ always @(*)
 	case(wCOrigPC)
 		3'b000:     wiPC <= wPC4;												// PC+4
       3'b001:     wiPC <= wBranch ? wBranchPC: wPC4;					// Branches
-      3'b010:     wiPC <= wBranchPC;											// jal
+      3'b010:     wiPC <= wBranchPC;										// jal
       3'b011:     wiPC <= (wRead1+wImmediate) & ~(32'h000000001);	// jalr
-		3'b100:		wiPC <= wCSRead; // UTVECT ou UEPC (exception)
+		3'b100:		wiPC <= wCSRead; 											// UTVECT ou UEPC (exception)
 		default:	   wiPC <= ZERO;
 	endcase
 
