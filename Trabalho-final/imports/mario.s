@@ -9,7 +9,7 @@
 	li a0,%x
 	li a1,%y
 	la a3,%sprite
-	call SET_MARIO_MOVEMENT
+	call SET_MARIO_MOVIMENT
 .end_macro
 
 # remove um sprite do mario nas posicoes atuais
@@ -53,8 +53,6 @@
 mario_state: .byte 0 # salva estado atual do mario
 pulo_px: .byte 0,0 # salva pixels movidos no pulo
 pos_mario: .half 0,0 # salva posicao atual do mario (x,y)
-
-movement_counter: .word 0 # contador de movimento
 .text
 
 # Printa o Mario na posicao inicial
@@ -77,8 +75,6 @@ INIT_MARIO:
 		sb zero,0(t0) # seta 00000 no mario state (parado no chao virado pra direita)
 		la t0,pulo_px
 		sh zero,0(t0) # reseta pulopx
-		la t0,movement_counter
-		sw zero,0(t0) # reseta mv counter
 	
 	FIM_INIT_MARIO:
 		free_stack(ra)
@@ -103,7 +99,7 @@ REMOVE_MARIO:
 # a0 = + x
 # a1 = + y
 # a3 = sprite
-SET_MARIO_MOVEMENT:
+SET_MARIO_MOVIMENT:
 	la t0,pos_mario # pega posicao do mario novamente
 	lh t1,0(t0)     # pois a funcao anterior modifica os valores
 	lh t2,2(t0)
@@ -117,222 +113,141 @@ SET_MARIO_MOVEMENT:
 
 # Faz o movimento do mario para a direita
 MOVE_MARIO_DIREITA:
-	save_stack(ra)
 	save_stack(a0)
 	
 	li a0,1
 	call MARIO_COLLISIONS # verifica permissao do movimento
 	beqz a0,FIM_MVMD_RET # se nao for permitido, so retorna
 	
-	MVMD_COUNTER_VERIF:
-	# verificacao do contador
-	la t0,movement_counter
-	lw t1,0(t0) # carrega counter
-	# se counter == 0, faz passo 1
-	beqz t1,MVMD_P1
-	# se counter == 150, faz passo 2
-	li t2,150
-	beq t1,t2,MVMD_P2
-	# se counter == 300, faz passo 3
-	li t2,300
-	beq t1,t2,MVMD_P3
-	# se counter == 450, faz passo 0
-	li t2,450
-	beq t1,t2,MVMD_P0
-	# se nenhum deles, apenas incrementa
-	j FIM_MVMD
+	# verificacao de degraus
+	call MARIO_VERIF_DEGRAU
+	beqz a0,MVMD_P1 # se nao tiver degrau, nao faz nada
+	li t0,0x03
+	beq a0,t0,DDIR_TIPO_D # se tiver degrau do tipo D
+	# se tiver degrau do tipo A, desce
+	jal MV_1PXDW
+	j MVMD_P1
+	
+	DDIR_TIPO_D: # se tiver degrau do tipo D, desce
+	jal MV_1PXUP
 	
 	MVMD_P1: # faz passo 1
 		rmv_mario(mario_parado)
 		
 		set_mario_move(1,0,mario_andando_p1) # se move 1px pra direita
 		call PRINT_OBJ # printa mario passo 1 na tela
-		
-		la t0,mario_state
-		lb t1,0(t0)
-		andi t1,t1,0x10 # depende do martelo, parado e pra direita
-		ori t1,t1,0x02 # andando
-		sb t1,0(t0)
-		
-		# verificacao de degraus
-		call MARIO_VERIF_DEGRAU
-		beqz a0,FIM_MVMD # se nao tiver degrau, nao faz nada
-		li t0,0x03
-		beq a0,t0,DDIR_TIPO_D # se tiver degrau do tipo D
-		# se tiver degrau do tipo A, desce
-		jal MV_1PXDW
-		j FIM_MVMD
 	
-		DDIR_TIPO_D: # se tiver degrau do tipo D, desce
-		jal MV_1PXUP
+		# sleep entre os passos (20ms)
+		li a0,20
+		li a7,32
+		ecall
 	
-		j FIM_MVMD
 	MVMD_P2: # faz passo 2
 		rmv_mario(mario_andando_p1)
 		
-		set_mario_move(2,0,mario_andando_p2) # se move 1px pra direita
+		set_mario_move(1,0,mario_andando_p2) # se move 1px pra direita
 		call PRINT_OBJ # printa mario passo 2 na tela
 		
-		j FIM_MVMD
+		# sleep entre os passos (20ms)
+		li a0,20
+		li a7,32
+		ecall
+	
 	MVMD_P3: # faz passo 3
 		rmv_mario(mario_andando_p2)
 		
 		set_mario_move(1,0,mario_andando_p1) # se move 1px pra direita
 		call PRINT_OBJ # printa mario passo 3 na tela
-		
-		# verifica se precisa continuar movimento ou resetar pra parado
-		la t0,last_key
-		lw t1,0(t0) # carrega tecla
-		lw t2,4(t0) # carrega tempo
-		li t3,100 # tecla pra direita
-		bne t1,t3,FIM_MVMD # se nao for tecla pra direita, reseta
-		li a7,30
-		ecall # retorna tempo atual em a0
-		sub t2,a0,t2 # tempo atual - tempo da ultima tecla
-		li t0,100 # tempo aceitavel (ms) pra ultima tecla
-		bgt t2,t0,FIM_MVMD # se foi mais de 100ms atras, tbm para
-		
-		# senao, zera contador e faz passo 1 dnv
-		la t0,movement_counter
-		sw zero,0(t0) # atualiza counter
-		
-		j FIM_MVMD_RET
+	
+		# sleep entre os passos (20ms)
+		li a0,20
+		li a7,32
+		ecall
+	
 	MVMD_P0: # faz mario parado novamente
 		rmv_mario(mario_andando_p1)
 		
-		set_mario_move(0,0,mario_parado) # se move 1px pra direita
+		set_mario_move(1,0,mario_parado) # se move 1px pra direita
 		call PRINT_OBJ # printa mario passo final na tela
-		
-		la t0,mario_state
-		lb t1,0(t0)
-		andi t1,t1,0x10 # dependo do martelo, parado e pra direita
-		sb t1,0(t0)
-		
-		la t0,movement_counter
-		sw zero,0(t0) # atualiza counter
-		
-		j FIM_MVMD_RET
+	
 	# com isso, o mario se movimentou um total de 4px
 	FIM_MVMD:
-		jal INCREASE_MVCOUNTER
+		la t0,mario_state
+		lb t1,0(t0)
+		andi t1,t1,0x10
+		sb t1,0(t0) # salva o estado atual do mario
 	FIM_MVMD_RET:
 		free_stack(a0) # devolve valor de a0
-		free_stack(ra) # devolve ra
-		ret
-
-# Faz o movimento do mario para a esquerda
+		tail MAINLOOP_RET
+	
 MOVE_MARIO_ESQUERDA:
-	save_stack(ra)
 	save_stack(a0)
 	
 	li a0,2
 	call MARIO_COLLISIONS # verifica permissao do movimento
-	beqz a0,FIM_MVME_RET # se nao for permitido, so retorna
+	beq a0,zero,FIM_MVME_RET # se nao for permitido, retorna
 	
-	MVME_COUNTER_VERIF:
-	# verificacao do contador
-	la t0,movement_counter
-	lw t1,0(t0) # carrega counter
-	# se counter == 0, faz passo 1
-	beqz t1,MVME_P1
-	# se counter == 150, faz passo 2
-	li t2,150
-	beq t1,t2,MVME_P2
-	# se counter == 300, faz passo 3
-	li t2,300
-	beq t1,t2,MVME_P3
-	# se counter == 450, faz passo 0
-	li t2,450
-	beq t1,t2,MVME_P0
-	# se nenhum deles, apenas incrementa
-	j FIM_MVME
+	# verificacao de degraus
+	call MARIO_VERIF_DEGRAU
+	beqz a0,MVME_P1 # se nao tiver degrau, nao faz nada
+	li t0,0x03
+	beq a0,t0,DESQ_TIPO_D # se tiver degrau do tipo D
+	# se tiver degrau do tipo A, sobe
+	jal MV_1PXUP
+	j MVME_P1
+	
+	DESQ_TIPO_D: # se tiver degrau do tipo D, desce
+	jal MV_1PXDW
 	
 	MVME_P1: # faz passo 1
 		rmv_mario(mario_parado)
 		
 		set_mario_move(-1,0,mario_andando_p1) # se move 1px pra esquerda
 		call PRINT_OBJ_MIRROR # printa mario passo 1 na tela
-		
-		la t0,mario_state
-		lb t1,0(t0)
-		andi t1,t1,0x14 # depende do martelo, parado e pra esquerda
-		ori t1,t1,0x06 # adiciona bits de andando pra esquerda
-		sb t1,0(t0)
-		
-		# verificacao de degraus
-		call MARIO_VERIF_DEGRAU
-		beqz a0,FIM_MVME # se nao tiver degrau, nao faz nada
-		li t0,0x03
-		beq a0,t0,DESQ_TIPO_D # se tiver degrau do tipo D
-		# se tiver degrau do tipo A, sobe
-		jal MV_1PXUP
-		j FIM_MVME
 	
-		DESQ_TIPO_D: # se tiver degrau do tipo D, desce
-		jal MV_1PXDW
+		# sleep entre os passos (20ms)
+		li a0,20
+		li a7,32
+		ecall
 	
-		j FIM_MVME
 	MVME_P2: # faz passo 2
 		rmv_mario(mario_andando_p1)
 		
-		set_mario_move(-2,0,mario_andando_p2) # se move 1px pra esquerda
+		set_mario_move(-1,0,mario_andando_p2) # se move 1px pra esquerda
 		call PRINT_OBJ_MIRROR # printa mario passo 2 na tela
 		
-		j FIM_MVME
+		# sleep entre os passos (20ms)
+		li a0,20
+		li a7,32
+		ecall
+	
 	MVME_P3: # faz passo 3
 		rmv_mario(mario_andando_p2)
 		
 		set_mario_move(-1,0,mario_andando_p1) # se move 1px pra esquerda
 		call PRINT_OBJ_MIRROR # printa mario passo 3 na tela
-		
-		# verifica se precisa continuar movimento ou resetar pra parado
-		la t0,last_key
-		lw t1,0(t0) # carrega tecla
-		lw t2,4(t0) # carrega tempo
-		li t3,97 # tecla pra esquerda
-		bne t1,t3,FIM_MVME # se nao for tecla pra esquerda, reseta
-		li a7,30
-		ecall # retorna tempo atual em a0
-		sub t2,a0,t2 # tempo atual - tempo da ultima tecla
-		li t0,100 # tempo aceitavel (ms) pra ultima tecla
-		bgt t2,t0,FIM_MVME # se foi mais de 100ms atras, tbm para
-		
-		# senao, zera contador e faz passo 1 dnv
-		la t0,movement_counter
-		sw zero,0(t0) # atualiza counter
-		
-		j FIM_MVME_RET
+	
+		# sleep entre os passos (20ms)
+		li a0,20
+		li a7,32
+		ecall
+	
 	MVME_P0: # faz mario parado novamente
 		rmv_mario(mario_andando_p1)
 		
-		set_mario_move(0,0,mario_parado)
-		call PRINT_OBJ_MIRROR # printa mario parado na tela
-		
+		set_mario_move(-1,0,mario_parado) # se move 1px pra esquerda
+		call PRINT_OBJ_MIRROR # printa mario passo final na tela
+	
+	# com isso, o mario se movimentou um total de -4px
+	FIM_MVME:
 		la t0,mario_state
 		lb t1,0(t0)
-		andi t1,t1,0x14 # dependo do martelo, parado e pra esquerda
-		ori t1,t1,0x04 # adiciona bit virado pra esquerda
-		sb t1,0(t0)
-		
-		la t0,movement_counter
-		sw zero,0(t0) # atualiza counter
-		
-		j FIM_MVME_RET
-	# com isso, o mario se movimentou um total de 4px
-	FIM_MVME:
-		jal INCREASE_MVCOUNTER
+		andi t1,t1,0x14
+		ori t1,t1,0x04
+		sb t1,0(t0) # salva o estado atual do mario (parado virado pra esquerda)
 	FIM_MVME_RET:
 		free_stack(a0) # devolve valor de a0
-		free_stack(ra) # devolve ra
-		ret
-		
-# Incrementa contador de movimento
-INCREASE_MVCOUNTER:
-	la t0,movement_counter
-	lw t1,0(t0)
-	addi t1,t1,1
-	sw t1,0(t0)
-	ret
+		tail MAINLOOP_RET
 
 # move o mario 1px acima, caso encontre um degrau
 MV_1PXUP:
@@ -608,8 +523,8 @@ MARIO_PULO_UP:
 		sb zero,1(t0) # reseta pulopx
 		
 		la t0,mario_state
-		lb t1,0(t0)
-		andi s0,t1,0x04
+		lb s0,0(t0)
+		andi s0,s0,0x04
 		sb s0,0(t0) # salva estado do mario no chao, virado pro lado onde ja estava
 		
 		set_mario_move(0,8,mario_parado) # se move 8px pra baixo

@@ -158,7 +158,8 @@ PRINT_OBJ_MIRRORY:
 # returna a0 = 0 (nenhuma tecla), ou a0 = tecla
 ######################################		
 KEYBIND:
-	# verificar se alguma tecla esta sendo pressionada
+	# verificar se alguma tecla esta sendo pressionada (teclado)
+	DE1(KEYBIND_JOYSTICK)
 	li t0,0xff200000
 	lw t1,0(t0)
 	beqz t1,KEYB_RET_0
@@ -168,6 +169,56 @@ KEYBIND:
 	KEYB_RET_0: # se nenhuma tecla esta sendo pressionada, retorna 0
 		li a0,0
 		ret
+	# verificar se alguma tecla esta sendo pressionada (joystick)
+	KEYBIND_JOYSTICK:
+		li t0,CTRL_X_ADDR
+		li t1,CTRL_Y_ADDR
+		lw t2,0(t0) # dado em x joystick
+		lw t4,0(t1) # dado em y joystick
+		li t3,1000
+		ble t2,t3,X_DOWN
+		li t3,3000
+		bge t2,t3,X_UP
+		li t3,1000
+		ble t4,t3,Y_DOWN_ALONE
+		li t3,3000
+		bge t4,t3,Y_UP_ALONE
+		li t0,CTRL_BTN_ADDR
+		lw t2,0(t0) # pulo
+		beqz t2,PULO_BTN_CTRL
+		li a0,0
+		ret
+		
+		Y_DOWN_ALONE: # descer
+			li a0,119
+			ret
+		Y_UP_ALONE: # subir
+			li a0,115
+			ret
+			
+		X_DOWN:
+			# verifica se move pra cima tbm
+			li t3,1000
+			bge t4,t3,X_DOWN_ALONE
+				# se tiver, pula direcionado
+				li a0,113
+				ret
+			X_DOWN_ALONE:
+				li a0,97
+				ret
+		X_UP:
+			# verifica se move pra cima tbm
+			li t3,1000
+			bge t4,t3,X_UP_ALONE
+				# se tiver, pula direcionado
+				li a0,101
+				ret
+			X_UP_ALONE:	
+				li a0,100
+				ret
+		PULO_BTN_CTRL:
+			li a0,32
+			ret
 
 ##################################################################
 # Limpa objeto na posicao desejada
