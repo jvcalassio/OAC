@@ -138,6 +138,7 @@ wire [ 4:0] wRs1			= wInstr[19:15];
 wire [ 4:0] wRs2			= wInstr[24:20];
 wire [ 4:0] wRd			= wInstr[11: 7];
 wire [ 2:0] wFunct3		= wInstr[14:12];
+wire [ 6:0] wOPCode		= wInstr[ 6: 0];
 
 
 
@@ -281,13 +282,15 @@ wire  [31:0] wReadData  = DwReadData;
 
 // Unidade de controle de leitura 
 wire [31:0] wMemLoad;
+wire [ 1:0] wLoadException;
 
 MemLoad MEMLOAD0 (
     .iAlignment(wALUresult[1:0]),
+	 .iOPCode(wOPCode),
     .iFunct3(wFunct3),
     .iData(wReadData),
     .oData(wMemLoad),
-    .oException()
+    .oException(wLoadException)
 	);
 
 
@@ -303,19 +306,26 @@ BranchControl BC0 (
 );
 
 
-
-
 // ******************************************************
-
-	
 // multiplexadores	
+
+// fios de selecao dos dados CSR
 wire [2:0]  wSCSRWSource, wSCOrigPC;
 wire [1:0]  wSCSType;
 wire 		   wSCSRegWrite, wSUCAUSEWrite, wSUEPCWrite;
 wire [31:0] wSUCAUSEData;
 
+// selecao dos dados CSR
 always @(*) begin
-	if (PC < BEGINNING_TEXT || PC > END_TEXT) begin
+	if(PC[1:0] != 2'b00) begin // endereco de instrucao desalinhado
+		wSUCAUSEWrite	<= ON; // escreve ucause
+		wSUCAUSEData 	<= 32'h00000000;
+		wSUEPCWrite 	<= ON; // escreve UEPC
+		wSCOrigPC 		<= 3'b100; // PC vem do CSR
+		wSCSRegWrite 	<= ON; // escreve em csr
+		wSCSRWSource	<= 3'b111; // excessao com ucause
+		wSCSType			<= 2'b01;
+	end else if (PC < BEGINNING_TEXT || PC > END_TEXT) begin // endereco fora do segmento .text
 		wSUCAUSEWrite	<= ON; // escreve ucause
 		wSUCAUSEData 	<= 32'h00000001;
 		wSUEPCWrite 	<= ON; // escreve UEPC
@@ -324,7 +334,25 @@ always @(*) begin
 		wSCSRWSource	<= 3'b111; // excessao com ucause
 		wSCSType			<= 2'b01;
 	end
-	else begin
+	else if(wLoadException == 2'b01) begin // endereco de load desalinhado
+		wSCSType 		<= 2'b01;
+		wSCSRWSource  	<= 3'b111;
+		wSUCAUSEData  	<= 32'h00000004; // causa = 4;
+		wSUCAUSEWrite 	<= ON;
+		wSUEPCWrite 	<= ON;
+		wSCOrigPC		<= 3'b100;
+		wSCSRegWrite   <= ON;
+	end
+	else if(wLoadException == 2'b10) begin // endereco de load fora do segmento
+		wSCSType 		<= 2'b01;
+		wSCSRWSource  	<= 3'b111;
+		wSUCAUSEData  	<= 32'h00000005; // causa = 5;
+		wSUCAUSEWrite 	<= ON;
+		wSUEPCWrite 	<= ON;
+		wSCOrigPC		<= 3'b100;
+		wSCSRegWrite  	<= ON;
+	end
+	else begin // sem exception
 		wSCSRWSource 	<= wCSRWSource;
 		wSCSType			<= wCSType;
 		wSCSRegWrite 	<= wCSRegWrite;
@@ -357,31 +385,26 @@ wire [6:0] wCSReadRegister, wCSWriteRegister;
 always @(*)
 	begin
 		case(wSCSType)
-			2'b00: // nenhum tipo (fica o espaco se necessario)
-				begin
+			2'b00: begin // nenhum tipo (fica o espaco se necessario)
 					wCSReadRegister	<= 7'b0000000;
 					wCSWriteRegister	<= 7'b0000000;
-				end
-			2'b01: // se for ecall ou qlqr outra excessao com ucause, le UTVEC, escreve UTVAL
-				begin
+			end
+			2'b01: begin // se for ecall ou qlqr outra excessao com ucause, le UTVEC, escreve UTVAL
 					wCSReadRegister	<= 7'b0000101;
 					wCSWriteRegister	<= 7'd18; // mudar para utval = 7'd67
-				end
-			2'b10: // se for uret, le CSR UEPC = 7'd65
-				begin
+			end
+			2'b10: begin // se for uret, le CSR UEPC = 7'd65
 					wCSReadRegister	<= 7'd17;
 					wCSWriteRegister	<= 7'b0000000;
 				end
-			2'b11: // se for instrucao, le e escreve o CSR vindo do imediato
-				begin
+			2'b11: begin // se for instrucao, le e escreve o CSR vindo do imediato
 					wCSReadRegister	<= wImmediate; 
 					wCSWriteRegister	<= wImmediate;
-				end
-			default: 
-				begin
+			end
+			default: begin
 					wCSReadRegister	<= 7'b0000000;
 					wCSWriteRegister	<= 7'b0000000;
-				end
+			end
 		endcase
 	end
 						  						 
