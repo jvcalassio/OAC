@@ -203,10 +203,10 @@ CSRegisters REGISTERS2 (
 	.oCSReadData(wCSRead),
 	.iCSWriteRegister(wCSWriteRegister),
 	.iCSWriteData(wCSWriteData),
-	.iCSRegWrite(wCSRegWrite),
-	.iUCAUSEWrite(wUCAUSEWrite),
-	.iUEPCWrite(wUEPCWrite),
-	.iUCAUSEData(wUCAUSEData),
+	.iCSRegWrite(wSCSRegWrite),
+	.iUCAUSEWrite(wSUCAUSEWrite),
+	.iUEPCWrite(wSUEPCWrite),
+	.iUCAUSEData(wSUCAUSEData),
 	.iUEPCData(PC),
 	
 	.iRegDispSelect(wRegDispSelect),    // seleção para display
@@ -263,7 +263,6 @@ MemStore MEMSTORE0 (
     .iAlignment(wALUresult[1:0]),
     .iFunct3(wFunct3),
     .iData(wWrite2Mem),
-	 .iMemOpType(wMemOpType),
     .oData(wMemDataWrite),
     .oByteEnable(wMemEnable),
 	 .oException()
@@ -287,7 +286,6 @@ MemLoad MEMLOAD0 (
     .iAlignment(wALUresult[1:0]),
     .iFunct3(wFunct3),
     .iData(wReadData),
-	 .iMemOpType(wMemOpType),
     .oData(wMemLoad),
     .oException()
 	);
@@ -308,13 +306,40 @@ BranchControl BC0 (
 
 
 // ******************************************************
-// multiplexadores	
+
 	
+// multiplexadores	
+wire [2:0]  wSCSRWSource, wSCOrigPC;
+wire [1:0]  wSCSType;
+wire 		   wSCSRegWrite, wSUCAUSEWrite, wSUEPCWrite;
+wire [31:0] wSUCAUSEData;
+
+always @(*) begin
+	if (PC < BEGINNING_TEXT || PC > END_TEXT) begin
+		wSUCAUSEWrite	<= ON; // escreve ucause
+		wSUCAUSEData 	<= 32'h00000001;
+		wSUEPCWrite 	<= ON; // escreve UEPC
+		wSCOrigPC 		<= 3'b100; // PC vem do CSR
+		wSCSRegWrite 	<= ON; // escreve em csr
+		wSCSRWSource	<= 3'b111; // excessao com ucause
+		wSCSType			<= 2'b01;
+	end
+	else begin
+		wSCSRWSource 	<= wCSRWSource;
+		wSCSType			<= wCSType;
+		wSCSRegWrite 	<= wCSRegWrite;
+		wSUCAUSEWrite	<= wUCAUSEWrite;
+		wSUCAUSEData	<= wUCAUSEData;
+		wSUEPCWrite		<= wUEPCWrite;
+		wSCOrigPC		<= wCOrigPC;
+	end
+end
+ 
 // fonte do dado a ser escrito no CSR
 wire [31:0] wCSWriteData;
 always @(*)
 	begin
-		case(wCSRWSource)
+		case(wSCSRWSource)
 			3'b000: 	wCSWriteData <= wRead1;
 			3'b001: 	wCSWriteData <= wCSRead | wRead1;
 			3'b010: 	wCSWriteData <= wCSRead & ~(wRead1);
@@ -331,7 +356,7 @@ always @(*)
 wire [6:0] wCSReadRegister, wCSWriteRegister;
 always @(*)
 	begin
-		case(wCSType)
+		case(wSCSType)
 			2'b00: // nenhum tipo (fica o espaco se necessario)
 				begin
 					wCSReadRegister	<= 7'b0000000;
@@ -403,7 +428,7 @@ always @(*) // Novo fio de saida para fazer os multiplexadores em cascata
 	 
 wire [31:0] wiPC;	 
 always @(*)
-	case(wCOrigPC)
+	case(wSCOrigPC)
 		3'b000:     wiPC <= wPC4;												// PC+4
       3'b001:     wiPC <= wBranch ? wBranchPC: wPC4;					// Branches
       3'b010:     wiPC <= wBranchPC;										// jal
