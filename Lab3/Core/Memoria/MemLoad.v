@@ -4,35 +4,37 @@
 
 /* Controlador da memoria de leitura */
 /* define a partir do funct3 qual a forma de acesso a memoria lb, lh, lw */
+/* verifica se ha algum erro no endereco de leitura */
 
 module MemLoad(
-	input [1:0] 		   iAlignment,
-	input [6:0]				iOPCode,
-	input [2:0] 		   iFunct3,
+	//input [1:0] 		   iAlignment,
+	input [31:0]			iReadAddr,
+	input [ 6:0]			iOPCode,
+	input [ 2:0] 		   iFunct3,
 	input [31:0] 		   iData,
 	output logic [31:0]  oData,
 	output 		 [ 1:0]	oException // 00 = nenhum, 01 = desalinhado, 10 = fora dos segmentos
 );
 
 wire wCheckAlignment;
+wire [1:0] iAlignment;
 
+assign iAlignment = iReadAddr[1:0];
 assign wCheckAlignment = (iFunct3 == FUNCT3_LW  && iAlignment    != 2'b00)
 								|| (iFunct3 == FUNCT3_LH  && iAlignment[0] != 1'b0 )
 								|| (iFunct3 == FUNCT3_LHU && iAlignment[0] != 1'b0 );
 always @(*) begin
 	if(iOPCode == OPC_LOAD) begin
 		if(wCheckAlignment) 
-			oException 			<= 2'b01; // endereco desalinhado
-		else
-			if(iData < BEGINNING_IODEVICES) begin
-				if(iData < BEGINNING_DATA || iData > END_DATA)
-					oException  <= 2'b10; // endereco fora do .data e do MMIO
-				else
-					oException  <= 2'b00; // endereco dentro do .data, valido
-			end else
-				oException 		<= 2'b00; // MMIO, valido
+				oException 	<= 2'b01; // endereco desalinhado
+		else begin
+			if((iReadAddr >= BEGINNING_DATA && iReadAddr <= END_DATA) || iReadAddr >= BEGINNING_IODEVICES) 
+				oException 	<= 2'b00; // endereco dentro do .data e MMIO, valido
+			else
+				oException	<= 2'b10; // endereco fora dos segmentos
+		end
 	end else
-		oException 				<= 2'b00; // nao eh load, valido
+				oException 	<= 2'b00; // nao eh load, valido
 end
 						
 logic [15:0] Halfword;

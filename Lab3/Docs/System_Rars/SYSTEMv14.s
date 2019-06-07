@@ -66,10 +66,6 @@
 
 
 .data
-# UTVEC e UEPC Enquanto nao tem o sistema de gerenciamento de interrupcao e excecao
-UEPC:	.word 0x00000000
-UTVEC:	.word 0x00000000
-
 # Tabela de caracteres desenhados segundo a fonte 8x8 pixels do ZX-Spectrum
 LabelTabChar:
 .word 	0x00000000, 0x00000000, 0x10101010, 0x00100010, 0x00002828, 0x00000000, 0x28FE2828, 0x002828FE, 
@@ -143,14 +139,14 @@ NumNaN:			.string "NaN"
 # textos da tela azul de excessoes
 TextError0: .string "Error 0: Instruction address misaligned"
 TextError1: .string "Error 1: Instruction access fault"
-TextError2: .string "Error 2: Ilegal Instruction"
+TextError2: .string "Error 2: Ilegal instruction"
 TextError4: .string "Error 4: Load address misaligned"
 TextError5: .string "Error 5: Load access fault"
 TextError6: .string "Error 6: Store address misaligned"
 TextError7: .string "Error 7: Store access fault"
 
-TextErrorPC: .string "PC: "
-TextErrorInst: .string "Instruction: "
+TextErrorPC: .string "PC:"
+TextErrorInst: .string "Instruction:"
 
 ### Obs.: a forma 'LABEL: instrucao' embora fique feio facilita o debug no Rars, por favor nao reformatar!!!
 
@@ -177,15 +173,23 @@ errorException: li a0,0x0099 # printa blue screen
 		jal clsCLS
 		csrrsi t0,16,0 # carrega ucause. 16 apenas temporario, mudar para 66
 		
-		addi a1,zero,10
-		addi a2,zero,10
-		li a3,0x99ff
-		
+	addi t1,zero,2
+	beq t0,t1,errorException_2 # se for exception 2, printa o "Instruction:"
+	# para todas as outras, sempre printa "PC: "
+	la a0,TextErrorPC
+	addi a1,zero,4
+	addi a2,zero,15
+	li a3,0x99ff
+	jal printString # printa pc:
+	
+	addi a1,zero,5 # prepara posicao para texto da exception
+	addi a2,zero,5
+	li a3,0x99ff
+	
+	csrrsi t0,16,0 # carrega ucause. 16 apenas temporario, mudar para 66
 	beq t0,zero,errorException_0
 	addi t1,zero,1
 	beq t0,t1,errorException_1
-	addi t1,zero,2
-	beq t0,t1,errorException_2
 	addi t1,zero,4
 	beq t0,t1,errorException_4
 	addi t1,zero,5
@@ -196,18 +200,13 @@ errorException: li a0,0x0099 # printa blue screen
 	beq t0,t1,errorException_7
 	j goToExit
 	
-	errorException_0: la a0,TextError0 # excessao instrucao desalinhada
+	errorException_0: 
+		la a0,TextError0 # excessao instrucao desalinhada
 		jal printString
 		
-		la a0,TextErrorPC
-		addi a1,zero,10
-		addi a2,zero,20
-		li a3,0x99ff
-		jal printString # printa pc:
-		
 		csrrsi a0,18,0 # 18 apenas para debug. mudar para 67
-		addi a1,zero,32
-		addi a2,zero,20
+		addi a1,zero,35
+		addi a2,zero,15
 		li a3,0x99ff
 		jal printHex # printa endereco de pc
 		
@@ -215,31 +214,28 @@ errorException: li a0,0x0099 # printa blue screen
 	errorException_1: la a0,TextError1
 		jal printString
 		
-		la a0,TextErrorPC
-		addi a1,zero,10
-		addi a2,zero,20
-		li a3,0x99ff
-		jal printString # printa pc:
-		
 		csrrsi a0,18,0 # 18 apenas para debug. mudar para 67
-		addi a1,zero,32
-		addi a2,zero,20
+		addi a1,zero,35
+		addi a2,zero,15
 		li a3,0x99ff
 		jal printHex # printa endereco de pc
 		
 		j goToExit
-	errorException_2: la a0,TextError2 # excessao instrucao ilegal
+	errorException_2: addi a1,zero,5 # prepara posicao para texto da exception
+		addi a2,zero,5
+		li a3,0x99ff
+		la a0,TextError2 # excessao instrucao ilegal
 		jal printString # printa texto 
 		
 		la a0,TextErrorInst
-		addi a1,zero,10
-		addi a2,zero,20
+		addi a1,zero,4
+		addi a2,zero,15
 		li a3,0x99ff
 		jal printString # printa instrucao:
 		
 		csrrsi a0,18,0 # 18 apenas para debug. mudar para 67
-		addi a1,zero,96
-		addi a2,zero,20
+		addi a1,zero,110
+		addi a2,zero,15
 		li a3,0x99ff
 		jal printHex # printa codigo hex da instrucao
 		
@@ -247,15 +243,9 @@ errorException: li a0,0x0099 # printa blue screen
 	errorException_4: la a0,TextError4
 		jal printString
 		
-		la a0,TextErrorPC
-		addi a1,zero,10
-		addi a2,zero,20
-		li a3,0x99ff
-		jal printString # printa pc:
-		
 		csrrsi a0,18,0 # 18 apenas para debug. mudar para 67
-		addi a1,zero,32
-		addi a2,zero,20
+		addi a1,zero,35
+		addi a2,zero,15
 		li a3,0x99ff
 		jal printHex # printa endereco de pc
 		
@@ -263,15 +253,9 @@ errorException: li a0,0x0099 # printa blue screen
 	errorException_5: la a0,TextError5
 		jal printString
 		
-		la a0,TextErrorPC
-		addi a1,zero,10
-		addi a2,zero,20
-		li a3,0x99ff
-		jal printString # printa pc:
-		
 		csrrsi a0,18,0 # 18 apenas para debug. mudar para 67
-		addi a1,zero,32
-		addi a2,zero,20
+		addi a1,zero,35
+		addi a2,zero,15
 		li a3,0x99ff
 		jal printHex # printa endereco de pc
 		
@@ -279,15 +263,9 @@ errorException: li a0,0x0099 # printa blue screen
 	errorException_6: la a0,TextError6
 		jal printString
 		
-		la a0,TextErrorPC
-		addi a1,zero,10
-		addi a2,zero,20
-		li a3,0x99ff
-		jal printString # printa pc:
-		
 		csrrsi a0,18,0 # 18 apenas para debug. mudar para 67
-		addi a1,zero,32
-		addi a2,zero,20
+		addi a1,zero,35
+		addi a2,zero,15
 		li a3,0x99ff
 		jal printHex # printa endereco de pc
 		
@@ -295,15 +273,9 @@ errorException: li a0,0x0099 # printa blue screen
 	errorException_7: la a0,TextError7
 		jal printString
 		
-		la a0,TextErrorPC
-		addi a1,zero,10
-		addi a2,zero,20
-		li a3,0x99ff
-		jal printString # printa pc:
-		
 		csrrsi a0,18,0 # 18 apenas para debug. mudar para 67
-		addi a1,zero,32
-		addi a2,zero,20
+		addi a1,zero,35
+		addi a2,zero,15
 		li a3,0x99ff
 		jal printHex # printa endereco de pc
 		

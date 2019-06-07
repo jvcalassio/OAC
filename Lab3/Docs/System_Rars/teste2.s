@@ -9,6 +9,7 @@ teste: .word 123456
 	
 	la t0,teste
 	lw t0,0(t0)
+	TESTE2: j FIM
 	
 FIM: j FIM
 
