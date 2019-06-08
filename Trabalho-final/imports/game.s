@@ -13,6 +13,7 @@ gameover_text: .string "GAME OVER\n"
 blank: .string " "
 
 vidas: .byte 0 # quantidade de vidas (inicia em 2, mudar apos testes)
+last_key: .word 0,0 # ultima tecla pressionada (tecla, tempo)
 .text
 	M_SetEcall(exceptionHandling)
 	jal PRINT_FASE1
@@ -83,6 +84,8 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	andi t0,t0,0x80
 	bnez t0,GAME_VICTORY # verifica se esta na posicao de vitoria
 	
+	jal CONTINUE_MOVEMENT
+	
 	la t0,mario_state
 	lb t1,0(t0)
 	andi t2,t1,0x01 # verifica se esta pulando
@@ -100,7 +103,20 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	call MARIO_GRAVITY
 	call KEYBIND
 	beqz a0,MAINLOOP_RET # se nenhuma tecla, faz nada
+		# salva ultima tecla pressionada
+		la t0,last_key
+		sw a0,0(t0) # salva tecla
+		li a7,30
+		ecall
+		sw a0,4(t0) # salva tempo
+		lw a0,0(t0) # retorna tecla
+	
 		#call PRINT_ACT_POS
+		la t0,mario_state
+		lb t1,0(t0)
+		andi t1,t1,0x02
+		bnez t1,MAINLOOP_RET # se ja tiver andando, ignora botao pressionado
+		
 		li t0,109
 		beq a0,t0,FIM # se tecla == M, sair  
 		
@@ -128,6 +144,11 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	MAINLOOP_RET:
 		call DK_DANCA_LOOP
 		call LADY_LOOP
+		
+		li a0,20
+		li a7,32
+		ecall
+		
 		j MAINLOOP
 	MPUP: tail MARIO_PULO_UP
 	MPDIR: tail MARIO_PULO_DIR
@@ -197,9 +218,11 @@ FIM:
 	
 # calls pra outras funcoes por causa dos 12bit
 BCALL_MV_MARIO_DIREITA:
-	tail MOVE_MARIO_DIREITA
+	call MOVE_MARIO_DIREITA
+	j MAINLOOP_RET
 BCALL_MV_MARIO_ESQUERDA:
-	tail MOVE_MARIO_ESQUERDA
+	call MOVE_MARIO_ESQUERDA
+	j MAINLOOP_RET
 BCALL_MV_MARIO_CIMA:
 	tail MOVE_MARIO_CIMA
 BCALL_MV_MARIO_BAIXO:
@@ -210,7 +233,28 @@ BCALL_MV_MARIO_PULO_DIR:
 	tail MARIO_PULO_DIR
 BCALL_MV_MARIO_PULO_ESQ:
 	tail MARIO_PULO_ESQ
+
+# continua movimentos do contador	
+CONTINUE_MOVEMENT:
+	save_stack(ra)
+	la t0,mario_state
+	lb t1,0(t0)
+	andi t2,t1,0x02
+	beqz t2,FIM_CONTINUE_MOVEMENT # se nao ta andando, sai
+	andi t2,t1,0x01
+	bnez t2,FIM_CONTINUE_MOVEMENT # se ta pulando, sai
 	
+	andi t1,t1,0x04
+	beqz t1,CONTINUE_MOVEMENT_DIR
+	CONTINUE_MOVEMENT_ESQ:
+		call MOVE_MARIO_ESQUERDA
+		j FIM_CONTINUE_MOVEMENT
+	CONTINUE_MOVEMENT_DIR:	
+		call MOVE_MARIO_DIREITA
+	FIM_CONTINUE_MOVEMENT:	
+		free_stack(ra)
+		ret
+
 .include "common.s"
 .include "mario.s"
 .include "environment.s"
