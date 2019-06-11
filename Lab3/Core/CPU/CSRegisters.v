@@ -24,7 +24,7 @@ reg [6:0] i;
 
 initial
 	begin 
-		for (i = 0; i <= 68; i = i + 1'b1) // seta os registradores 0 a 5
+		for (i = 0; i <= 68; i = i + 1'b1) // seta os registradores em 0
 			registers[i] = 32'b0;
 	end
 
@@ -52,12 +52,10 @@ begin
 				registers[iCSWriteRegister] <= iCSWriteData;
 				
 		if(iUCAUSEWrite)
-			// apenas temporario, mudar para 7'd66
-				registers[7'd16] <= iUCAUSEData;
+				registers[7'd66] <= iUCAUSEData;
 				
 		if(iUEPCWrite)
-			// apenas temporario, mudar para 7'd65
-				registers[7'd17] <= iUEPCData;
+				registers[7'd65] <= iUEPCData;
 		
 		end
 end

@@ -8,6 +8,9 @@ module CPU (
     input  wire        iCLK, iCLK50, iRST,
     input  wire [31:0] iInitialPC,
 	 
+	 // Break signal
+	 output wire 		  oBreak,
+	 
     //sinais de monitoramento
 	 output wire [31:0] mPC, 
 	 output wire [31:0] mInstr,
@@ -114,7 +117,8 @@ wire 			 wCFPstart;
 	.oUEPCWrite(wUEPCWrite),
 	.oCSType(wCSType),
 	.oUCAUSEData(wUCAUSEData),
-	.oCSRWSource(wCSRWSource)
+	.oCSRWSource(wCSRWSource),
+	.oBreak(oBreak)
 `ifdef RV32IMF
 	 ,
 	 .oFRegWrite(wCFRegWrite),

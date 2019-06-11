@@ -412,11 +412,11 @@ always @(*)
 					wCSWriteRegister	<= 7'b0000000;
 			end
 			2'b01: begin // se for ecall ou qlqr outra excessao com ucause, le UTVEC, escreve UTVAL
-					wCSReadRegister	<= 7'b0000101;
-					wCSWriteRegister	<= 7'd18; // mudar para utval = 7'd67
+					wCSReadRegister	<= 7'd05;
+					wCSWriteRegister	<= 7'd67;
 			end
 			2'b10: begin // se for uret, le CSR UEPC = 7'd65
-					wCSReadRegister	<= 7'd17;
+					wCSReadRegister	<= 7'd65;
 					wCSWriteRegister	<= 7'b0000000;
 				end
 			2'b11: begin // se for instrucao, le e escreve o CSR vindo do imediato
@@ -478,7 +478,7 @@ always @(*)
       3'b001:     wiPC <= wBranch ? wBranchPC: wPC4;					// Branches
       3'b010:     wiPC <= wBranchPC;										// jal
       3'b011:     wiPC <= (wRead1+wImmediate) & ~(32'h000000001);	// jalr
-		3'b100:		wiPC <= wCSRead; 											// UTVECT ou UEPC (exception)
+		3'b100:		wiPC <= wCSRead; 											// UTVEC ou UEPC (exception)
 		default:	   wiPC <= ZERO;
 	endcase
 

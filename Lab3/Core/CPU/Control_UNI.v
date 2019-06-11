@@ -23,7 +23,8 @@
 	 output			oUEPCWrite,
 	 output [ 1:0]	oCSType,
 	 output [31:0]	oUCAUSEData,
-	 output [ 2:0] oCSRWSource
+	 output [ 2:0] oCSRWSource,
+	 output			oBreak
 `ifdef RV32IMF
 	 ,
 	 output       oFRegWrite,    // Controla a escrita no FReg
@@ -41,7 +42,7 @@ wire [6:0] Opcode = iInstr[ 6: 0];
 wire [2:0] Funct3	= iInstr[14:12];
 wire [6:0] Funct7	= iInstr[31:25];
 //`ifdef RV32IMF
-wire [4:0] Rs2    = iInstr[24:20]; // Para os converts de ponto flutuante
+wire [4:0] Rs2    = iInstr[24:20]; // Para os converts de ponto flutuante e CSR
 //`endif
 
 always @(*)
@@ -63,6 +64,7 @@ always @(*)
 				oUEPCWrite 	 <= OFF;
 				oCSType		 <= 2'b00;
 				oUCAUSEData  <= ZERO;
+				oBreak		 <= 1'b0;
 `ifdef RV32IMF
 				oFPALU2Reg    <= 1'b0;
 				oFPALUControl <= OPNULL;
@@ -89,6 +91,7 @@ always @(*)
 				oUEPCWrite 	 <= OFF;
 				oCSType		 <= 2'b00;
 				oUCAUSEData  <= ZERO;
+				oBreak		 <= 1'b0;
 `ifdef RV32IMF
 				oFPALU2Reg    <= 1'b0;
 				oFPALUControl <= OPNULL;
@@ -158,6 +161,7 @@ always @(*)
 				oUEPCWrite 	 <= OFF;
 				oCSType		 <= 2'b00;
 				oUCAUSEData  <= ZERO;
+				oBreak		 <= 1'b0;
 `ifdef RV32IMF
 				oFPALU2Reg    <= 1'b0;
 				oFPALUControl <= OPNULL;
@@ -186,6 +190,7 @@ always @(*)
 				oUEPCWrite 	 <= OFF;
 				oCSType		 <= 2'b00;
 				oUCAUSEData  <= ZERO;
+				oBreak		 <= 1'b0;
 `ifdef RV32IMF
 				oFPALU2Reg    <= 1'b0;
 				oFPALUControl <= OPNULL;
@@ -213,6 +218,7 @@ always @(*)
 				oUEPCWrite 	 <= OFF;
 				oCSType		 <= 2'b00;
 				oUCAUSEData  <= ZERO;
+				oBreak		 <= 1'b0;
 `ifdef RV32IMF
 				oFPALU2Reg    <= 1'b0;
 				oFPALUControl <= OPNULL;
@@ -359,6 +365,7 @@ always @(*)
 				oUEPCWrite 	 <= OFF;
 				oCSType		 <= 2'b00;
 				oUCAUSEData  <= ZERO;
+				oBreak		 <= 1'b0;
 `ifdef RV32IMF
 				oFPALU2Reg    <= 1'b0;
 				oFPALUControl <= OPNULL;
@@ -387,6 +394,7 @@ always @(*)
 				oUEPCWrite 	 <= OFF;
 				oCSType		 <= 2'b00;
 				oUCAUSEData  <= ZERO;
+				oBreak		 <= 1'b0;
 `ifdef RV32IMF
 				oFPALU2Reg    <= 1'b0;
 				oFPALUControl <= OPNULL;
@@ -415,6 +423,7 @@ always @(*)
 				oUEPCWrite 	 <= OFF;
 				oCSType		 <= 2'b00;
 				oUCAUSEData  <= ZERO;
+				oBreak		 <= 1'b0;
 `ifdef RV32IMF
 				oFPALU2Reg    <= 1'b0;
 				oFPALUControl <= OPNULL;
@@ -443,6 +452,7 @@ always @(*)
 				oUEPCWrite 	 <= OFF;
 				oCSType		 <= 2'b00;
 				oUCAUSEData  <= ZERO;
+				oBreak		 <= 1'b0;
 `ifdef RV32IMF
 				oFPALU2Reg    <= 1'b0;
 				oFPALUControl <= OPNULL;
@@ -474,6 +484,7 @@ always @(*)
 				oUEPCWrite 	 <= OFF;
 				oCSType		 <= 2'b00;
 				oUCAUSEData  <= ZERO;
+				oBreak		 <= 1'b0;
 				
 				case(Funct7)
 					FUNCT7_FADD_S:
@@ -782,6 +793,7 @@ always @(*)
 				oUEPCWrite 	 <= OFF;
 				oCSType		 <= 2'b00;
 				oUCAUSEData  <= ZERO;
+				oBreak		 <= 1'b0;
 			end
 			
 		OPC_FSTORE:
@@ -810,6 +822,7 @@ always @(*)
 				oUEPCWrite 	 <= OFF;
 				oCSType		 <= 2'b00;
 				oUCAUSEData  <= ZERO;
+				oBreak		 <= 1'b0;
 			end
 		
 `endif
@@ -820,6 +833,7 @@ always @(*)
 				oMemWrite	<= 1'b0; 
 				oMemRead 	<= 1'b0; 
 				oALUControl	<= OPNULL;
+				oBreak		<= 1'b0;
 				
 			`ifdef RV32IMF
 				oFPALU2Reg    <= 1'b0;
@@ -857,6 +871,19 @@ always @(*)
 										oRegWrite		<= 1'b0;
 										oOrigPC 			<= 3'b100; // pc vem do csreg
 										oCSType 			<= 2'b10; // tipo uret
+									end
+								RS2_EBREAK:	 // ebreak
+									begin
+										oCSRegWrite		<= OFF;
+										oCSRWSource		<= 3'b000;
+										oUCAUSEWrite	<= OFF;
+										oUCAUSEData		<= ZERO;
+										oUEPCWrite		<= OFF;
+										oMem2Reg			<= 3'b000;
+										oRegWrite		<= 1'b0;
+										oOrigPC			<= 3'b000;
+										oCSType			<= 2'b00;
+										oBreak		 	<= 1'b1;
 									end
 								default:
 									begin
@@ -989,6 +1016,7 @@ always @(*)
 				oUEPCWrite 	 <= ON;
 				oCSType		 <= 2'b01; // tipo cs excessao
 				oOrigPC		 <= 3'b100; // pc vem do csreg utvec
+				oBreak		 <= 1'b0;
         end
 		  
 	endcase
