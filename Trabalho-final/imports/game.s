@@ -15,7 +15,7 @@ blank: .string " "
 vidas: .byte 0 # quantidade de vidas (inicia em 2, mudar apos testes)
 last_key: .word 0,0 # ultima tecla pressionada (tecla, tempo)
 .text
-	M_SetEcall(exceptionHandling)
+	setEcall(exceptionHandling)
 	jal PRINT_FASE1
 	call INIT_MARIO
 	call INIT_DK_DANCA
@@ -258,4 +258,4 @@ CONTINUE_MOVEMENT:
 .include "common.s"
 .include "mario.s"
 .include "environment.s"
-.include "SYSTEMv13.s"
+.include "SYSTEMv14.s"
