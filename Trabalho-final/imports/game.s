@@ -15,7 +15,7 @@ blank: .string " "
 vidas: .byte 0 # quantidade de vidas (inicia em 2, mudar apos testes)
 last_key: .word 0,0 # ultima tecla pressionada (tecla, tempo)
 .text
-	setEcall(exceptionHandling)
+	M_SetEcall(exceptionHandling)
 	jal PRINT_FASE1
 	call INIT_MARIO
 	call INIT_DK_DANCA
