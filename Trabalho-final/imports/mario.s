@@ -1,42 +1,8 @@
 #################################################
 # Responsavel por gerenciar movimentos do Mario
 #################################################
-.eqv START_MARIO_X_FASE1 84
-.eqv START_MARIO_Y_FASE1 199
-
-# move o mario +x px, +y px, usando o sprite desejado
-.macro set_mario_move(%x,%y,%sprite)
-	li a0,%x
-	li a1,%y
-	la a3,%sprite
-	call SET_MARIO_MOVIMENT
-.end_macro
-
-# remove um sprite do mario nas posicoes atuais
-.macro rmv_mario(%sprite)
-	la a4,%sprite
-	call REMOVE_MARIO
-.end_macro
-
-# pega a posicao do mario no map
-.macro mario_mappos(%result)
-	la t0,pos_mario
-	lh t1,0(t0) # x do mario
-	lh t2,2(t0) # y do mario
-	
-	addi t1,t1,16 # +16 para saber posicao do pe direito do mario
-	addi t2,t2,20 # +16 --
-	srli t1,t1,2 # x / 4 para alinhar com mapeamento
-	srli t2,t2,2 # y / 4 para alinhar com mapeamento
-	
-	la t0,fase1_obj
-	li t3,80
-	mul t3,t2,t3 # (y * 80)
-	add t3,t3,t1 # (y * 80) + n
-	add %result,t0,t3 # endereco da posicao desejada
-.end_macro
-
 .data
+# Sprites
 .include "../sprites/bin/mario_parado.s"
 .include "../sprites/bin/mario_andando_p1.s"
 .include "../sprites/bin/mario_andando_p2.s"
@@ -50,9 +16,15 @@
 .include "../sprites/bin/mario_morrendo_x.s"
 .include "../sprites/bin/mario_morto.s"
 
+# Sons
+.include "../sounds/mario_sounds.s"
+
+# Variaveis
 mario_state: .byte 0 # salva estado atual do mario
 pulo_px: .byte 0,0 # salva pixels movidos no pulo
 pos_mario: .half 0,0 # salva posicao atual do mario (x,y)
+
+movement_counter: .word 0 # contador de passos dos movimentos
 .text
 
 # Printa o Mario na posicao inicial
@@ -99,7 +71,7 @@ REMOVE_MARIO:
 # a0 = + x
 # a1 = + y
 # a3 = sprite
-SET_MARIO_MOVIMENT:
+SET_MARIO_MOVEMENT:
 	la t0,pos_mario # pega posicao do mario novamente
 	lh t1,0(t0)     # pois a funcao anterior modifica os valores
 	lh t2,2(t0)
@@ -114,112 +86,183 @@ SET_MARIO_MOVIMENT:
 # Faz o movimento do mario para a direita
 MOVE_MARIO_DIREITA:
 	save_stack(a0)
+	save_stack(ra)
 	
 	li a0,1
 	call MARIO_COLLISIONS # verifica permissao do movimento
-	beqz a0,FIM_MVMD_RET # se nao for permitido, so retorna
+	beqz a0,FIM_MVMD_PAROU # se nao for permitido, so retorna
 	
-	# verificacao de degraus
-	call MARIO_VERIF_DEGRAU
-	beqz a0,MVMD_P1 # se nao tiver degrau, nao faz nada
-	li t0,0x03
-	beq a0,t0,DDIR_TIPO_D # se tiver degrau do tipo D
-	# se tiver degrau do tipo A, desce
-	jal MV_1PXDW
-	j MVMD_P1
+	la t0,movement_counter
+	lw t1,0(t0) # contador de movimento
 	
-	DDIR_TIPO_D: # se tiver degrau do tipo D, desce
-	jal MV_1PXUP
+	# cont == 0, passo 1
+	beqz t1,MVMD_P1 #
+	# cont == 1, passo 2
+	addi t2,zero,1
+	beq t1,t2,MVMD_P2
+	# cont == 2, passo 3
+	addi t2,zero,2
+	beq t1,t2,MVMD_P3
+	# cont == 3, passo 0
+	addi t2,zero,3
+	beq t1,t2,MVMD_P0
+	j FIM_MVMD_RET
 	
 	MVMD_P1: # faz passo 1
 		rmv_mario(mario_parado)
 		
 		set_mario_move(1,0,mario_andando_p1) # se move 1px pra direita
 		call PRINT_OBJ # printa mario passo 1 na tela
+		
+		la t0,movement_counter
+		addi t1,zero,1
+		sw t1,0(t0) # salva q fez passo 1
+		
+		# verificacao de degraus
+		call MARIO_VERIF_DEGRAU
+		beqz a0,FIM_MVMD_ANDANDO # se nao tiver degrau, nao faz nada
+		li t0,0x03
+		beq a0,t0,DDIR_TIPO_D # se tiver degrau do tipo D
+		# se tiver degrau do tipo A, desce
+		jal MV_1PXDW
+		j FIM_MVMD_ANDANDO
 	
-		# sleep entre os passos (20ms)
-		li a0,20
-		li a7,32
-		ecall
+		DDIR_TIPO_D: # se tiver degrau do tipo D, desce
+		jal MV_1PXUP
+		
+		j FIM_MVMD_ANDANDO
 	
 	MVMD_P2: # faz passo 2
 		rmv_mario(mario_andando_p1)
 		
-		set_mario_move(1,0,mario_andando_p2) # se move 1px pra direita
+		set_mario_move(2,0,mario_andando_p2) # se move 1px pra direita
 		call PRINT_OBJ # printa mario passo 2 na tela
-		
-		# sleep entre os passos (20ms)
-		li a0,20
-		li a7,32
-		ecall
 	
+		la t0,movement_counter
+		addi t1,zero,2
+		sw t1,0(t0) # salva q fez passo 2
+		
+		j FIM_MVMD_RET
+		
 	MVMD_P3: # faz passo 3
 		rmv_mario(mario_andando_p2)
 		
 		set_mario_move(1,0,mario_andando_p1) # se move 1px pra direita
 		call PRINT_OBJ # printa mario passo 3 na tela
-	
-		# sleep entre os passos (20ms)
-		li a0,20
-		li a7,32
+		
+		la t0,movement_counter
+		addi t1,zero,3
+		sw t1,0(t0) # salva q fez passo 3
+		
+		#j FIM_MVMD_RET
+		
+		la t0,last_key
+		lw t1,0(t0) # carrega ultima tecla
+		li t2,100
+		bne t1,t2,FIM_MVMD_RET # se nao foi D a ultima tecla, ignora
+		# se foi, verifica se foi ha menos de 150ms
+		lw t1,4(t0) # carrega tempo
+		addi a7,zero,30
 		ecall
-	
+		sub t1,a0,t1 # t1 = tempo atual - tempo da tecla
+		addi t2,zero,150
+		bgt t1,t2,FIM_MVMD_RET # se a diferenca de tmepo for maior q 150ms, o mario para
+		# se for menor, o mario reseta pro passo 1
+		la t0,movement_counter
+		add t1,zero,zero
+		sw t1,0(t0)
+		
+		j FIM_MVMD_RET
+		
 	MVMD_P0: # faz mario parado novamente
 		rmv_mario(mario_andando_p1)
 		
-		set_mario_move(1,0,mario_parado) # se move 1px pra direita
+		set_mario_move(0,0,mario_parado) # se move 1px pra direita
 		call PRINT_OBJ # printa mario passo final na tela
+		
+		la t0,movement_counter
+		add t1,zero,zero
+		sw t1,0(t0) # salva q fez passo 0
+		
+		j FIM_MVMD_PAROU
 	
 	# com isso, o mario se movimentou um total de 4px
-	FIM_MVMD:
+	FIM_MVMD_ANDANDO:
+		la t0,mario_state
+		lb t1,0(t0)
+		andi t1,t1,0x10 # parado pra direita
+		ori t1,t1,0x02 # andando
+		sb t1,0(t0) # salva estado de andando
+		j FIM_MVMD_RET
+	FIM_MVMD_PAROU:
 		la t0,mario_state
 		lb t1,0(t0)
 		andi t1,t1,0x10
 		sb t1,0(t0) # salva o estado atual do mario
 	FIM_MVMD_RET:
+		free_stack(ra)
 		free_stack(a0) # devolve valor de a0
-		tail MAINLOOP_RET
+		#tail MAINLOOP_RET
+		ret
 	
 MOVE_MARIO_ESQUERDA:
 	save_stack(a0)
+	save_stack(ra)
 	
 	li a0,2
 	call MARIO_COLLISIONS # verifica permissao do movimento
-	beq a0,zero,FIM_MVME_RET # se nao for permitido, retorna
+	beq a0,zero,FIM_MVME_PAROU # se nao for permitido, retorna
 	
-	# verificacao de degraus
-	call MARIO_VERIF_DEGRAU
-	beqz a0,MVME_P1 # se nao tiver degrau, nao faz nada
-	li t0,0x03
-	beq a0,t0,DESQ_TIPO_D # se tiver degrau do tipo D
-	# se tiver degrau do tipo A, sobe
-	jal MV_1PXUP
-	j MVME_P1
+	la t0,movement_counter
+	lw t1,0(t0) # contador de movimento
 	
-	DESQ_TIPO_D: # se tiver degrau do tipo D, desce
-	jal MV_1PXDW
+	# cont == 0, passo 1
+	beqz t1,MVME_P1 #
+	# cont == 1, passo 2
+	addi t2,zero,1
+	beq t1,t2,MVME_P2
+	# cont == 2, passo 3
+	addi t2,zero,2
+	beq t1,t2,MVME_P3
+	# cont == 3, passo 0
+	addi t2,zero,3
+	beq t1,t2,MVME_P0
+	j FIM_MVME_RET
 	
 	MVME_P1: # faz passo 1
 		rmv_mario(mario_parado)
 		
 		set_mario_move(-1,0,mario_andando_p1) # se move 1px pra esquerda
 		call PRINT_OBJ_MIRROR # printa mario passo 1 na tela
+		
+		la t0,movement_counter
+		addi t1,zero,1
+		sw t1,0(t0) # salva q fez passo 1
 	
-		# sleep entre os passos (20ms)
-		li a0,20
-		li a7,32
-		ecall
+		# verificacao de degraus
+		call MARIO_VERIF_DEGRAU
+		beqz a0,FIM_MVME_ANDANDO # se nao tiver degrau, nao faz nada
+		li t0,0x03
+		beq a0,t0,DESQ_TIPO_D # se tiver degrau do tipo D
+		# se tiver degrau do tipo A, sobe
+		jal MV_1PXUP
+		j FIM_MVME_ANDANDO
+	
+		DESQ_TIPO_D: # se tiver degrau do tipo D, desce
+		jal MV_1PXDW
+		j FIM_MVME_ANDANDO
 	
 	MVME_P2: # faz passo 2
 		rmv_mario(mario_andando_p1)
 		
-		set_mario_move(-1,0,mario_andando_p2) # se move 1px pra esquerda
+		set_mario_move(-2,0,mario_andando_p2) # se move 1px pra esquerda
 		call PRINT_OBJ_MIRROR # printa mario passo 2 na tela
 		
-		# sleep entre os passos (20ms)
-		li a0,20
-		li a7,32
-		ecall
+		la t0,movement_counter
+		addi t1,zero,2
+		sw t1,0(t0) # salva q fez passo 2
+		
+		j FIM_MVME_RET
 	
 	MVME_P3: # faz passo 3
 		rmv_mario(mario_andando_p2)
@@ -227,27 +270,60 @@ MOVE_MARIO_ESQUERDA:
 		set_mario_move(-1,0,mario_andando_p1) # se move 1px pra esquerda
 		call PRINT_OBJ_MIRROR # printa mario passo 3 na tela
 	
-		# sleep entre os passos (20ms)
-		li a0,20
-		li a7,32
+		la t0,movement_counter
+		addi t1,zero,3
+		sw t1,0(t0) # salva q fez passo 3
+		
+		#j FIM_MVMD_RET
+		
+		# LEMBRAR DE AVALIAR O TEMPO DA ULTIMA TECLA NA PLACA
+		la t0,last_key
+		lw t1,0(t0) # carrega ultima tecla
+		li t2,97
+		bne t1,t2,FIM_MVME_RET # se nao foi A a ultima tecla, ignora
+		# se foi, verifica se foi ha menos de 150ms
+		lw t1,4(t0) # carrega tempo
+		addi a7,zero,30
 		ecall
+		sub t1,a0,t1 # t1 = tempo atual - tempo da tecla
+		addi t2,zero,150
+		bgt t1,t2,FIM_MVMD_RET # se a diferenca de tempo for maior q 150ms, o mario para
+		# se for menor, o mario reseta pro passo 1
+		la t0,movement_counter
+		add t1,zero,zero
+		sw t1,0(t0)
+		j FIM_MVME_RET
 	
 	MVME_P0: # faz mario parado novamente
 		rmv_mario(mario_andando_p1)
 		
-		set_mario_move(-1,0,mario_parado) # se move 1px pra esquerda
+		set_mario_move(0,0,mario_parado) # se move 1px pra esquerda
 		call PRINT_OBJ_MIRROR # printa mario passo final na tela
+		
+		la t0,movement_counter
+		add t1,zero,zero
+		sw t1,0(t0) # salva q fez passo 0
+		
+		j FIM_MVME_PAROU
 	
 	# com isso, o mario se movimentou um total de -4px
-	FIM_MVME:
+	FIM_MVME_ANDANDO:
+		la t0,mario_state
+		lb t1,0(t0)
+		andi t1,t1,0x14
+		ori t1,t1,0x06
+		sb t1,0(t0) # salva o estado atual do mario (andando virado pra esquerda)
+		j FIM_MVME_RET
+	FIM_MVME_PAROU:
 		la t0,mario_state
 		lb t1,0(t0)
 		andi t1,t1,0x14
 		ori t1,t1,0x04
 		sb t1,0(t0) # salva o estado atual do mario (parado virado pra esquerda)
 	FIM_MVME_RET:
+		free_stack(ra)
 		free_stack(a0) # devolve valor de a0
-		tail MAINLOOP_RET
+		ret
 
 # move o mario 1px acima, caso encontre um degrau
 MV_1PXUP:
@@ -435,10 +511,6 @@ MARIO_PULO_UP:
 	lb t1,0(t0)
 	andi t1,t1,0x1A # verifica se pode pular
 	bne t1,zero,FIM_PULO_UP # se nao puder pular, sai
-
-	li a0,20
-	li a7,32
-	ecall # sleep de 20ms, entre cada movimento para cima, para ficar mais fluido
 	
 	rmv_mario(mario_pulando) # remove mario na posicao atual
 	
@@ -548,10 +620,6 @@ MARIO_PULO_DIR:
 	lb t1,0(t0)
 	andi t1,t1,0x18 # verifica se pode pular
 	bne t1,zero,FIM_PULO_DIR # se nao puder pular, sai
-
-	li a0,20
-	li a7,32
-	ecall # sleep de 20ms, entre cada movimento para cima, para ficar mais fluido
 	
 	rmv_mario(mario_pulando) # remove mario na posicao atual
 	
@@ -684,10 +752,6 @@ MARIO_PULO_ESQ:
 	lb t1,0(t0)
 	andi t1,t1,0x18 # verifica se pode pular
 	bne t1,zero,FIM_PULO_ESQ # se nao puder, sai
-
-	li a0,20
-	li a7,32
-	ecall # sleep de 20ms, entre cada movimento para cima, para ficar mais fluido
 	
 	rmv_mario(mario_pulando) # remove mario na posicao atual
 	
@@ -775,11 +839,12 @@ MARIO_PULO_ESQ:
 		li t1,0x04
 		sb t1,0(t0) # salva estado do mario no chao, virado pra esquerda
 	
-		set_mario_move(-4,8,mario_parado) # se move 8px pra baixo, 4px pra esquerda p/ finalizar pulo
-
+		#mario_mappos(s0) # pega posicao atual do mario
 		# verifica se em algum dos 24px horizontais anteriores (referentes a dist do pulo) tinha degrau
 		# a cada degrau, adiciona (ou remove) 1 no Y do mario pos
 		save_stack(s1)
+		addi s0,s0,-1
+		addi s0,s0,160
 		li s1,6 # iteracoes
 		VERIFD_PULOE:
 			beqz s1,FIM_VERIFD_PULOE # se t1 == 0, sai do loop
@@ -801,7 +866,8 @@ MARIO_PULO_ESQ:
 		
 		FIM_VERIFD_PULOE:
 		free_stack(s1)
-		set_mario_move(0,0,mario_parado)
+		set_mario_move(-4,8,mario_parado) # se move 8px pra baixo, 4px pra esquerda p/ finalizar pulo
+		#set_mario_move(0,0,mario_parado)
 	PULO_ESQ_ANIM: # pula pra esquerda em movimento
 		call PRINT_OBJ_MIRROR
 	
@@ -928,6 +994,11 @@ MARIO_VERIF_DEGRAU:
 MARIO_GRAVITY:
 	save_stack(ra)
 	save_stack(s0)
+	la t0,mario_state
+	lb t1,0(t0)
+	andi t1,t1,0x01 # verifica se esta pulando
+	bnez t1,FIM_MARIO_GRAVITY # se estiver pulando, sai
+	
 	mario_mappos(s0)
 	lb t1,0(s0) # carrega posicao do mario atual no map
 	bnez t1,FIM_MARIO_GRAVITY # se for qualquer coisa exceto 0, sai pois tem chao
@@ -958,22 +1029,58 @@ MARIO_GRAVITY:
 
 # faz a morte do mario (0 vidas por enquanto)	
 MARIO_DEATH:
-	# animacao de morte do mario
+	# animacao e som de morte do mario
 	# recebe mario morrendo y inicialmente
 	la a0,mario_morrendo_x
 	jal MARIO_DEATH_ANIM
 	call PRINT_OBJ # faz mario virado pra um lado
+	
 	la a0,mario_morrendo_y
 	jal MARIO_DEATH_ANIM
 	call PRINT_OBJ_MIRRORY # faz mario de cabeca pra baixo
+	
 	la a0,mario_morrendo_x
 	jal MARIO_DEATH_ANIM
 	call PRINT_OBJ_MIRROR # faz mario virado pro outro lado
 	
+	la a0,mario_morrendo_x
+	jal MARIO_DEATH_ANIM
+	call PRINT_OBJ # faz mario virado pra um lado
+	
+	la a0,mario_morrendo_y
+	jal MARIO_DEATH_ANIM
+	call PRINT_OBJ_MIRRORY # faz mario de cabeca pra baixo
+	
+	la a0,mario_morrendo_x
+	jal MARIO_DEATH_ANIM
+	call PRINT_OBJ_MIRROR # faz mario virado pro outro lado
+	
+	addi a0,zero,0
+	jal MARIO_DEATH_SOUND
 	la a0,mario_morto
 	jal MARIO_DEATH_ANIM
-	call PRINT_OBJ # print amario no chao
+	call PRINT_OBJ # printa mario no chao
 	# fim da animacao
+	addi a0,zero,1
+	jal MARIO_DEATH_SOUND
+	li a0,300
+	li a7,32
+	ecall
+	addi a0,zero,2
+	jal MARIO_DEATH_SOUND
+	li a0,300
+	li a7,32
+	ecall
+	addi a0,zero,3
+	jal MARIO_DEATH_SOUND
+	li a0,400
+	li a7,32
+	ecall
+	addi a0,zero,4
+	jal MARIO_DEATH_SOUND
+	li a0,40
+	li a7,32
+	ecall
 
 	# verifica se ainda tem vidas
 	la t0,vidas
@@ -1020,6 +1127,20 @@ MARIO_DEATH_ANIM:
 	FIM_MARIO_DEATH_ANIM:
 		free_stack(ra)
 		ret
+		
+# toca som do mario morrendo
+# a0 = numero do som atual
+MARIO_DEATH_SOUND:
+	la t0,mario_death
+	slli a0,a0,3 # multiplica por 8
+	add t0,t0,a0 # pula pra posicao do audio desejado
+	lw a0,0(t0) # carrega nota
+	lw a1,4(t0) # carrega duracao
+	li a2,80 # instrumento
+	li a3,127 # volume
+	li a7,31 # ecall som async
+	ecall
+	ret
 	
 # temporario
 PRINT_ACT_POS:
