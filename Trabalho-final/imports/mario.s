@@ -2,6 +2,7 @@
 # Responsavel por gerenciar movimentos do Mario
 #################################################
 .data
+# Sprites
 .include "../sprites/bin/mario_parado.s"
 .include "../sprites/bin/mario_andando_p1.s"
 .include "../sprites/bin/mario_andando_p2.s"
@@ -15,6 +16,10 @@
 .include "../sprites/bin/mario_morrendo_x.s"
 .include "../sprites/bin/mario_morto.s"
 
+# Sons
+.include "../sounds/mario_sounds.s"
+
+# Variaveis
 mario_state: .byte 0 # salva estado atual do mario
 pulo_px: .byte 0,0 # salva pixels movidos no pulo
 pos_mario: .half 0,0 # salva posicao atual do mario (x,y)
@@ -1024,22 +1029,58 @@ MARIO_GRAVITY:
 
 # faz a morte do mario (0 vidas por enquanto)	
 MARIO_DEATH:
-	# animacao de morte do mario
+	# animacao e som de morte do mario
 	# recebe mario morrendo y inicialmente
 	la a0,mario_morrendo_x
 	jal MARIO_DEATH_ANIM
 	call PRINT_OBJ # faz mario virado pra um lado
+	
 	la a0,mario_morrendo_y
 	jal MARIO_DEATH_ANIM
 	call PRINT_OBJ_MIRRORY # faz mario de cabeca pra baixo
+	
 	la a0,mario_morrendo_x
 	jal MARIO_DEATH_ANIM
 	call PRINT_OBJ_MIRROR # faz mario virado pro outro lado
 	
+	la a0,mario_morrendo_x
+	jal MARIO_DEATH_ANIM
+	call PRINT_OBJ # faz mario virado pra um lado
+	
+	la a0,mario_morrendo_y
+	jal MARIO_DEATH_ANIM
+	call PRINT_OBJ_MIRRORY # faz mario de cabeca pra baixo
+	
+	la a0,mario_morrendo_x
+	jal MARIO_DEATH_ANIM
+	call PRINT_OBJ_MIRROR # faz mario virado pro outro lado
+	
+	addi a0,zero,0
+	jal MARIO_DEATH_SOUND
 	la a0,mario_morto
 	jal MARIO_DEATH_ANIM
-	call PRINT_OBJ # print amario no chao
+	call PRINT_OBJ # printa mario no chao
 	# fim da animacao
+	addi a0,zero,1
+	jal MARIO_DEATH_SOUND
+	li a0,300
+	li a7,32
+	ecall
+	addi a0,zero,2
+	jal MARIO_DEATH_SOUND
+	li a0,300
+	li a7,32
+	ecall
+	addi a0,zero,3
+	jal MARIO_DEATH_SOUND
+	li a0,400
+	li a7,32
+	ecall
+	addi a0,zero,4
+	jal MARIO_DEATH_SOUND
+	li a0,40
+	li a7,32
+	ecall
 
 	# verifica se ainda tem vidas
 	la t0,vidas
@@ -1086,6 +1127,20 @@ MARIO_DEATH_ANIM:
 	FIM_MARIO_DEATH_ANIM:
 		free_stack(ra)
 		ret
+		
+# toca som do mario morrendo
+# a0 = numero do som atual
+MARIO_DEATH_SOUND:
+	la t0,mario_death
+	slli a0,a0,3 # multiplica por 8
+	add t0,t0,a0 # pula pra posicao do audio desejado
+	lw a0,0(t0) # carrega nota
+	lw a1,4(t0) # carrega duracao
+	li a2,80 # instrumento
+	li a3,127 # volume
+	li a7,31 # ecall som async
+	ecall
+	ret
 	
 # temporario
 PRINT_ACT_POS:
