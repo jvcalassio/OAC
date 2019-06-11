@@ -5,7 +5,7 @@
 
 .text
 
-setEcall(exceptionHandling)
+M_SetEcall(exceptionHandling)
 
 MAIN:
 	li	a0, preto
@@ -67,7 +67,7 @@ MAIN:
 				li	t0, preto
 				sw	t0, 0(s0)
 				
-				addi	s0, s0, -320
+				addi	s0, s0, -1280
 				li	t0, branco
 				sw	t0, 0(s0)
 				ret
@@ -76,7 +76,7 @@ MAIN:
 				li	t0, preto
 				sw	t0, 0(s0)
 				
-				addi	s0, s0, 320
+				addi	s0, s0, 1280
 				li	t0, branco
 				sw	t0, 0(s0)
 				ret
