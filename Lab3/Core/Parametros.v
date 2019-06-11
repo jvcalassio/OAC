@@ -196,6 +196,7 @@ parameter
 	RS2_FCVT_WU_S     = 5'b00001,
 	RS2_ECALL			= 5'b00000,
 	RS2_URET				= 5'b00010,
+	RS2_EBREAK			= 5'b00001,
 	
 
 	
