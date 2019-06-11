@@ -883,7 +883,8 @@ always @(*)
 										oRegWrite		<= 1'b0;
 										oOrigPC			<= 3'b000;
 										oCSType			<= 2'b00;
-										oBreak		 	<= 1'b1;
+										if({iInstr[31:25],iInstr[19:7]} == 20'h00000)
+											oBreak		 	<= 1'b1;
 									end
 								default:
 									begin

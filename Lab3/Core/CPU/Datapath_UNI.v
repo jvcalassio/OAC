@@ -311,7 +311,7 @@ BranchControl BC0 (
 
 
 // ******************************************************
-// multiplexadores	
+// multiplexadores
 
 // fios de selecao dos dados CSR
 wire [2:0]  wSCSRWSource, wSCOrigPC;

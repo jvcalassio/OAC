@@ -75,7 +75,6 @@ module CPU (
 
 assign mControlState    = 6'b000000;
 
-
 // Unidade de Controle
 wire    	 	 wCOrigAULA; 
 wire 			 wCOrigBULA; 
@@ -131,8 +130,6 @@ wire 			 wCFPstart;
 `endif	
 	
 );
-
-
 
 
 // Caminho de Dados

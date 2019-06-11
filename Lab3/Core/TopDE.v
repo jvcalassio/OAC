@@ -402,7 +402,7 @@ assign Escreve_FReg      = mCFRegWrite;
 // ********************* Gerador e gerenciador de Clock *********************
 wire CLK, oCLK_50, oCLK_25, oCLK_100, oCLK_150, oCLK_200, oCLK_27, oCLK_18;
 wire Reset, CLKSelectFast, CLKSelectAuto;
-wire wBreakInstr;
+wire wBreakSignal, wBreakInstr;
 
 
 CLOCK_Interface CLOCK0(
@@ -421,9 +421,17 @@ CLOCK_Interface CLOCK0(
     .iKEY(KEY),                         // controles dos clocks e reset
     .fdiv({3'b0,SW[4:0]}),              // divisor da frequencia CLK = iCLK_50/fdiv
     .Timer(SW[5]),                      // Timer de 10 segundos 
-	 .iBreak(wbreak)			 // Break Point
+	 .iBreak(wbreak | wBreakInstr)		 // Break Point
 );
 
+//******************** Controlador do Break Signal (instrucao) *****************
+
+Break_Instruction_Control BRKIC0 (
+	.iCLK(CLK),
+	.iReset(Reset),
+	.iBreakSignal(wBreakSignal),
+	.oBreak(wBreakInstr),
+);
 
 
 // ********************************* CPU ************************************
@@ -433,7 +441,7 @@ CPU CPU0 (
     .iRST(Reset),
     .iInitialPC(PCinicial),
 	 
-	 .oBreak(wBreakInstr),
+	 .oBreak(wBreakSignal),
 
     // Sinais de monitoramento
     .mPC(mPC),
