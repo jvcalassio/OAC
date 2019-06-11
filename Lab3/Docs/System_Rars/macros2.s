@@ -1,15 +1,15 @@
 ######### Verifica se eh a DE1-SoC ###############
 .macro DE1(%salto)
 	li tp, 0x10008000			# carrega tp = 0x10008000
-	bne gp,tp,%salto			# Na DE1 gp = 0 ! N�o tem segmento .extern
+	bne gp,tp,%salto			# Na DE1 gp = 0 ! Nao tem segmento .extern
 .end_macro
 
 ######### Seta o endereco UTVEC ###############
-.macro setEcall(%label)
- 	la t6,%label		# carrega em t6 o endere�o base das rotinas do sistema ECALL
- 	csrrw zero,5,t6 	# seta utvec (reg 5) para o endere�o t6
- 	csrrsi zero,0,1 	# seta o bit de habilita��o de interrup��o em ustatus (reg 0)
- .end_macro
+.macro M_SetEcall(%label)
+ 	la t6,%label		# carrega em t6 o endereco base das rotinas do sistema ECALL
+ 	csrrw zero,5,t6 	# seta utvec (reg 5) para o endereco t6
+ 	csrrsi zero,0,1 	# seta o bit de habilitacao de interrupcao em ustatus (reg 0)
+.end_macro
  
 #definicao do mapa de enderecamento de MMIO
 .eqv VGAADDRESSINI0     0xFF000000

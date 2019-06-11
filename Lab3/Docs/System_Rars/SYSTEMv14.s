@@ -1,5 +1,5 @@
 #########################################################################
-# Rotina de tratamento de excecao e interrupcao		v1.3		#
+# Rotina de tratamento de excecao e interrupcao		v1.4		#
 # Lembre-se: Os ecalls originais do Rars possuem precedencia sobre	#
 # 	     estes definidos aqui					#
 # Os ecalls 1XX usam o BitMap Display e Keyboard Display MMIO Tools	#
@@ -154,7 +154,10 @@ TextErrorInst: .string "Instruction:"
 .text
 
 ###### Devem ser colocadas aqui as identificações das interrupções e exceções
-exceptionHandling:	csrrsi t0,16,0 # carrega ucause. 17 apenas temporario, mudar para 66
+exceptionHandling:	addi sp,sp,-8 # salva t0 e t1 na pilha
+			sw t0,0(sp) # salva t0 na pilha
+			sw t1,4(sp) # salva t1 na pilha
+			csrrsi t0,66,0 # carrega ucause
 			li t1,8
 			beq t0,t1,ecallException # chama ecall se ucause = 8
 			j errorException 	 # chama erro se ucause for qlqr outro
@@ -162,16 +165,19 @@ exceptionHandling:	csrrsi t0,16,0 # carrega ucause. 17 apenas temporario, mudar 
 	
 	# do contrario, chama tela azul
 	
-endException:  	csrrw tp, 17, zero	# le o valor de EPC salvo no registrador uepc (reg 65)
+endException:  	lw t1,4(sp) # recupera valor de t1
+		lw t0,0(sp) # recupera valor de t0
+		addi sp,sp,8
+		csrrw tp, 65, zero	# le o valor de EPC salvo no registrador uepc (reg 65)
 		addi tp, tp, 4		# soma 4 para obter a instrucao seguinte ao ecall
-		csrrw zero, 17, tp	# coloca no registrador uepc
+		csrrw zero, 65, tp	# coloca no registrador uepc
 		uret			# retorna PC=uepc
 
 ############# interrupcao de erro  ####################
 errorException: li a0,0x0099 # printa blue screen
 		add a1,a1,zero
 		jal clsCLS
-		csrrsi t0,16,0 # carrega ucause. 16 apenas temporario, mudar para 66
+		csrrsi t0,66,0 # carrega ucause
 		
 	addi t1,zero,2
 	beq t0,t1,errorException_2 # se for exception 2, printa o "Instruction:"
@@ -186,7 +192,7 @@ errorException: li a0,0x0099 # printa blue screen
 	addi a2,zero,5
 	li a3,0x99ff
 	
-	csrrsi t0,16,0 # carrega ucause. 16 apenas temporario, mudar para 66
+	csrrsi t0,66,0 # carrega ucause
 	beq t0,zero,errorException_0
 	addi t1,zero,1
 	beq t0,t1,errorException_1
@@ -204,7 +210,7 @@ errorException: li a0,0x0099 # printa blue screen
 		la a0,TextError0 # excessao instrucao desalinhada
 		jal printString
 		
-		csrrsi a0,18,0 # 18 apenas para debug. mudar para 67
+		csrrsi a0,67,0 # carrega uval
 		addi a1,zero,35
 		addi a2,zero,15
 		li a3,0x99ff
@@ -214,7 +220,7 @@ errorException: li a0,0x0099 # printa blue screen
 	errorException_1: la a0,TextError1
 		jal printString
 		
-		csrrsi a0,18,0 # 18 apenas para debug. mudar para 67
+		csrrsi a0,67,0 # carrega uval
 		addi a1,zero,35
 		addi a2,zero,15
 		li a3,0x99ff
@@ -233,7 +239,7 @@ errorException: li a0,0x0099 # printa blue screen
 		li a3,0x99ff
 		jal printString # printa instrucao:
 		
-		csrrsi a0,18,0 # 18 apenas para debug. mudar para 67
+		csrrsi a0,67,0 # carrega uval
 		addi a1,zero,110
 		addi a2,zero,15
 		li a3,0x99ff
@@ -243,7 +249,7 @@ errorException: li a0,0x0099 # printa blue screen
 	errorException_4: la a0,TextError4
 		jal printString
 		
-		csrrsi a0,18,0 # 18 apenas para debug. mudar para 67
+		csrrsi a0,67,0 # carrega uval
 		addi a1,zero,35
 		addi a2,zero,15
 		li a3,0x99ff
@@ -253,7 +259,7 @@ errorException: li a0,0x0099 # printa blue screen
 	errorException_5: la a0,TextError5
 		jal printString
 		
-		csrrsi a0,18,0 # 18 apenas para debug. mudar para 67
+		csrrsi a0,67,0 # carrega uval
 		addi a1,zero,35
 		addi a2,zero,15
 		li a3,0x99ff
@@ -263,7 +269,7 @@ errorException: li a0,0x0099 # printa blue screen
 	errorException_6: la a0,TextError6
 		jal printString
 		
-		csrrsi a0,18,0 # 18 apenas para debug. mudar para 67
+		csrrsi a0,67,0 # carrega uval
 		addi a1,zero,35
 		addi a2,zero,15
 		li a3,0x99ff
@@ -273,7 +279,7 @@ errorException: li a0,0x0099 # printa blue screen
 	errorException_7: la a0,TextError7
 		jal printString
 		
-		csrrsi a0,18,0 # 18 apenas para debug. mudar para 67
+		csrrsi a0,67,0 # carrega uval
 		addi a1,zero,35
 		addi a2,zero,15
 		li a3,0x99ff
@@ -288,8 +294,8 @@ ecallException:     addi    sp, sp, -264              # Salva todos os registrad
     sw      x2,    4(sp)
     sw      x3,    8(sp)
     sw      x4,   12(sp)
-    sw      x5,   16(sp)
-    sw      x6,   20(sp)
+    #sw      x5,   16(sp) nao precisa salvar t0 (ja foi salvo)
+    #sw      x6,   20(sp) nao precisa salvar t1 (ja foi salvo)
     sw      x7,   24(sp)
     sw      x8,   28(sp)
     sw      x9,   32(sp)
@@ -448,8 +454,8 @@ endEcall: lw	x1, 0(sp)  # recupera QUASE todos os registradores na pilha
 	lw	x2,   4(sp)	
 	lw	x3,   8(sp)	
 	lw	x4,  12(sp)      	
-	lw	x5,  16(sp)      	
-    	lw	x6,  20(sp)	
+	#lw	x5,  16(sp) nao precisa retornar t0 (ja vai ser retornado no uret)
+    	#lw	x6,  20(sp) nao precisa retornar t1 (ja vai ser retornado no uret)
     	lw	x7,  24(sp)
     	lw	x8,  28(sp)
     	lw	x9,    32(sp)
