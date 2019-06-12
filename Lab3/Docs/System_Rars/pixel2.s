@@ -28,15 +28,15 @@ MAIN:
 	ecall			#preencher de preto o display
 
 	li	t0, branco
-	li	s0, 160		#s0 = x do pixel branco
-	li	s1, 120		#s1 = y do pixel branco
+	li	s0, 160		#s0 = coordenada x do pixel branco
+	li	s1, 120		#s1 = coordenada y do pixel branco
 	jal	GET_POSITION	
 	sb	t0, 0(a0)	#a0 = posicao do pixel
 
 	MAINLOOP:
-		li	a0, 50
+		li	a0, 75
 		li	a7, 32
-		ecall		#sleep de 50
+		ecall		#sleep de 75
 
 		li	t0, AdcCH0
 		lw	s2, 0(t0)	#s2 = x do analogico, x entre 0x000 e 0xFFF
@@ -140,8 +140,8 @@ MAIN:
 			jal 	GET_POSITION
 			free_stack(ra)
 			li	t0, preto
-			sb	t0, 0(a0)	#preenche a posição atual com preto
-			
+			sb	t0, 0(a0)	#preenche a posicao atual com preto
+		
 			addi	s0, s0, -9	#move o pixel nove posicoes para a esquerda
 			
 			li	t1, 1
@@ -168,7 +168,7 @@ MAIN:
 			jal 	GET_POSITION
 			free_stack(ra)
 			li	t0, preto
-			sb	t0, 0(a0)	#preenche a posição atual com preto
+			sb	t0, 0(a0)	#preenche a posicao atual com preto
 			
 			addi	s0, s0, -3	#move o pixel tres posicoes para a esquerda
 			
@@ -196,7 +196,7 @@ MAIN:
 			jal 	GET_POSITION
 			free_stack(ra)
 			li	t0, preto
-			sb	t0, 0(a0)	#preenche a posição atual com preto
+			sb	t0, 0(a0)	#preenche a posiï¿½ï¿½o atual com preto
 			
 			addi	s0, s0, -1	#move o pixel uma posicao para a esquerda
 			
@@ -212,6 +212,7 @@ MAIN:
 			sb	t0, 0(a0)	#preenche a nova posicao com branco
 			ret
 		
+		#impede que o pixel ultrapasse o limite a esquerda da tela
 		LIMIT_LEFT:
 			li	s0, 1
 			mv	a0, s0
@@ -223,6 +224,7 @@ MAIN:
 			sb	t0, 0(a0)	#preenche a nova posicao com branco
 			ret			
 		
+
 		RIGHT1:
 			li	t0, 2500
 			bgeu	s2, t0, RIGHT1continue	#x > 2500 ? continue
@@ -305,7 +307,8 @@ MAIN:
 			li	t0, branco
 			sb	t0, 0(a0)
 			ret
-			
+		
+		#impede que o pixel ultrapasse o limite a direita da tela
 		LIMIT_RIGHT:
 			li	s0, 319
 			mv	a0, s0
@@ -318,7 +321,6 @@ MAIN:
 			ret
 		
 		
-		
 		UP3:
 			mv	a0, s0
 			mv	a1, s1
@@ -326,7 +328,7 @@ MAIN:
 			jal 	GET_POSITION
 			free_stack(ra)
 			li	t0, preto
-			sb	t0, 0(a0)	#preenche a posição atual com preto
+			sb	t0, 0(a0)	#preenche a posicao atual com preto
 			
 			addi	s1, s1, -9	#move o pixel nove posicoes para cima
 			
@@ -354,7 +356,7 @@ MAIN:
 			jal 	GET_POSITION
 			free_stack(ra)
 			li	t0, preto
-			sb	t0, 0(a0)	#preenche a posição atual com preto
+			sb	t0, 0(a0)	#preenche a posicao atual com preto
 			
 			addi	s1, s1, -3	#move o pixel tres posicoes para cima
 			
@@ -382,7 +384,7 @@ MAIN:
 			jal 	GET_POSITION
 			free_stack(ra)
 			li	t0, preto
-			sb	t0, 0(a0)	#preenche a posição atual com preto
+			sb	t0, 0(a0)	#preenche a posicao atual com preto
 			
 			addi	s1, s1, -1	#move o pixel uma pos para cima
 			
@@ -398,6 +400,7 @@ MAIN:
 			sb	t0, 0(a0)	#preenche a nova posicao com branco
 			ret
 		
+		#impede que o pixel ultrapasse o limite superior da tela
 		LIMIT_UP:
 			li	s1, 1
 			mv	a0, s0
@@ -408,6 +411,7 @@ MAIN:
 			li	t0, branco
 			sb	t0, 0(a0)	#preenche a nova posicao com branco
 			ret			
+		
 		
 		DOWN1:
 			li	t0, 2600
@@ -493,7 +497,7 @@ MAIN:
 			sb	t0, 0(a0)
 			ret
 		
-		#impede que pixel ultrapasee o limite inferior da tela
+		#impede que pixel ultrapasse o limite inferior da tela
 		LIMIT_DOWN:
 			li	s1, 239
 			mv	a0, s0
