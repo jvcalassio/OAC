@@ -10,196 +10,396 @@ M_SetEcall(exceptionHandling)
 MAIN:
 	li	a0, preto
 	li	a7, 148
-	ecall
+	ecall			#preencher de preto o display
 
 	li	t0, branco
-	li	a0, 160
-	li	a1, 120
-	li	a2, VGAADDRESSINI0
-	jal	GET_POSITION	#a0 = end pixel
-	mv	s0, a0
-	
-	sw	t0, 0(s0)	#s0 = posicao do pixel
+	li	s0, 160		#s0 = x do pixel branco
+	li	s1, 120		#s1 = y do pixel branco
+	jal	GET_POSITION	
+	sb	t0, 0(a0)	#a0 = posicao do pixel
 
 	MAINLOOP:
-		li	a0, 125
+		li	a0, 100
 		li	a7, 32
-		ecall
+		ecall		#sleep de 125ms
 
 		li	t0, AdcCH0
-		lw	t1, 0(t0)	#t1 = x, x entre 0x000 e 0xFFF
+		lw	s2, 0(t0)	#s2 = x, x entre 0x000 e 0xFFF
 		
-		li	t0, 0x60B	#t0 = meio - 500
-		ble	t1, t0, gotoLEFT
+		li	t0, 100
+		bleu	s2, t0, LEFT3	#x < 100 ? goto LEFT3
 		
-		continue0:
-		li	t0, 0x9F3	#t0 = meio + 500 
-		bge	t1, t0, gotoRIGHT
+		li	t0, 1000
+		bleu	s2, t0, LEFT2	#x<1000 ? goto LEFT2
 		
-		continue1:
+		li	t0, 2400
+		bleu	s2, t0, LEFT1	#x<2400 ? goto LEFT1
+		
+		li	t0, 3300
+		bleu	s2, t0, RIGHT1	#x<3300 ? goto RIGHT1
+		
+		li	t0, 4000
+		bleu	s2, t0, RIGHT2	#x < 4000 ? goto RIGHT2
+		
+		li	t0, 5000
+		bleu	s2, t0, RIGHT3	#x < 5000? goto RIGHT3
+		
+		
 		li	t0, AdcCH4
-		lw	t1, 0(t0)	#t1 = y, y entre 0x000 e 0xFFF
+		lw	s2, 0(t0)	#s2 = y, y entre 0x000 e 0xFFF
 		
-		li	t0, 0x60B	#t0 = meio - 500
-		ble	t1, t0, gotoDOWN
+		li	t0, 100
+		bleu	s2, t0, DOWN3	#y < 100 ? goto DOWN3
 		
-		continue2:
-		li	t0, 0x9F3	#t0 = meio + 500
-		bge	t1, t0, gotoUP
+		li	t0, 1000
+		bleu	s2, t0, DOWN2	#y<1000 ? goto DOWN2
 		
-		continue3:
-		j	MAINLOOP
+		li	t0, 2400
+		bleu	s2, t0, DOWN1	#y<2400 ? goto DOWN1
 		
-		gotoLEFT:
-			jal 	LEFT
-			j	continue0
+		li	t0, 3300
+		bleu	s2, t0, UP1	#x<3300 ? goto UP1
 		
-		gotoRIGHT:
-			jal	RIGHT
-			j	continue1
+		li	t0, 4000
+		bleu	s2, t0, UP2	#x < 4000 ? goto UP2
 		
-		gotoDOWN:
-			jal	DOWN
-			j 	continue2
-			
-		gotoUP:
-			jal	UP
-			j 	continue3
-			
-			
-		LEFT:
+		li	t0, 5000
+		bleu	s2, t0, UP3	#x < 5000? goto UP3
+		
+		j MAINLOOP
+		
+		LEFT3:
 			mv	a0, s0
-			li	a1, VGAADDRESSINI0
-			addi	sp, sp, -4
-			sw	ra, 0(sp)
-			jal	GET_XY
-			lw	ra, 0(sp)
-			addi	sp, sp, 4
-			beq	a0, zero, MAINLOOP	#x == 0? goto main loop
-			
+			mv	a1, s1
+			jal 	GET_POSITION
 			li	t0, preto
-			sw	t0, 0(s0)
+			sb	t0, 0(a0)	#preenche a posição atual com preto
 			
-			li	t0, AdcCH0
-			lw	t1, 0(t0)	#t1 = x
-			li	t0, 0x7FF	#t0 = meio
+			addi	s0, s0, -9	#move o pixel tres posicoes para a esquerda
 			
-			div	t0, t0, t1	#t0 = meio/x >= 1
-			li	t1, -4
-			mul	t0, t0, t1	#t0 = meio/x * -4
+			li	t1, 1
+			ble	s0, t1, LIMIT_LEFT
 			
-			add	s0, s0, t0
+			mv	a0, s0
+			mv	a1, s1
+			jal 	GET_POSITION
 			li	t0, branco
-			sw	t0, 0(s0)
-			ret
+			sb	t0, 0(a0)	#preenche a nova posicao com branco
+			j	 MAINLOOP
+			
+		LEFT2:
+			li	t0, 100
+			bgeu	s2, t0, LEFT2continue	#x > 100 ? continue
+			j	 MAINLOOP
+			
+		LEFT2continue:
+			mv	a0, s0
+			mv	a1, s1
+			jal 	GET_POSITION
+			li	t0, preto
+			sb	t0, 0(a0)	#preenche a posição atual com preto
+			
+			addi	s0, s0, -3	#move o pixel dois posicoes para a esquerda
+			
+			li	t1, 1
+			ble	s0, t1, LIMIT_LEFT
+			
+			mv	a0, s0
+			mv	a1, s1
+			jal 	GET_POSITION
+			li	t0, branco
+			sb	t0, 0(a0)	#preenche a nova posicao com branco
+			j 	MAINLOOP
+			
+		LEFT1:
+			li	t0, 1000
+			bgeu	s2, t0, LEFT1continue	#x > 1000 ? continue
+			j	 MAINLOOP
 		
-		RIGHT:	
+		LEFT1continue:
 			mv	a0, s0
-			li	a1, VGAADDRESSINI0
-			addi	sp, sp, -4
-			sw	ra, 0(sp)
-			jal	GET_XY
-			lw	ra, 0(sp)
-			addi	sp, sp, 4
-			li	t0, 320
-			beq	a0, t0, MAINLOOP	#x == 320? goto main loop
-			
-			li	t0, 0xFF000000
-			ble	s0, t0, MAINLOOP
-			li	t0, 0xFF012C00
-			bge	s0, t0, MAINLOOP
+			mv	a1, s1
+			jal 	GET_POSITION
 			li	t0, preto
-			sw	t0, 0(s0)
+			sb	t0, 0(a0)	#preenche a posição atual com preto
 			
-			li	t0, AdcCH0
-			lw	t1, 0(t0)		#t1 = x
-			li	t0, 0x7FF		#t0 = meio
+			addi	s0, s0, -1	#move o pixel tres posicoes para a esquerda
 			
-			div	t0, t1, t0	#t0 = x/meio >= 1
-			li	t1, 4
-			mul	t0, t0, t1	#t0 = meio/x * 1
+			li	t1, 1
+			ble	s0, t1, LIMIT_LEFT
 			
-			add	s0, s0, t0
-			li	t0, branco
-			sw	t0, 0(s0)
-			ret
-			
-		DOWN:	
 			mv	a0, s0
-			li	a1, VGAADDRESSINI0
-			addi	sp, sp, -4
-			sw	ra, 0(sp)
-			jal	GET_XY
-			lw	ra, 0(sp)
-			addi	sp, sp, 4
-			li	t0, 320
-			beq	a1, t0, MAINLOOP	#y == 320? goto main loop
-			
-			li	t0, 0xFF000000
-			ble	s0, t0, MAINLOOP
-			li	t0, 0xFF012C00
-			bge	s0, t0, MAINLOOP
-			li	t0, preto
-			sw	t0, 0(s0)
-			li	t0, AdcCH4
-			lw	t1, 0(t0)	#t1 = y
-			li	t0, 0x7FF	#t0 = meio
-			
-			div	t0, t0, t1	#t0 = meio/y >= 1
-			li	t1, 1280
-			mul	t0, t0, t1	#t0 = meio/y * 320
-			
-			add	s0, s0, t0
+			mv	a1, s1
+			jal 	GET_POSITION
 			li	t0, branco
-			sw	t0, 0(s0)
-			ret
+			sb	t0, 0(a0)	#preenche a nova posicao com branco
+			j 	MAINLOOP
 		
-		UP:	
+		LIMIT_LEFT:
+			li	s0, 1
 			mv	a0, s0
-			li	a1, VGAADDRESSINI0
-			addi	sp, sp, -4
-			sw	ra, 0(sp)
-			jal	GET_XY
-			lw	ra, 0(sp)
-			addi	sp, sp, 4
-			beq	a1, zero, MAINLOOP	#y == 0? goto main loop
-			
-			li	t0, 0xFF000000
-			ble	s0, t0, MAINLOOP
-			li	t0, 0xFF012C00
-			bge	s0, t0, MAINLOOP
-			li	t0, preto
-			sw	t0, 0(s0)
-			li	t0, AdcCH4
-			lw	t1, 0(t0)	#t1 = y
-			li	t0, 0x7FF	#t0 = meio
-			
-			div	t0, t0, t1	#t0 = meio/y >= 1
-			li	t1, -1280
-			mul	t0, t0, t1	#t0 = meio/y * -320
-			
-			add	s0, s0, t0
+			mv	a1, s1
+			jal 	GET_POSITION
 			li	t0, branco
-			sw	t0, 0(s0)
-			ret
+			sb	t0, 0(a0)	#preenche a nova posicao com branco
+			j 	MAINLOOP			
+		
+		RIGHT1:
+			li	t0, 2500
+			bgeu	s2, t0, RIGHT1continue	#x > 2500 ? continue
+			j	MAINLOOP
+		
+		RIGHT1continue:
+			mv	a0, s0
+			mv	a1, s1
+			jal	 GET_POSITION
+			li	t0, preto
+			sb	t0, 0(a0)	#preenche a pos atual com preto
+			
+			addi	s0, s0, 1
+			
+			li	t1, 319
+			bge	s0, t1, LIMIT_RIGHT
+			
+			mv	a0, s0
+			mv	a1, s1
+			jal	GET_POSITION
+			li	t0, branco
+			sb	t0, 0(a0)
+			j	MAINLOOP
+		
+		RIGHT2:
+			li	t0, 3300
+			bgeu	s2, t0, RIGHT2continue	#x > 3000? continue
+			j	MAINLOOP
+		
+		RIGHT2continue:
+			mv	a0, s0
+			mv	a1, s1
+			jal	GET_POSITION
+			li	t0, preto
+			sb	t0, 0(a0)
+			
+			addi	s0,s0, 3
+			
+			li	t1, 319
+			bge	s0, t1, LIMIT_RIGHT
+			
+			mv	a0, s0
+			mv	a1, s1
+			jal	GET_POSITION
+			li	t0, branco
+			sb	t0,0(a0)
+			j	MAINLOOP
+		
+		RIGHT3:
+			li	t0, 4000
+			bgeu	s2, t0, RIGHT3continue
+			j	MAINLOOP
+		
+		RIGHT3continue:
+			mv	a0, s0
+			mv	a1, s1
+			jal	GET_POSITION
+			li	t0, preto
+			sb	t0,0(a0)
+			
+			addi	s0,s0,9
+			li	t1, 319
+			bge	s0, t1, LIMIT_RIGHT
+			
+			mv	a0,s0
+			mv	a1, s1
+			jal	GET_POSITION
+			li	t0, branco
+			sb	t0, 0(a0)
+			j	MAINLOOP
+			
+		LIMIT_RIGHT:
+			li	s0, 319
+			mv	a0, s0
+			mv	a1, s1
+			jal	GET_POSITION
+			li	t0, branco
+			sb	t0, 0(a0)
+			j	MAINLOOP
+		
+		
+		
+		DOWN3:
+			mv	a0, s0
+			mv	a1, s1
+			jal 	GET_POSITION
+			li	t0, preto
+			sb	t0, 0(a0)	#preenche a posição atual com preto
+			
+			addi	s1, s1, 9	#move o pixel tres posicoes para baixo
+			
+			li	t1, 239
+			bge	s1, t1, LIMIT_DOWN
+			
+			mv	a0, s0
+			mv	a1, s1
+			jal 	GET_POSITION
+			li	t0, branco
+			sb	t0, 0(a0)	#preenche a nova posicao com branco
+			j	 MAINLOOP
+			
+		DOWN2:
+			li	t0, 100
+			bgeu	s2, t0, DOWN2continue	#x > 100 ? continue
+			j	 MAINLOOP
+			
+		DOWN2continue:
+			mv	a0, s0
+			mv	a1, s1
+			jal 	GET_POSITION
+			li	t0, preto
+			sb	t0, 0(a0)	#preenche a posição atual com preto
+			
+			addi	s1, s1, 3	#move o pixel dois posicoes para a esquerda
+			
+			li	t1, 239
+			bge	s1, t1, LIMIT_DOWN
+			
+			mv	a0, s0
+			mv	a1, s1
+			jal 	GET_POSITION
+			li	t0, branco
+			sb	t0, 0(a0)	#preenche a nova posicao com branco
+			j 	MAINLOOP
+			
+		DOWN1:
+			li	t0, 1000
+			bgeu	s2, t0, DOWN1continue	#x > 1000 ? continue
+			j	 MAINLOOP
+		
+		DOWN1continue:
+			mv	a0, s0
+			mv	a1, s1
+			jal 	GET_POSITION
+			li	t0, preto
+			sb	t0, 0(a0)	#preenche a posição atual com preto
+			
+			addi	s1, s1, 1	#move o pixel tres posicoes para a esquerda
+			
+			li	t1, 239
+			bge	s1, t1, LIMIT_DOWN
+			
+			mv	a0, s0
+			mv	a1, s1
+			jal 	GET_POSITION
+			li	t0, branco
+			sb	t0, 0(a0)	#preenche a nova posicao com branco
+			j 	MAINLOOP
+		
+		LIMIT_DOWN:
+			li	s1, 239
+			mv	a0, s0
+			mv	a1, s1
+			jal 	GET_POSITION
+			li	t0, branco
+			sb	t0, 0(a0)	#preenche a nova posicao com branco
+			j 	MAINLOOP			
+		
+		UP1:
+			li	t0, 2500
+			bgeu	s2, t0, UP1continue	#x > 2500 ? continue
+			j	MAINLOOP
+		
+		UP1continue:
+			mv	a0, s0
+			mv	a1, s1
+			jal	 GET_POSITION
+			li	t0, preto
+			sb	t0, 0(a0)	#preenche a pos atual com preto
+			
+			addi	s1, s1, -1
+			
+			li	t1, 1
+			ble	s1, t1, LIMIT_UP
+			
+			mv	a0, s0
+			mv	a1, s1
+			jal	GET_POSITION
+			li	t0, branco
+			sb	t0, 0(a0)
+			j	MAINLOOP
+		
+		UP2:
+			li	t0, 3300
+			bgeu	s2, t0, UP2continue	#x > 3000? continue
+			j	MAINLOOP
+		
+		UP2continue:
+			mv	a0, s0
+			mv	a1, s1
+			jal	GET_POSITION
+			li	t0, preto
+			sb	t0, 0(a0)
+			
+			addi	s1,s1, -3
+			
+			li	t1, 1
+			ble	s1, t1, LIMIT_UP
+			
+			mv	a0, s0
+			mv	a1, s1
+			jal	GET_POSITION
+			li	t0, branco
+			sb	t0,0(a0)
+			j	MAINLOOP
+		
+		UP3:
+			li	t0, 4000
+			bgeu	s2, t0, UP3continue
+			j	MAINLOOP
+		
+		UP3continue:
+			mv	a0, s0
+			mv	a1, s1
+			jal	GET_POSITION
+			li	t0, preto
+			sb	t0,0(a0)
+			
+			addi	s1,s1,-9
+			
+			li	t1, 1
+			ble	s1, t1, LIMIT_UP
+			
+			mv	a0,s0
+			mv	a1, s1
+			jal	GET_POSITION
+			li	t0, branco
+			sb	t0, 0(a0)
+			j	MAINLOOP
+	
+		LIMIT_UP:
+			li	s1, 1
+			mv	a0, s0
+			mv	a1, s1
+			jal	GET_POSITION
+			li	t0, branco
+			sb	t0, 0(a0)
+			j	MAINLOOP
 
-#a0 = x
+#a0 = x	
 #a1 = y
-#a2 = endbase		
 #a0 (retorno)
 GET_POSITION:
 	li t0,320
 	mul t0,t0,a1 # (y * 320)
 	add t0,t0,a0 # (y * 320) + x
-	add a0,a2,t0 # end base + calculo acima
+	li t1, VGAADDRESSINI0
+	add a0,t1,t0 # end base + calculo acima
 	jr ra,0 # retorna
 	
 #a0 = end
-#a1 = endbase
 #a0 = x (retorno)
 #a1 = y (retorno)
 GET_XY:
-	sub a0, a0, a1
+	li t0, VGAADDRESSINI0
+	sub a0, a0, t0
 	li t0, 320
 	rem a0, a0, t0
 	div a1, a1, t0

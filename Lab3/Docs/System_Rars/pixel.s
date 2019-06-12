@@ -14,7 +14,7 @@ MAIN:
 
 	li	t0, branco
 	li	s0, 0xFF0096A0
-	sw	t0, 0(s0)	#s0 = posicao do pixel
+	sb	t0, 0(s0)	#s0 = posicao do pixel
 
 	MAINLOOP:
 		li	t0, 0xFF200000
@@ -65,38 +65,38 @@ MAIN:
 			
 			UP:
 				li	t0, preto
-				sw	t0, 0(s0)
+				sb	t0, 0(s0)
 				
 				addi	s0, s0, -1280
 				li	t0, branco
-				sw	t0, 0(s0)
+				sb	t0, 0(s0)
 				ret
 				
 			DOWN:
 				li	t0, preto
-				sw	t0, 0(s0)
+				sb	t0, 0(s0)
 				
 				addi	s0, s0, 1280
 				li	t0, branco
-				sw	t0, 0(s0)
+				sb	t0, 0(s0)
 				ret
 				
 			LEFT:	
 				li	t0, preto
-				sw	t0, 0(s0)
+				sb	t0, 0(s0)
 				
 				addi	s0, s0, -4
 				li	t0, branco
-				sw	t0, 0(s0)
+				sb	t0, 0(s0)
 				ret
 								
 			RIGHT:	
 				li	t0, preto
-				sw	t0, 0(s0)
+				sb	t0, 0(s0)
 				
 				addi	s0, s0, 4
 				li	t0, branco
-				sw	t0, 0(s0)
+				sb	t0, 0(s0)
 				ret
 				
 				
