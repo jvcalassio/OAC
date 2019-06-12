@@ -84,7 +84,7 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	andi t0,t0,0x80
 	bnez t0,GAME_VICTORY # verifica se esta na posicao de vitoria
 	
-	jal CONTINUE_MOVEMENT
+	#jal CONTINUE_MOVEMENT
 	
 	la t0,mario_state
 	lb t1,0(t0)
@@ -100,7 +100,7 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	beq t2,t1,MPESQ # se for pra esquerda, faz pulo pra esquerda
 	
 	MAINLOOP_KEYBIND:
-	call MARIO_GRAVITY
+	#call MARIO_GRAVITY
 	call KEYBIND
 	beqz a0,MAINLOOP_RET # se nenhuma tecla, faz nada
 		# salva ultima tecla pressionada
@@ -115,7 +115,7 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		la t0,mario_state
 		lb t1,0(t0)
 		andi t1,t1,0x02
-		bnez t1,MAINLOOP_RET # se ja tiver andando, ignora botao pressionado
+		#bnez t1,MAINLOOP_RET # se ja tiver andando, ignora botao pressionado
 		
 		li t0,109
 		beq a0,t0,FIM # se tecla == M, sair  
