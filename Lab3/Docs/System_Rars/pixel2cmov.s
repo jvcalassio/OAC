@@ -39,11 +39,10 @@ MAIN:
 	jal	GET_POSITION	
 	sb	t0, 0(a0)	#a0 = posicao do pixel
 	
-	mv	s4, zero	#botao não foi pressionado
-	
 	MAINLOOP:
-		
-		sleep(s5)
+		li	s4, 0
+		li	s5, 0
+		#s4 = sleep da coordenada x, s5 = sleep da coordenada y
 		
 		li	t0, AdcCH0
 		lw	s2, 0(t0)		#s2 = x do analogico, x entre 0x000 e 0xFFF
@@ -89,8 +88,19 @@ MAIN:
 		bleu	s3, t0, gotoDOWN3	#y < 5000? goto DOWN3
 		continue11:
 		
-		j MAINLOOP
-		
+		beqz	s4, SLEEPXZERO
+		beqz	s5, SLEEPYZERO
+		add	s4, s4, s5
+		li	t0, 2
+		div	s4, s4, t0
+		sleep(s4)
+		j	MAINLOOP
+		SLEEPXZERO:
+		sleep(s5)
+		j	MAINLOOP
+		SLEEPYZERO:
+		sleep(s4)
+		j	MAINLOOP
 		
 		gotoLEFT3:
 			jal	LEFT3
@@ -142,7 +152,7 @@ MAIN:
 		
 		
 		LEFT3:
-			li	s5, 3		#sleep de 3 ms
+			li	s4, 5		#sleep de 5 ms
 			
 			save_stack(ra)
 			jal	MOV_LEFT
@@ -155,7 +165,7 @@ MAIN:
 			ret
 			
 		LEFT2continue:
-			li	s5, 15		#sleep de 15 ms
+			li	s4, 10		#sleep de 15 ms
 			
 			save_stack(ra)
 			jal	MOV_LEFT
@@ -168,7 +178,7 @@ MAIN:
 			ret
 		
 		LEFT1continue:
-			li	s5, 75		#sleep de 75 ms
+			li	s4, 20		#sleep de 75 ms
 			
 			save_stack(ra)
 			jal	MOV_LEFT
@@ -217,7 +227,7 @@ MAIN:
 			ret
 		
 		RIGHT1continue:
-			li	s5, 75		#sleep de 75ms
+			li	s4, 20		#sleep de 75ms
 			
 			save_stack(ra)
 			jal	MOV_RIGHT
@@ -230,7 +240,7 @@ MAIN:
 			ret
 		
 		RIGHT2continue:
-			li	s5, 15
+			li	s4, 10
 			
 			save_stack(ra)
 			jal	MOV_RIGHT
@@ -243,7 +253,7 @@ MAIN:
 			ret
 		
 		RIGHT3continue:
-			li	s5, 3
+			li	s4, 5
 			
 			save_stack(ra)
 			jal	MOV_RIGHT
@@ -288,7 +298,7 @@ MAIN:
 		
 		
 		UP3:	
-			li	s5, 3
+			li	s5, 5
 			
 			save_stack(ra)
 			jal	MOV_UP
@@ -301,7 +311,7 @@ MAIN:
 			ret
 			
 		UP2continue:
-			li	s5, 15
+			li	s5, 10
 			
 			save_stack(ra)
 			jal	MOV_UP
@@ -314,7 +324,7 @@ MAIN:
 			ret
 		
 		UP1continue:
-			li	s5, 75
+			li	s5, 20
 			
 			save_stack(ra)
 			jal	MOV_UP
@@ -363,7 +373,7 @@ MAIN:
 			ret
 		
 		DOWN1continue:
-			li	s5, 75
+			li	s5, 20
 			
 			save_stack(ra)
 			jal	MOV_DOWN
@@ -376,7 +386,7 @@ MAIN:
 			ret
 		
 		DOWN2continue:
-			li	s5, 15
+			li	s5, 10
 			
 			save_stack(ra)
 			jal	MOV_DOWN
@@ -389,7 +399,7 @@ MAIN:
 			ret
 		
 		DOWN3continue:
-			li	s5, 3
+			li	s5, 5
 			
 			save_stack(ra)
 			jal	MOV_DOWN
