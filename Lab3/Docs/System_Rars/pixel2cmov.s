@@ -12,7 +12,7 @@
 
 .macro sleep(%miliseg)
 	mv a0, %miliseg
-	li a7, 10
+	li a7, 32
 	ecall
 .end_macro
 
@@ -42,9 +42,11 @@ MAIN:
 	mv	s4, zero	#botao não foi pressionado
 	
 	MAINLOOP:
-	
+		
+		sleep(s5)
+		
 		li	t0, AdcCH0
-		lw	s2, 0(t0)	#s2 = x do analogico, x entre 0x000 e 0xFFF
+		lw	s2, 0(t0)		#s2 = x do analogico, x entre 0x000 e 0xFFF
 		
 		li	t0, 100
 		bleu	s2, t0, gotoLEFT3	#x < 100 ? goto LEFT3
@@ -86,11 +88,7 @@ MAIN:
 		li	t0, 5000
 		bleu	s3, t0, gotoDOWN3	#y < 5000? goto DOWN3
 		continue11:
-		li	t0, AdcCH7
-		lw	t1, 0(t0)
-		bnez	t1, L0		#botao pressionado? fazer switch da flag do botao(s4)
-		not	s4, s4		#switch botao pressionado
-		L0:
+		
 		j MAINLOOP
 		
 		
@@ -144,8 +142,7 @@ MAIN:
 		
 		
 		LEFT3:
-			li	t0, 3
-			sleep(t0)		#sleep de 3 ms
+			li	s5, 3		#sleep de 3 ms
 			
 			save_stack(ra)
 			jal	MOV_LEFT
@@ -158,8 +155,7 @@ MAIN:
 			ret
 			
 		LEFT2continue:
-			li	t0, 15
-			sleep(t0)		#sleep de 15 ms
+			li	s5, 15		#sleep de 15 ms
 			
 			save_stack(ra)
 			jal	MOV_LEFT
@@ -172,8 +168,7 @@ MAIN:
 			ret
 		
 		LEFT1continue:
-			li	t0, 75
-			sleep(t0)		#sleep de 75 ms
+			li	s5, 75		#sleep de 75 ms
 			
 			save_stack(ra)
 			jal	MOV_LEFT
@@ -222,8 +217,7 @@ MAIN:
 			ret
 		
 		RIGHT1continue:
-			li	t0, 75
-			sleep(t0)		#sleep de 75ms
+			li	s5, 75		#sleep de 75ms
 			
 			save_stack(ra)
 			jal	MOV_RIGHT
@@ -236,8 +230,7 @@ MAIN:
 			ret
 		
 		RIGHT2continue:
-			li	t0, 15
-			sleep(t0)
+			li	s5, 15
 			
 			save_stack(ra)
 			jal	MOV_RIGHT
@@ -250,8 +243,7 @@ MAIN:
 			ret
 		
 		RIGHT3continue:
-			li	t0, 3
-			sleep(t0)
+			li	s5, 3
 			
 			save_stack(ra)
 			jal	MOV_RIGHT
@@ -296,8 +288,7 @@ MAIN:
 		
 		
 		UP3:	
-			li	t0, 3
-			sleep(t0)
+			li	s5, 3
 			
 			save_stack(ra)
 			jal	MOV_UP
@@ -310,8 +301,7 @@ MAIN:
 			ret
 			
 		UP2continue:
-			li	t0, 15
-			sleep(t0)
+			li	s5, 15
 			
 			save_stack(ra)
 			jal	MOV_UP
@@ -324,8 +314,7 @@ MAIN:
 			ret
 		
 		UP1continue:
-			li	t0, 75
-			sleep(t0)
+			li	s5, 75
 			
 			save_stack(ra)
 			jal	MOV_UP
@@ -374,8 +363,7 @@ MAIN:
 			ret
 		
 		DOWN1continue:
-			li	t0, 75
-			sleep(t0)
+			li	s5, 75
 			
 			save_stack(ra)
 			jal	MOV_DOWN
@@ -388,8 +376,7 @@ MAIN:
 			ret
 		
 		DOWN2continue:
-			li	t0, 15
-			sleep(t0)
+			li	s5, 15
 			
 			save_stack(ra)
 			jal	MOV_DOWN
@@ -402,8 +389,7 @@ MAIN:
 			ret
 		
 		DOWN3continue:
-			li	t0, 3
-			sleep(t0)
+			li	s5, 3
 			
 			save_stack(ra)
 			jal	MOV_DOWN
