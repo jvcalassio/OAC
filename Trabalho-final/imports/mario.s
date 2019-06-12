@@ -46,7 +46,8 @@ INIT_MARIO:
 		la t0,mario_state # seta mario_state como 0
 		sb zero,0(t0) # seta 00000 no mario state (parado no chao virado pra direita)
 		la t0,pulo_px
-		sh zero,0(t0) # reseta pulopx
+		sb zero,0(t0) # reseta pulopx
+		sb zero,1(t0)
 	
 	FIM_INIT_MARIO:
 		free_stack(ra)
