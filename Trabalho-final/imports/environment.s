@@ -6,7 +6,13 @@
 var_dk: .word 0,0,0,0
 var_lady: .word 0
 
+up_text: .string "UP"
+highscore_text: .string "HIGHSCORE"
+bonus_text: .string "BONUS"
+
 .text
+
+# Faz danca do Donkey Kong fase 1
 INIT_DK_DANCA:
 	
 	la	t4, var_dk
@@ -131,7 +137,7 @@ DK_DANCA_LOOP:
 		
 		ret
 
-
+# Faz danca da lady na fase 1
 INIT_LADY:
 	
 	la	t4, var_lady
@@ -253,3 +259,47 @@ LADY_LOOP:
 		sw	t0, 0(t4)
 		
 		ret
+
+# Imprime textos auxiliares de jogo
+PRINT_TEXT_INITIAL:
+	la a0,up_text
+	li a1,40
+	li a2,5
+	li a3,0x00ff
+	li a7,104
+	ecall # imprime "UP"
+	
+	la a0,highscore_text
+	li a1,190
+	li a2,5
+	li a3,0x00ff
+	li a7,104
+	ecall # imprime "HIGHSCORE"
+	
+	la t0,vidas
+	lb a0,0(t0)
+	li a1,30
+	li a2,5
+	li a3,0x00ff
+	li a7,101
+	ecall # imprime quantidade de vidas atualmente
+	ret
+	
+# Imprime dados de jogo (vidas, score, high score, bonus)
+PRINT_TEXT:
+	la t0,score
+	lb a0,0(t0)
+	li a1,30
+	li a2,15
+	li a3,0x00ff
+	li a7,101
+	ecall # imprime score 
+	
+	la t0,highscore
+	lb a0,0(t0)
+	li a1,190
+	li a2,15
+	li a3,0x00ff
+	li a7,101
+	ecall  # imprime highscore
+	ret

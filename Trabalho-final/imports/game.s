@@ -12,7 +12,9 @@ victory_text: .string "PARABENS VC VENCEU\n"
 gameover_text: .string "GAME OVER\n"
 blank: .string " "
 
-vidas: .byte 0 # quantidade de vidas (inicia em 2, mudar apos testes)
+vidas: .byte 2 # quantidade de vidas (inicia em 2, mudar apos testes)
+highscore: .word 0 # highscore atual
+score: .word 0 # score atual
 last_key: .word 0,0 # ultima tecla pressionada (tecla, tempo)
 .text
 	M_SetEcall(exceptionHandling)
@@ -43,6 +45,9 @@ PRINT_FASE1:
 		addi t0,t0,-1
 		j FORF
 	FIMFORF:
+		save_stack(ra)
+		call PRINT_TEXT_INITIAL
+		free_stack(ra)
 		ret
 		
 # anotacao temporaria das teclas
@@ -64,7 +69,7 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	#lw t1,0(t0) # carrega qual o display mostrado atual
 	#xori t1,t1,0x01
 	#sw t1,0(t0) # seta display
-	
+	call PRINT_TEXT
 	# fim mudar display
 	la t0,pos_mario
 	lh t1,0(t0) # x do mario
