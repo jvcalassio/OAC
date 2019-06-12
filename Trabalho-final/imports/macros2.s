@@ -1,37 +1,15 @@
 ######### Verifica se eh a DE1-SoC ###############
 .macro DE1(%salto)
 	li tp, 0x10008000			# carrega tp = 0x10008000
-	bne gp,tp,%salto			# Na DE1 gp = 0 ! Não tem segmento .extern
+	bne gp,tp,%salto			# Na DE1 gp = 0 ! Nao tem segmento .extern
 .end_macro
 
 ######### Seta o endereco UTVEC ###############
 .macro M_SetEcall(%label)
- 	la t6,%label		# carrega em t6 o endereço base das rotinas do sistema ECALL
- 	csrrw zero,5,t6 	# seta utvec (reg 5) para o endereço t6
- 	csrrsi zero,0,1 	# seta o bit de habilitação de interrupção em ustatus (reg 0)
- .end_macro
-
-######### Chamada de Ecall #################
-.macro M_Ecall
-	DE1(NotECALL)
- 	ecall		# tem ecall? só chama
- 	j FimECALL			
-NotECALL: la tp,UEPC	
-	la t6,FimECALL	# endereco após o ecall
-	sw t6,0(tp)	# salva UEPC
-	lw tp,4(tp)	# le UTVEC
-	jalr zero,tp,0	# chama UTVEC
-FimECALL: nop
- .end_macro
- 
-######### Chamada de Uret #################
-.macro M_Uret
-	DE1(NotURET)
- 	uret			# tem uret? só retorna
-NotURET: la tp,UEPC		# nao tem uret
-	lw tp,0(tp)		# carrega o endereco UEPC
-	jalr zero,tp,0		# pula para UEPC
- .end_macro
+ 	la t6,%label		# carrega em t6 o endereco base das rotinas do sistema ECALL
+ 	csrrw zero,5,t6 	# seta utvec (reg 5) para o endereco t6
+ 	csrrsi zero,0,1 	# seta o bit de habilitacao de interrupcao em ustatus (reg 0)
+.end_macro
  
 #definicao do mapa de enderecamento de MMIO
 .eqv VGAADDRESSINI0     0xFF000000
@@ -79,3 +57,13 @@ NotURET: la tp,UEPC		# nao tem uret
 .eqv KeyMap1		0xFF200524
 .eqv KeyMap2		0xFF200528
 .eqv KeyMap3		0xFF20052C 
+
+# ADC Controller
+.eqv AdcCH0 		0xFF200200
+.eqv AdcCH1		0xFF200204
+.eqv AdcCH2 		0xFF200208
+.eqv AdcCH3 		0xFF20020C
+.eqv AdcCH4 		0xFF200210
+.eqv AdcCH5 		0xFF200214
+.eqv AdcCH6		0xFF200218
+.eqv AdcCH7 		0xFF20021C
