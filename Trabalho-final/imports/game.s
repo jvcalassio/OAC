@@ -145,7 +145,7 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		call DK_DANCA_LOOP
 		call LADY_LOOP
 		
-		li a0,20
+		li a0,40
 		li a7,32
 		ecall
 		

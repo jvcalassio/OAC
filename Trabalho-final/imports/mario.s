@@ -481,7 +481,8 @@ MOVE_MARIO_BAIXO:
 		call PRINT_OBJ_MIRROR
 		# devolve pulo_px emprestado
 		la t0,pulo_px
-		sh zero,0(t0)
+		sb zero,0(t0)
+		sb zero,1(t0)
 		
 		# reseta mario state
 		la t0,mario_state
@@ -920,6 +921,7 @@ MARIO_COLLISIONS:
 		VERIF_MV_DIR_DOWNDEG: 
 		la t0,fase
 		lw a2,0(t0) # carrega mapa da fase atual
+		addi a2,a2,8
 		la t0,pos_mario
 		lh a0,0(t0) # carrega x
 		addi a0,a0,10
