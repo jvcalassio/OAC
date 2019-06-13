@@ -95,6 +95,43 @@ SET_MARIO_MOVEMENT:
 	lw a2,0(t0) # carrega qual display usar
 	ret
 
+# Pega a posicao do mario no map
+MARIO_MAP_POS:
+	save_stack(s0)
+	save_stack(s1)
+	la t0,pos_mario
+	lh s1,0(t0) # x do mario
+	lh s0,2(t0) # y do mario
+	
+	addi s1,s1,16 # +16 para saber posicao do pe direito do mario
+	addi s0,s0,20 # +16 --
+	srli s1,s1,2 # x / 4 para alinhar com mapeamento
+	srli s0,s0,2 # y / 4 para alinhar com mapeamento
+	
+	la t0,fase
+	lb t0,0(t0)
+	li t1,1
+	beq t0,t1,MMPOS_FASE1
+	li t1,2
+	beq t0,t1,MMPOS_FASE2
+	j FIM_MMPOS
+	
+	MMPOS_FASE1:
+	la a1,fase1_obj
+	j MMPOS_CONTINUE
+	MMPOS_FASE2:
+	la a1,fase2_obj
+	MMPOS_CONTINUE:
+	li a0,80
+	mul a0,s0,a0 # (y * 80)
+	add a0,a0,s1 # (y * 80) + n
+	
+	FIM_MMPOS:
+	free_stack(s1)
+	free_stack(s0)
+	ret
+	
+
 # Faz o movimento do mario para a direita
 MOVE_MARIO_DIREITA:
 	save_stack(a0)

@@ -34,10 +34,10 @@ Esquemas do mapa:
 
 */
 int main(){
-	printf("fase1_obj: .byte ");
+	printf("fase2_obj: .byte ");
 	string mapa;
 	ifstream map_in;
-	map_in.open("fase1_map.txt");
+	map_in.open("fase2_map.txt");
 	for(int j=0;j<60;j++){
 		map_in >> mapa;
 		for(int i=0;i<80;i++){

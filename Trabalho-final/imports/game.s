@@ -3,12 +3,13 @@
 
 .data
 .include "fases/fase1_obj.s"
+.include "fases/fase2_obj.s"
 
 # Variaveis de jogo
 display: .word DISPLAY0,DISPLAY1 # endereco do display utilizado no momento
-fase_current: .space 76800 # salva fase atual
+fase_current: .space 76800 # salva fase atual 
 
-fase: .byte 1 # primeira fase
+fase: .byte 1 # primeira fase 
 level: .byte 1 # primeiro lvl
 
 vidas: .byte 2 # quantidade de vidas (inicia em 2)
@@ -80,8 +81,10 @@ SET_FASE1:
 		j FOR_LOADFASE1
 		
 	LOADFASE1_DE1:
+		save_stack(ra)
 		li a0,1
 		call MAP_RETRIEVER
+		free_stack(ra)
 		
 	FIM_LOADFASE1:
 	la t0,fase
@@ -107,13 +110,15 @@ SET_FASE2:
 		j FOR_LOADFASE2
 	
 	LOADFASE2_DE1:
+		save_stack(ra)
 		li a0,2
 		call MAP_RETRIEVER
+		free_stack(ra)
 			
 	FIM_LOADFASE2:
 	la t0,fase
 	li t1,2
-	sb t1,0(t0) # salva fase 1
+	sb t1,0(t0) # salva fase 2
 	ret
 
 # Imprime a fase atual	

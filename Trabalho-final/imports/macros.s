@@ -26,20 +26,30 @@
 
 # pega a posicao do mario no map
 .macro mario_mappos(%result)
-	la t0,pos_mario
-	lh t1,0(t0) # x do mario
-	lh t2,2(t0) # y do mario
+	#la t0,pos_mario
+	#lh t1,0(t0) # x do mario
+	#lh t2,2(t0) # y do mario
 	
-	addi t1,t1,16 # +16 para saber posicao do pe direito do mario
-	addi t2,t2,20 # +16 --
-	srli t1,t1,2 # x / 4 para alinhar com mapeamento
-	srli t2,t2,2 # y / 4 para alinhar com mapeamento
+	#addi t1,t1,16 # +16 para saber posicao do pe direito do mario
+	#addi t2,t2,20 # +16 --
+	#srli t1,t1,2 # x / 4 para alinhar com mapeamento
+	#srli t2,t2,2 # y / 4 para alinhar com mapeamento
 	
-	la t0,fase1_obj
-	li t3,80
-	mul t3,t2,t3 # (y * 80)
-	add t3,t3,t1 # (y * 80) + n
-	add %result,t0,t3 # endereco da posicao desejada
+	#la t0,fase1_obj
+	#li t3,80
+	#mul t3,t2,t3 # (y * 80)
+	#add t3,t3,t1 # (y * 80) + n
+	#add %result,t0,t3 # endereco da posicao desejada
+	addi sp,sp,-12
+	sw ra,0(sp)
+	sw a0,4(sp)
+	sw a1,8(sp)
+	call MARIO_MAP_POS
+	add %result,a1,a0
+	lw ra,0(sp)
+	lw a0,4(sp)
+	lw a1,8(sp)
+	addi sp,sp,12
 .end_macro
 
 # recebe tempo atual
@@ -62,7 +72,7 @@
 .eqv START_MARIO_X_FASE1 222
 .eqv START_MARIO_Y_FASE1 46
 .eqv START_MARIO_X_FASE2 52
-.eqv START_MARIO_Y_FASE2 185
+.eqv START_MARIO_Y_FASE2 183
 
 .eqv STARTING_BONUS 5000
 
