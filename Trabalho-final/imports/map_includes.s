@@ -45,5 +45,10 @@ MAP_RETRIEVER:
 		ret
 		
 	FIM_MAP_RETRIEVER: # recebeu todo o mapa desejado, retorna
+		# muda mapa para 0
+		sb zero,0(s1) # desliga recebimento de mapa
+		sb t0,0(s0) # start = 1
+		sb zero,0(s0) # start = 0
+		jal LOOP_MAP_BUSY
 		free_stack(ra)
 		ret
