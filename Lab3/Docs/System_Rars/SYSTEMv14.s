@@ -153,7 +153,7 @@ TextErrorInst: .string "Instruction:"
 ########################################################################################
 .text
 
-###### Devem ser colocadas aqui as identificações das interrupções e exceções
+###### Devem ser colocadas aqui as identificaï¿½ï¿½es das interrupï¿½ï¿½es e exceï¿½ï¿½es
 exceptionHandling:	addi sp,sp,-8 # salva t0 e t1 na pilha
 			sw t0,0(sp) # salva t0 na pilha
 			sw t1,4(sp) # salva t1 na pilha
@@ -454,8 +454,8 @@ endEcall: lw	x1, 0(sp)  # recupera QUASE todos os registradores na pilha
 	lw	x2,   4(sp)	
 	lw	x3,   8(sp)	
 	lw	x4,  12(sp)      	
-	#lw	x5,  16(sp) nao precisa retornar t0 (ja vai ser retornado no uret)
-    	#lw	x6,  20(sp) nao precisa retornar t1 (ja vai ser retornado no uret)
+	#lw	x5,  16(sp) nao precisa recuperar t0 (ja vai ser recuperado no uret)
+    	#lw	x6,  20(sp) nao precisa recuperar t1 (ja vai ser recuperado no uret)
     	lw	x7,  24(sp)
     	lw	x8,  28(sp)
     	lw	x9,    32(sp)
@@ -522,7 +522,7 @@ goToExit:   	DE1(goToExitDE2)	# se for a DE2
   		li 	a7, 10		# chama o ecall normal do Rars
   		ecall			# exit ecall
   		
-goToExitDE2:	j 	goToExitDE2		# trava o processador : Não tem sistema operacional!
+goToExitDE2:	j 	goToExitDE2		# trava o processador : Nï¿½o tem sistema operacional!
 
 goToPrintInt:	jal     printInt               	# chama printInt
 		j       endEcall
@@ -581,6 +581,7 @@ goToBRES:	jal     BRESENHAM               # chama BRESENHAM
 #  a1    =    x                             #
 #  a2    =    y  			    #
 #  a3    =    cor                           #
+#  a4	 =    frame			    #
 #############################################
 
 printInt:	addi 	sp, sp, -4			# Aloca espaco
@@ -628,6 +629,7 @@ fimprintInt:	ret					# retorna
 #  a1    =    x                             #
 #  a2    =    y                             #
 #  a3    =    cor			    #
+#  a4	 =    frame			    #
 #############################################
 
 printHex:	addi    sp, sp, -4    		# aloca espaco
@@ -668,6 +670,7 @@ fimprintHex:	ret				# retorna
 #  a1    =  x                       #
 #  a2    =  y                       #
 #  a3    =  cor		    	    #
+#  a4	 =  frame		    #
 #####################################
 
 printString:	addi	sp, sp, -8			# aloca espaco
@@ -788,7 +791,7 @@ endForChar2I:	ret				# retorna
 
 #########################################
 # ReadChar           			#
-# a0 = valor ascii da tecla   		#
+# a0 = valor ascii da tecla (retorno)	#
 # 2017/2  				#
 ######################################### 
 
@@ -900,7 +903,7 @@ fimreadString: 	sb 	zero, 0(a0)			# grava NULL no buffer
 ###########################
 #    ReadInt              #
 # a0 = valor do inteiro   #
-#                         #
+# (retorno)               #
 ###########################
 
 readInt: 	addi 	sp,sp,-4		# reserva espaco na pilha
@@ -1070,11 +1073,14 @@ Melody:     	lw      t5, 0(t4)
 fimmidiOutSync:	ret
 
 
-#################################
-# printFloat                    #
-# imprime Float em fa0          #
-# na posicao (a1,a2)	cor a3  #
-#################################
+#######################################
+# Print Float                 	      #
+# fa0	= 	float a ser impresso  #
+# a1	=	x		      #
+# a2 	=	y		      #
+# a3	=	cor		      #
+# a4	=	frame		      #
+#######################################
 # muda s0, s1
 
 printFloat:	addi 	sp, sp, -4
@@ -1485,6 +1491,7 @@ fimRandom:	ret			# retorna
 #    CLS                        #
 #  Clear Screen                 #
 #  a0 = cor                     #
+#  a1 = frame			#
 #################################
 
 clsCLS:	beq 	a1, zero, frame0CLS
