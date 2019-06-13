@@ -11,7 +11,7 @@
 .end_macro
 
 
-.include "macros2.s"
+.include "../macros2.s"
 
 
 .eqv preto 0x00
@@ -590,4 +590,4 @@ GET_XY:
 	jr ra, 0 #retorna
 	
 			
-.include "SYSTEMv14.s"
+.include "../SYSTEMv14.s"
