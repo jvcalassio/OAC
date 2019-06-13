@@ -17,7 +17,12 @@ bonus_time: .word 0 # ultimo tempo de modificacao do bonus
 bonus: .word 0 # bonus inicial da fase
 .text
 	M_SetEcall(exceptionHandling)
-	
+# Inicia o jogo (iniciando as variaveis)
+INIT_GAME:
+	addi t0,zero,2
+	la t1,vidas
+	sb t0,0(t1) # reinicia a vida
+		
 # Inicia a fase 1
 INIT_FASE1:
 	jal PRINT_FASE1
