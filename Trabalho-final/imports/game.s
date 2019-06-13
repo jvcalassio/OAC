@@ -4,38 +4,42 @@
 .data
 .include "fases/fase1_obj.s"
 .include "../sprites/bin/fase1.s"
+
+# Variaveis de jogo
 display: .word DISPLAY0,DISPLAY1 # endereco do display utilizado no momento
 fase: .space 4 # endereco da fase atual
 
-# string do jogo
-victory_text: .string "PARABENS VC VENCEU\n"
-gameover_text: .string "GAME OVER\n"
-blank: .string " "
-
-vidas: .byte 2 # quantidade de vidas (inicia em 2, mudar apos testes)
+vidas: .byte 2 # quantidade de vidas (inicia em 2)
 highscore: .word 0 # highscore atual
 score: .word 0 # score atual
 last_key: .word 0,0 # ultima tecla pressionada (tecla, tempo)
+bonus_time: .word 0 # ultimo tempo de modificacao do bonus
+bonus: .word 0 # bonus inicial da fase
 .text
 	M_SetEcall(exceptionHandling)
+	
+# Inicia a fase 1
+INIT_FASE1:
 	jal PRINT_FASE1
+	call PRINT_TEXT_INITIAL
 	call INIT_MARIO
 	call INIT_DK_DANCA
 	call INIT_LADY
+	call INIT_BONUS
 	j MAINLOOP
 
 # Imprime fase 1 na t ela, e salva no indicador de fase atual
 PRINT_FASE1:
 	la t0,display
-	lw s0,0(t0)
-	li s2,DISPLAY1
+	lw s0,0(t0) # primeiro display
+	lw s2,4(t0) # segundo display
 	la s1,fase1
 	la t0,fase
 	sw s1,0(t0) # salva o endereco do mapa da fase atual
 	addi s1,s1,8 # pula as words que indicam o tamanho da imagem
 	li t0,76800 # 320 * 240 pixels, tamanho total da imagem
-	FORF:
-		beqz t0,FIMFORF
+	FORFASE1:
+		beqz t0,FIMFORFASE1
 		lb t2,0(s1)
 		sb t2,0(s0)
 		sb t2,0(s2)
@@ -43,11 +47,8 @@ PRINT_FASE1:
 		addi s1,s1,1
 		addi s2,s2,1
 		addi t0,t0,-1
-		j FORF
-	FIMFORF:
-		save_stack(ra)
-		call PRINT_TEXT_INITIAL
-		free_stack(ra)
+		j FORFASE1
+	FIMFORFASE1:
 		ret
 		
 # anotacao temporaria das teclas
@@ -69,8 +70,14 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	#lw t1,0(t0) # carrega qual o display mostrado atual
 	#xori t1,t1,0x01
 	#sw t1,0(t0) # seta display
-	call PRINT_TEXT
 	# fim mudar display
+	
+	# Modifica valores de variaveis (highscore, bonus)
+	call HIGHSCORE_BONUS_MANAGEMENT
+	
+	# Imprime variaveis de jogo (score, vidas, highscore, bonus)
+	call PRINT_TEXT
+	
 	la t0,pos_mario
 	lh t1,0(t0) # x do mario
 	lh t2,2(t0) # y do mario
@@ -89,7 +96,7 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	andi t0,t0,0x80
 	bnez t0,GAME_VICTORY # verifica se esta na posicao de vitoria
 	
-	#jal CONTINUE_MOVEMENT
+	jal CONTINUE_MOVEMENT
 	
 	la t0,mario_state
 	lb t1,0(t0)
@@ -105,7 +112,7 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	beq t2,t1,MPESQ # se for pra esquerda, faz pulo pra esquerda
 	
 	MAINLOOP_KEYBIND:
-	#call MARIO_GRAVITY
+	call MARIO_GRAVITY
 	call KEYBIND
 	beqz a0,MAINLOOP_RET # se nenhuma tecla, faz nada
 		# salva ultima tecla pressionada
@@ -117,10 +124,6 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		lw a0,0(t0) # retorna tecla
 	
 		#call PRINT_ACT_POS
-		la t0,mario_state
-		lb t1,0(t0)
-		andi t1,t1,0x02
-		#bnez t1,MAINLOOP_RET # se ja tiver andando, ignora botao pressionado
 		
 		li t0,109
 		beq a0,t0,FIM # se tecla == M, sair  
@@ -150,7 +153,7 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		call DK_DANCA_LOOP
 		call LADY_LOOP
 		
-		li a0,40
+		li a0,20
 		li a7,32
 		ecall
 		
@@ -185,10 +188,11 @@ GAME_VICTORY:
 	j FIM
 	
 # Imprime a tela de game over e volta para o menu
+# falta adaptar para display frames (!)
 GAME_OVER:
 	li a0,100 # x do bloco
 	li a1,100 # y do bloco
-	li a3,DISPLAY0
+	li a2,DISPLAY0
 	call GET_POSITION
 	mv s0,a0 # endereco p/ comecar a printar
 	li s1,130 # largura
@@ -252,10 +256,10 @@ CONTINUE_MOVEMENT:
 	andi t1,t1,0x04
 	beqz t1,CONTINUE_MOVEMENT_DIR
 	CONTINUE_MOVEMENT_ESQ:
-		call MOVE_MARIO_ESQUERDA
+		call MVME_P0
 		j FIM_CONTINUE_MOVEMENT
-	CONTINUE_MOVEMENT_DIR:	
-		call MOVE_MARIO_DIREITA
+	CONTINUE_MOVEMENT_DIR:
+		call MVMD_P0
 	FIM_CONTINUE_MOVEMENT:	
 		free_stack(ra)
 		ret

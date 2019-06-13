@@ -6,6 +6,10 @@
 var_dk: .word 0,0,0,0
 var_lady: .word 0
 
+# strings de jogo
+victory_text: .string "PARABENS VC VENCEU"
+gameover_text: .string "GAME OVER"
+blank: .string " " # lembrar de apagar
 up_text: .string "UP"
 highscore_text: .string "HIGHSCORE"
 bonus_text: .string "BONUS"
@@ -266,40 +270,149 @@ PRINT_TEXT_INITIAL:
 	li a1,40
 	li a2,5
 	li a3,0x00ff
+	li a4,0
 	li a7,104
-	ecall # imprime "UP"
+	ecall # imprime "UP" no display 0
+	la a0,up_text
+	li a4,1
+	ecall # imprime "UP" no display 1
 	
 	la a0,highscore_text
 	li a1,190
 	li a2,5
 	li a3,0x00ff
+	li a4,0
 	li a7,104
-	ecall # imprime "HIGHSCORE"
+	ecall # imprime "HIGHSCORE" no display 0
+	la a0,highscore_text
+	li a4,1
+	ecall # imprime "HIGHSCORE" no display 1
 	
 	la t0,vidas
 	lb a0,0(t0)
 	li a1,30
 	li a2,5
 	li a3,0x00ff
+	li a4,0
 	li a7,101
-	ecall # imprime quantidade de vidas atualmente
+	ecall # imprime quantidade de vidas atualmente no display 0
+	la t0,vidas
+	lb a0,0(t0)
+	li a4,1
+	ecall # imprime quantidade de vidas no display 1
+	
+	
+	li a0,100000000
+	li a1,190
+	li a2,15
+	li a3,0x00ff
+	la t0,display
+	lw a4,0(t0) # carrega display atual
+	andi a4,a4,0x20
+	srli a4,a4,5
+	li a7,101
+	ecall  # imprime suposto highscore, apenas para ficar com varios zeros
+	
+	li a0,100000000
+	li a1,30
+	li a2,15
+	li a3,0x00ff
+	la t0,display
+	lw a4,0(t0) # carrega display atual
+	andi a4,a4,0x20
+	srli a4,a4,5
+	li a7,101
+	ecall  # imprime suposto score, apenas para ficar com varios zeros
 	ret
 	
 # Imprime dados de jogo (vidas, score, high score, bonus)
 PRINT_TEXT:
 	la t0,score
-	lb a0,0(t0)
+	lw a0,0(t0)
 	li a1,30
 	li a2,15
 	li a3,0x00ff
+	la t0,display
+	lw a4,0(t0) # carrega display atual
+	andi a4,a4,0x20
+	srli a4,a4,5
 	li a7,101
 	ecall # imprime score 
 	
 	la t0,highscore
-	lb a0,0(t0)
+	lw a0,0(t0)
 	li a1,190
 	li a2,15
 	li a3,0x00ff
+	la t0,display
+	lw a4,0(t0) # carrega display atual
+	andi a4,a4,0x20
+	srli a4,a4,5
 	li a7,101
 	ecall  # imprime highscore
+	
+	la t0,bonus
+	lw a0,0(t0)
+	li a1,265
+	li a2,30
+	li a3,0x00ff
+	la t0,display
+	lw a4,0(t0) # carrega display atual
+	andi a4,a4,0x20
+	srli a4,a4,5
+	li a7,101
+	ecall  # imprime bonus
+	ret
+
+# Muda valores do highscore e bonus
+HIGHSCORE_BONUS_MANAGEMENT:
+	la t0,score
+	lw t1,0(t0)
+	la t0,highscore
+	lw t2,0(t0)
+	bgt t1,t2,ADD_HIGHSCORE # highscore
+	
+	HBONUS_MANAG_CONT1:
+	gettime()
+	la t0,bonus_time
+	lw t1,0(t0)
+	sub t2,a0,t1 # tempo atual - ultimo tempo de sub do highscore
+	li t1,3000 # 3 segundos
+	bge t2,t1,SUB_BONUS # se a dif de tempo >= 3s, subtrai o valor do bonus
+	
+	j FIM_HBONUS_MANAGEMENT
+	
+	ADD_HIGHSCORE: # muda highscore caso score seja maior
+		la t0,score
+		lw t1,0(t0)
+		la t0,highscore
+		sw t1,0(t0)
+		j HBONUS_MANAG_CONT1
+		
+	SUB_BONUS: # muda bonus caso tenha decorrido o tempo
+		la t0,bonus_time
+		gettime()
+		sw a0,0(t0) # grava ultimo tempo de subtracao
+		la t0,bonus
+		lw t1,0(t0)
+		addi t1,t1,-100 # subtrai 100 do bonus
+		sw t1,0(t0) # grava novo bonus
+		bgez t1,FIM_HBONUS_MANAGEMENT # se bonus > 0, continua
+		# se bonus <= 0, mario morre
+		tail MARIO_DEATH
+		
+	FIM_HBONUS_MANAGEMENT:
+		ret
+
+# Inicia bonus da fase
+INIT_BONUS:
+	gettime()
+	# recebe tempo em a0
+	la t0,bonus_time
+	sw a0,0(t0)
+	
+	# grava bonus inicial
+	la t0,bonus
+	li t1,STARTING_BONUS
+	sw t1,0(t0)
 	ret

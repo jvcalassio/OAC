@@ -42,6 +42,12 @@
 	add %result,t0,t3 # endereco da posicao desejada
 .end_macro
 
+# recebe tempo atual
+.macro gettime()
+	addi a7,zero,30
+	ecall
+.end_macro
+
 # Enderecos
 .eqv DISPLAY0 0xff000000
 .eqv DISPLAY1 0xff100000
@@ -53,3 +59,5 @@
 # Constantes de jogo
 .eqv START_MARIO_X_FASE1 84
 .eqv START_MARIO_Y_FASE1 199
+
+.eqv STARTING_BONUS 5000
