@@ -31,10 +31,12 @@ movement_counter: .word 0 # contador de passos dos movimentos
 # Sem argumentos
 INIT_MARIO:
 	save_stack(ra)
-	la t0,fase
-	lw t0,0(t0) # fase atual
-	la t1,fase1
+	la t0,fase 
+	lb t0,0(t0) # carrega numero da fase atual
+	li t1,1
 	beq t0,t1,INIT_MARIO_F1 # se fase atual for fase 1, printa mario parado na fase 1
+	li t1,2
+	beq t0,t1,INIT_MARIO_F2 # se fase atual for fase 2, printa mario parado na fase 2
 	j FIM_INIT_MARIO
 	
 	INIT_MARIO_F1:
@@ -42,7 +44,16 @@ INIT_MARIO:
 		sw zero,0(t0) # zera pos mario
 		set_mario_move(START_MARIO_X_FASE1,START_MARIO_Y_FASE1,mario_parado)
 		call PRINT_OBJ # printa mario na posicao inicial, reseta pos mario
+		j FIM_INIT_MARIO
 		
+	INIT_MARIO_F2:
+		la t0,pos_mario
+		sw zero,0(t0) # zera pos mario
+		set_mario_move(START_MARIO_X_FASE2,START_MARIO_Y_FASE2,mario_parado)
+		call PRINT_OBJ # printa mario na posicao inicial, reseta pos mario
+		
+	FIM_INIT_MARIO:
+		# reseta variaveis
 		la t0,mario_state # seta mario_state como 0
 		sb zero,0(t0) # seta 00000 no mario state (parado no chao virado pra direita)
 		la t0,pulo_px
@@ -50,8 +61,7 @@ INIT_MARIO:
 		sb zero,1(t0) 
 		la t0,movement_counter
 		sw zero,0(t0) # reseta mov counter
-	
-	FIM_INIT_MARIO:
+		
 		free_stack(ra)
 		ret
 	
@@ -64,8 +74,7 @@ REMOVE_MARIO:
 	lh a1,2(t0) # carrega y
 	la a2,display
 	lw a2,0(a2) # carrega display atual
-	la a3,fase
-	lw a3,0(a3) # carrega fase atual
+	la a3,fase_current
 	call CLEAR_OBJPOS # limpa mario na posicao atual
 	free_stack(ra)
 	ret
@@ -808,14 +817,12 @@ MARIO_COLLISIONS:
 		or t0,t1,t0 # junta os dois bytes
 		bne t0,zero,MARIO_CL_DENY # se qlqr um deles der 1 no bit desejado, nao permite
 		# verifica se tem degrau subindo
-		la t0,fase
-		lw a2,0(t0) # carrega mapa da fase atual
-		addi a2,a2,8 # pula tamanho do mapa
 		la t0,pos_mario
 		lh a0,0(t0) # carrega x
 		addi a0,a0,20
 		lh a1,2(t0) # carrega y
 		addi a1,a1,16
+		la a2,fase_current # carrega endereco da fase atual
 		call GET_POSITION
 		lb t0,0(a0)
 		li t2,0x46
@@ -824,14 +831,12 @@ MARIO_COLLISIONS:
 		j MARIO_CL_ALLOW
 		# verifica se tem degrau descendo
 		VERIF_MV_DIR_DOWNDEG: 
-		la t0,fase
-		lw a2,0(t0) # carrega mapa da fase atual
-		addi a2,a2,8
 		la t0,pos_mario
 		lh a0,0(t0) # carrega x
 		addi a0,a0,10
 		lh a1,2(t0) # carrega y
 		addi a1,a1,17
+		la a2,fase_current # carrega endereco da fase atual
 		call GET_POSITION
 		lb t0,0(a0)
 		li t2,0x00
@@ -849,14 +854,12 @@ MARIO_COLLISIONS:
 		or t0,t1,t0 # junta os dois bytes
 		bne t0,zero,MARIO_CL_DENY # se qlqr um deler de 1 no bit, nao permite
 		# verifica se tem degrau subindo
-		la t0,fase
-		lw a2,0(t0) # carrega mapa da fase atual
-		addi a2,a2,8 # pula tamanho do mapa
 		la t0,pos_mario
 		lh a0,0(t0) # carrega x
 		addi a0,a0,0
 		lh a1,2(t0) # carrega y
 		addi a1,a1,16
+		la a2,fase_current # carrega endereco da fase atual
 		call GET_POSITION
 		lb t0,0(a0)
 		li t2,0x46
@@ -865,14 +868,12 @@ MARIO_COLLISIONS:
 		j MARIO_CL_ALLOW
 		# verifica se tem degrau descendo
 		VERIF_MV_ESQ_DOWNDEG:
-		la t0,fase
-		lw a2,0(t0) # carrega mapa da fase atual
-		addi a2,a2,8 # pula tamanho do mapa
 		la t0,pos_mario
 		lh a0,0(t0) # carrega x
 		addi a0,a0,12
 		lh a1,2(t0) # carrega y
 		addi a1,a1,17
+		la a2,fase_current # carrega endereco da fase atual
 		call GET_POSITION
 		lb t0,0(a0)
 		li t2,0x00
@@ -1046,8 +1047,8 @@ MARIO_DEATH:
 	# se ainda tiver vidas, decrementa e volta para o comeco
 	FASE_RESET:
 		la t0,fase
-		lw t1,0(t0) # carrega qual a fase atual
-		la t0,fase1
+		lb t1,0(t0) # carrega numero da fase atual
+		li t0,1
 		beq t0,t1,MARIO_DEATH_FASE1 # se tiver na fase 1, reseta na fase1
 		tail GAME_OVER
 		

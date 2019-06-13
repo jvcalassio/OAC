@@ -6,17 +6,17 @@
 
 .data
 # Numero de Notas a tocar
-NUM: .word 4
+NUM: .word 8
 # lista de nota,dura��o,nota,dura��o,nota,dura��o,...
-NOTAS: 64,300,67,300,55,350,60,300,0,40
+NOTAS: .word 67,450,69,450,72,450,69,450,67,300,69,300,65,900,53,600
 
 .text
 	la s0,NUM		# define o endere�o do n�mero de notas
 	lw s1,0(s0)		# le o numero de notas
 	la s0,NOTAS		# define o endere�o das notas
-	li t0,0		# zera o contador de notas
-	li a2,100		# define o instrumento
-	li a3,127		# define o volume
+	li t0,0			# zera o contador de notas
+	li a2,80		# define o instrumento
+	li a3,125		# define o volume
 
 LOOP:	beq t0,s1, FIM	# contador chegou no final? ent�o  v� para FIM
 	lw a0,0(s0)		# le o valor da nota

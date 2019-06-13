@@ -241,7 +241,7 @@ CLEAR_OBJPOS:
 	
 	mv a0,s0 # retorna valor de a0 original
 	mv a2,a3 # seta novo endereco para calcular
-	addi a2,a2,8 # pula as duas words que especificam o tamanho
+	#addi a2,a2,8 # pula as duas words que especificam o tamanho
 	jal GET_POSITION # retorna endereco no mapa, para imprimir
 	mv a3,a0 # salva endereco no mapa em s2
 	mv a0,s1
@@ -273,4 +273,36 @@ CLEAR_OBJPOS:
 		free_stack(ra)
 		free_stack(s1)
 		free_stack(s0)
+		ret
+
+##################################################################
+# Bloco preto para textos					 #
+# Utilizado no carregando e game over				 #
+# Sem argumentos, sem retornos 					 #
+##################################################################
+BLACK_BLOCK_SCR:
+	save_stack(ra)
+	li a0,100
+	li a1,100
+	la t0,display
+	lw a2,0(t0) # carrega display atual
+	call GET_POSITION
+	mv s0,a0 # endereco p/ comecar a printar
+	li s1,130 # largura
+	li s2,35 # altura
+	FOR_BLACK_BLOCK:
+		beqz s1,FIMF1_BLACK_BLOCK
+		sb zero,0(s0) # pixel preto na posicao
+		addi s1,s1,-1
+		addi s0,s0,1
+		j FOR_BLACK_BLOCK
+		FIMF1_BLACK_BLOCK:
+			beqz s2,FIMF2_BLACK_BLOCK
+			addi s0,s0,190
+			li s1,130
+			addi s2,s2,-1
+			j FOR_BLACK_BLOCK
+			
+	FIMF2_BLACK_BLOCK:
+		free_stack(ra)
 		ret

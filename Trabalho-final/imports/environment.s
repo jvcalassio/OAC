@@ -9,6 +9,7 @@ var_lady: .word 0
 # strings de jogo
 victory_text: .string "PARABENS VC VENCEU"
 gameover_text: .string "GAME OVER"
+loading_text: .string "CARREGANDO"
 blank: .string " " # lembrar de apagar
 up_text: .string "UP"
 highscore_text: .string "HIGHSCORE"
@@ -68,7 +69,7 @@ DK_DANCA_LOOP:
 		li	a0, 62
 		li	a1, 28
 		li	a2, DISPLAY0
-		la	a3, fase1
+		la	a3, fase_current
 		la	a4, dk_1
 		save_stack(ra)
 		call	CLEAR_OBJPOS
@@ -94,7 +95,7 @@ DK_DANCA_LOOP:
 		li	a0, 62
 		li	a1, 28
 		li	a2, DISPLAY0
-		la	a3, fase1
+		la	a3, fase_current
 		la	a4, dk_2
 		save_stack(ra)
 		call	CLEAR_OBJPOS
@@ -120,7 +121,7 @@ DK_DANCA_LOOP:
 		li	a0, 62
 		li	a1, 28
 		li	a2, DISPLAY0
-		la	a3, fase1
+		la	a3, fase_current
 		la	a4, dk_1
 		save_stack(ra)
 		call	CLEAR_OBJPOS
@@ -217,7 +218,7 @@ LADY_LOOP:
 		li	a0, 113
 		li	a1, 25
 		li	a2, DISPLAY0
-		la	a3, fase1
+		la	a3, fase_current
 		la	a4, lady_p1
 		save_stack(ra)
 		call CLEAR_OBJPOS
@@ -243,7 +244,7 @@ LADY_LOOP:
 		li	a0, 113
 		li	a1, 25
 		li	a2, DISPLAY0
-		la	a3, fase1
+		la	a3, fase_current
 		la	a4, lady_p2
 		save_stack(ra)
 		call CLEAR_OBJPOS
@@ -300,29 +301,6 @@ PRINT_TEXT_INITIAL:
 	lb a0,0(t0)
 	li a4,1
 	ecall # imprime quantidade de vidas no display 1
-	
-	
-	li a0,100000000
-	li a1,190
-	li a2,15
-	li a3,0x00ff
-	la t0,display
-	lw a4,0(t0) # carrega display atual
-	andi a4,a4,0x20
-	srli a4,a4,5
-	li a7,101
-	ecall  # imprime suposto highscore, apenas para ficar com varios zeros
-	
-	li a0,100000000
-	li a1,30
-	li a2,15
-	li a3,0x00ff
-	la t0,display
-	lw a4,0(t0) # carrega display atual
-	andi a4,a4,0x20
-	srli a4,a4,5
-	li a7,101
-	ecall  # imprime suposto score, apenas para ficar com varios zeros
 	ret
 	
 # Imprime dados de jogo (vidas, score, high score, bonus)

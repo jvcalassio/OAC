@@ -3,11 +3,13 @@
 
 .data
 .include "fases/fase1_obj.s"
-.include "../sprites/bin/fase1.s"
 
 # Variaveis de jogo
 display: .word DISPLAY0,DISPLAY1 # endereco do display utilizado no momento
-fase: .space 4 # endereco da fase atual
+fase_current: .space 76800 # salva fase atual
+
+fase: .byte 1 # primeira fase
+level: .byte 1 # primeiro lvl
 
 vidas: .byte 2 # quantidade de vidas (inicia em 2)
 highscore: .word 0 # highscore atual
@@ -22,10 +24,37 @@ INIT_GAME:
 	addi t0,zero,2
 	la t1,vidas
 	sb t0,0(t1) # reinicia a vida
+	la t0,score
+	sw zero,0(t0) # reinicia score
+	la t0,highscore
+	sw zero,0(t0) # reinicia highscore
+	la t0,last_key
+	sw zero,0(t0)
+	sw zero,4(t0) # reinicia last key
+	
+	li t1,1
+	la t0,fase
+	sb t1,0(t0) # seta fase1
+	la t0,level 
+	sb t1,0(t0) # seta lvl1
+	
 		
 # Inicia a fase 1
 INIT_FASE1:
-	jal PRINT_FASE1
+	jal LOADING_SCR
+	jal SET_FASE1
+	jal PRINT_FASE
+	call PRINT_TEXT_INITIAL
+	call INIT_MARIO
+	call INIT_DK_DANCA
+	call INIT_LADY
+	call INIT_BONUS
+	j MAINLOOP
+	
+INIT_FASE2:
+	jal LOADING_SCR
+	jal SET_FASE2
+	jal PRINT_FASE
 	call PRINT_TEXT_INITIAL
 	call INIT_MARIO
 	call INIT_DK_DANCA
@@ -33,18 +62,69 @@ INIT_FASE1:
 	call INIT_BONUS
 	j MAINLOOP
 
+# Imprime fase 1 na tela, e salva no indicador de fase atual
+SET_FASE1:
+	DE1(LOADFASE1_DE1) # se estiver na DE1, carrega o mapa do USB serial
+	# do contrario, carregar do endereco no RARS
+	la s1,fase_current # endereco do mapa geral
+	li t0,76800
+	la t1,fase1
+	addi t1,t1,8 # pula as words que indicam o tamanho da imagem
+	FOR_LOADFASE1:
+		beqz t0,FIM_LOADFASE1
+		lb t2,0(t1) # carrega byte do mapa
+		sb t2,0(s1) # grava byte no current
+		addi t1,t1,1
+		addi s1,s1,1
+		addi t0,t0,-1
+		j FOR_LOADFASE1
+		
+	LOADFASE1_DE1:
+		li a0,1
+		call MAP_RETRIEVER
+		
+	FIM_LOADFASE1:
+	la t0,fase
+	li t1,1
+	sb t1,0(t0) # salva fase atual como 1
+	ret
+		
 # Imprime fase 1 na t ela, e salva no indicador de fase atual
-PRINT_FASE1:
+SET_FASE2:
+	DE1(LOADFASE2_DE1) # se estiver na DE1, carrega o mapa do USB serial
+	# do contrario, carregar do endereco no RARS
+	la s1,fase_current # endereco do mapa geral
+	li t0,76800
+	la t1,fase2
+	addi t1,t1,8 # pula as words que indicam o tamanho da imagem
+	FOR_LOADFASE2:
+		beqz t0,FIM_LOADFASE2
+		lb t2,0(t1) # carrega byte do mapa
+		sb t2,0(s1) # grava byte no current
+		addi t1,t1,1
+		addi s1,s1,1
+		addi t0,t0,-1
+		j FOR_LOADFASE2
+	
+	LOADFASE2_DE1:
+		li a0,2
+		call MAP_RETRIEVER
+			
+	FIM_LOADFASE2:
+	la t0,fase
+	li t1,2
+	sb t1,0(t0) # salva fase 1
+	ret
+
+# Imprime a fase atual	
+PRINT_FASE:
 	la t0,display
 	lw s0,0(t0) # primeiro display
-	lw s2,4(t0) # segundo display
-	la s1,fase1
-	la t0,fase
-	sw s1,0(t0) # salva o endereco do mapa da fase atual
-	addi s1,s1,8 # pula as words que indicam o tamanho da imagem
+	lw s2,4(t0) # segundo display	
+	la s1,fase_current # carrega fase atual
 	li t0,76800 # 320 * 240 pixels, tamanho total da imagem
-	FORFASE1:
-		beqz t0,FIMFORFASE1
+	FORFASE_PRINT:
+		beqz t0,FIMFORFASE_PRINT
 		lb t2,0(s1)
 		sb t2,0(s0)
 		sb t2,0(s2)
@@ -52,8 +132,8 @@ PRINT_FASE1:
 		addi s1,s1,1
 		addi s2,s2,1
 		addi t0,t0,-1
-		j FORFASE1
-	FIMFORFASE1:
+		j FORFASE_PRINT
+	FIMFORFASE_PRINT:
 		ret
 		
 # anotacao temporaria das teclas
@@ -168,8 +248,25 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	MPESQ: tail MARIO_PULO_ESQ
 
 # Imprime tela de vitoria (temporaria)
-# Na definitiva, passa para prox fase
+# Passa para proxima fase
 GAME_VICTORY:
+	# Adiciona bonus ao score
+	la t0,bonus
+	lw t1,0(t0) # carrega bonus atual
+	la t0,score
+	lw t2,0(t0) # carrega score atual
+	add t1,t1,t2 # soma scora atual + bonus
+	sw t1,0(t0) # adiciona ao score
+
+	la t0,fase
+	lb t1,0(t0) # carrega fase atual
+	li t0,1
+	beq t0,t1,INIT_FASE2
+	#li t0,2
+	#beq t0,t1,INIT_FASE3
+	
+	
+	# se nenhuma das fases, apenas ganha
 	la t0,display
 	lw s0,0(t0)
 	li s2,DISPLAY1
@@ -192,39 +289,33 @@ GAME_VICTORY:
 		ecall
 	j FIM
 	
+# Imprime tela de carregando
+LOADING_SCR:
+	save_stack(ra)
+	call BLACK_BLOCK_SCR
+	la a0,loading_text
+	li a1,130
+	li a2,115
+	li a3,0x00ff
+	li a4,0
+	li a7,104
+	ecall
+	free_stack(ra)
+	ret
+	
 # Imprime a tela de game over e volta para o menu
 # falta adaptar para display frames (!)
 GAME_OVER:
-	li a0,100 # x do bloco
-	li a1,100 # y do bloco
-	li a2,DISPLAY0
-	call GET_POSITION
-	mv s0,a0 # endereco p/ comecar a printar
-	li s1,130 # largura
-	li s2,35 # altura
-	FOR_GAMEOVER:
-		beqz s1,FIMF1_GAMEOVER
-		sb zero,0(s0) # coloca cor preta na posicao
-		addi s1,s1,-1
-		addi s0,s0,1
-		j FOR_GAMEOVER
-		FIMF1_GAMEOVER:
-			beqz s2,FIMF2_GAMEOVER
-			addi s0,s0,190
-			li s1,130
-			addi s2,s2,-1
-			j FOR_GAMEOVER
-			
-	FIMF2_GAMEOVER:
-		# fim do bloco preto
-		la a0,gameover_text
-		li a1,130
-		li a2,115
-		li a3,0x00ff
-		li a4,0
-		li a7,104
-		ecall
-		j FIM
+	call BLACK_BLOCK_SCR
+	# Imprime texto de game over
+	la a0,gameover_text
+	li a1,130
+	li a2,115
+	li a3,0x00ff
+	li a4,0
+	li a7,104
+	ecall
+	j FIM
 	
 FIM:
 	li a7,10
@@ -273,3 +364,4 @@ CONTINUE_MOVEMENT:
 .include "mario.s"
 .include "environment.s"
 .include "SYSTEMv14.s"
+.include "map_includes.s"
