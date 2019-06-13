@@ -10,6 +10,12 @@
 	addi sp,sp,4
 .end_macro
 
+.macro sleep(%miliseg)
+	mv a0, %miliseg
+	li a7, 32
+	ecall
+.end_macro
+
 
 .include "macros2.s"
 
@@ -28,24 +34,22 @@ MAIN:
 	ecall			#preencher de preto o display
 
 	li	t0, branco
-	li	s0, 160		#s0 = x do pixel branco
-	li	s1, 120		#s1 = y do pixel branco
+	li	s0, 160		#s0 = coordenada x do pixel branco
+	li	s1, 120		#s1 = coordenada y do pixel branco
 	jal	GET_POSITION	
 	sb	t0, 0(a0)	#a0 = posicao do pixel
-	
-	li 	s6, 1 		# seletor de desenho (0 = false, 1 = true)
 
-	MAINLOOP:
-		li	a0, 50
-		li	a7, 32
-		ecall		#sleep de 50
+	li 	s6, 0 		# seletor de desenho (0 = false, 1 = true)
 		
-		# salva posicoes anteriores, antes de setar as novas
-		mv 	s4, s0 # x anterior
-		mv 	s5, s1 # y anterior
-
+	MAINLOOP:
+		li	s4, 0
+		li	s5, 0
+		#s4 = sleep da coordenada x, s5 = sleep da coordenada y
+		mv 	s9, s0 # x anterior
+		mv 	s10, s1 # y anterior
+		
 		li	t0, AdcCH0
-		lw	s2, 0(t0)	#s2 = x do analogico, x entre 0x000 e 0xFFF
+		lw	s2, 0(t0)		#s2 = x do analogico, x entre 0x000 e 0xFFF
 		
 		li	t0, 100
 		bleu	s2, t0, gotoLEFT3	#x < 100 ? goto LEFT3
@@ -87,13 +91,27 @@ MAIN:
 		li	t0, 5000
 		bleu	s3, t0, gotoDOWN3	#y < 5000? goto DOWN3
 		continue11:
+		
+		beqz	s4, SLEEPXZERO
+		beqz	s5, SLEEPYZERO
+		add	s4, s4, s5
+		li	t0, 2
+		div	s4, s4, t0
+		sleep(s4)
+		j	MAINLOOP
+		SLEEPXZERO:
+		sleep(s5)
+		j	MAINLOOP
+		SLEEPYZERO:
+		sleep(s4)
+		continue14:
 		li	t0, AdcCH7
 		lw 	t1, 0(t0) # carrega byte do botao
 		beqz	t1, gotoTogglePainting
 		continue12:
 		bnez	s6, DRAW_MOVEMENT # se pintar == true, desenha movimento
 		continue13:
-		j MAINLOOP
+		j	MAINLOOP
 		
 		gotoLEFT3:
 			jal	LEFT3
@@ -142,35 +160,16 @@ MAIN:
 		gotoDOWN3:
 			jal	DOWN3
 			j	continue11
-			
 		gotoTogglePainting:
-			#jal	TogglePainting
+			jal	TogglePainting
 			j	continue12
 		
 		LEFT3:
-			mv	a0, s0
-			mv	a1, s1
+			li	s4, 5		#sleep de 5 ms
+			
 			save_stack(ra)
-			jal 	GET_POSITION
+			jal	MOV_LEFT
 			free_stack(ra)
-			
-			bnez	s6, LEFT3continue1 # se pintar == true, nao pinta px atual de preto
-			li	t0, preto
-			sb	t0, 0(a0)	#preenche a posi��o atual com preto
-			
-			LEFT3continue1:
-			addi	s0, s0, -9	#move o pixel nove posicoes para a esquerda
-			
-			li	t1, 1
-			ble	s0, t1, LIMIT_LEFT
-			
-			mv	a0, s0
-			mv	a1, s1
-			save_stack(ra)
-			jal 	GET_POSITION
-			free_stack(ra)
-			li	t0, branco
-			sb	t0, 0(a0)	#preenche a nova posicao com branco
 			ret
 			
 		LEFT2:
@@ -179,29 +178,11 @@ MAIN:
 			ret
 			
 		LEFT2continue:
-			mv	a0, s0
-			mv	a1, s1
+			li	s4, 10		#sleep de 15 ms
+			
 			save_stack(ra)
-			jal 	GET_POSITION
+			jal	MOV_LEFT
 			free_stack(ra)
-			
-			bnez	s6, LEFT2continue1 # se pintar == true, nao pinta px atual de preto
-			li	t0, preto
-			sb	t0, 0(a0)	#preenche a posi��o atual com preto
-			
-			LEFT2continue1:
-			addi	s0, s0, -3	#move o pixel tres posicoes para a esquerda
-			
-			li	t1, 1
-			ble	s0, t1, LIMIT_LEFT
-			
-			mv	a0, s0
-			mv	a1, s1
-			save_stack(ra)
-			jal 	GET_POSITION
-			free_stack(ra)
-			li	t0, branco
-			sb	t0, 0(a0)	#preenche a nova posicao com branco
 			ret
 			
 		LEFT1:
@@ -210,31 +191,14 @@ MAIN:
 			ret
 		
 		LEFT1continue:
-			mv	a0, s0
-			mv	a1, s1
+			li	s4, 20		#sleep de 75 ms
+			
 			save_stack(ra)
-			jal 	GET_POSITION
+			jal	MOV_LEFT
 			free_stack(ra)
-			
-			bnez	s6, LEFT1continue1 # se pintar == true, nao pinta px atual de preto
-			li	t0, preto
-			sb	t0, 0(a0)	#preenche a posi��o atual com preto
-			
-			LEFT1continue1:
-			addi	s0, s0, -1	#move o pixel uma posicao para a esquerda
-			
-			li	t1, 1
-			ble	s0, t1, LIMIT_LEFT
-			
-			mv	a0, s0
-			mv	a1, s1
-			save_stack(ra)
-			jal 	GET_POSITION
-			free_stack(ra)
-			li	t0, branco
-			sb	t0, 0(a0)	#preenche a nova posicao com branco
 			ret
 		
+		#impede que o pixel ultrapasse o limite a esquerda da tela
 		LIMIT_LEFT:
 			li	s0, 1
 			mv	a0, s0
@@ -246,23 +210,96 @@ MAIN:
 			sb	t0, 0(a0)	#preenche a nova posicao com branco
 			ret			
 		
+		MOV_LEFT:
+			mv	a0, s0
+			mv	a1, s1
+			save_stack(ra)
+			jal 	GET_POSITION
+			free_stack(ra)
+			
+			bnez	s6,CONT_MOV_LEFT # se pintar == true, nao pinta px atual de preto
+			li	t0, preto
+			sb	t0, 0(a0)	#preenche a posicao atual com preto
+		
+			CONT_MOV_LEFT:
+			addi	s0, s0, -1	#move o pixel nove posicoes para a esquerda
+			
+			li	t1, 1
+			ble	s0, t1, LIMIT_LEFT
+			
+			mv	a0, s0
+			mv	a1, s1
+			save_stack(ra)
+			jal 	GET_POSITION
+			free_stack(ra)
+			li	t0, branco
+			sb	t0, 0(a0)	#preenche a nova posicao com branco
+			ret
+			
+			
 		RIGHT1:
 			li	t0, 2500
 			bgeu	s2, t0, RIGHT1continue	#x > 2500 ? continue
 			ret
 		
 		RIGHT1continue:
+			li	s4, 20		#sleep de 75ms
+			
+			save_stack(ra)
+			jal	MOV_RIGHT
+			free_stack(ra)
+			ret
+		
+		RIGHT2:
+			li	t0, 3300
+			bgeu	s2, t0, RIGHT2continue	#x > 3300? continue
+			ret
+		
+		RIGHT2continue:
+			li	s4, 10
+			
+			save_stack(ra)
+			jal	MOV_RIGHT
+			free_stack(ra)
+			ret
+		
+		RIGHT3:
+			li	t0, 4000
+			bgeu	s2, t0, RIGHT3continue	#x>4000? continue
+			ret
+		
+		RIGHT3continue:
+			li	s4, 5
+			
+			save_stack(ra)
+			jal	MOV_RIGHT
+			free_stack(ra)
+			ret
+		
+		#impede que o pixel ultrapasse o limite a direita da tela
+		LIMIT_RIGHT:
+			li	s0, 319
+			mv	a0, s0
+			mv	a1, s1
+			save_stack(ra)
+			jal	GET_POSITION
+			free_stack(ra)
+			li	t0, branco
+			sb	t0, 0(a0)
+			ret
+		
+		MOV_RIGHT:
 			mv	a0, s0
 			mv	a1, s1
 			save_stack(ra)
 			jal	 GET_POSITION
 			free_stack(ra)
 			
-			bnez	s6, RIGHT1continue1 # se pintar == true, nao pinta px atual de preto
+			bnez	s6, CONT_MOV_RIGHT # se pintar == true, nao pinta px atual de preto
 			li	t0, preto
 			sb	t0, 0(a0)	#preenche a pos atual com preto
 			
-			RIGHT1continue1:
+			CONT_MOV_RIGHT:
 			addi	s0, s0, 1	#move o pixel uma pos para a direita
 			
 			li	t1, 319
@@ -277,101 +314,13 @@ MAIN:
 			sb	t0, 0(a0)
 			ret
 		
-		RIGHT2:
-			li	t0, 3300
-			bgeu	s2, t0, RIGHT2continue	#x > 3300? continue
-			ret
 		
-		RIGHT2continue:
-			mv	a0, s0
-			mv	a1, s1
+		UP3:	
+			li	s5, 5
+			
 			save_stack(ra)
-			jal	GET_POSITION
+			jal	MOV_UP
 			free_stack(ra)
-			
-			bnez	s6, RIGHT2continue1 # se pintar == true, nao pinta px atual de preto
-			li	t0, preto	
-			sb	t0, 0(a0)	#preenche a pos atual com preto
-			
-			RIGHT2continue1:
-			addi	s0,s0, 3	#move o pixel 3 pos para a direita
-			
-			li	t1, 319
-			bge	s0, t1, LIMIT_RIGHT
-			
-			mv	a0, s0
-			mv	a1, s1
-			save_stack(ra)
-			jal	GET_POSITION
-			free_stack(ra)
-			li	t0, branco
-			sb	t0,0(a0)
-			ret
-		
-		RIGHT3:
-			li	t0, 4000
-			bgeu	s2, t0, RIGHT3continue	#x>4000? continue
-			ret
-		
-		RIGHT3continue:
-			mv	a0, s0
-			mv	a1, s1
-			save_stack(ra)
-			jal	GET_POSITION
-			free_stack(ra)
-			
-			bnez	s6, RIGHT3continue1 # se pintar == true, nao pinta px atual de preto
-			li	t0, preto	#preenche a pos atual com preto
-			sb	t0,0(a0)
-			
-			RIGHT3continue1:
-			addi	s0,s0,9		#move o pixel nove pos para a direita
-			li	t1, 319
-			bge	s0, t1, LIMIT_RIGHT
-			
-			mv	a0,s0
-			mv	a1, s1
-			save_stack(ra)
-			jal	GET_POSITION
-			free_stack(ra)
-			li	t0, branco
-			sb	t0, 0(a0)
-			ret
-			
-		LIMIT_RIGHT:
-			li	s0, 319
-			mv	a0, s0
-			mv	a1, s1
-			save_stack(ra)
-			jal	GET_POSITION
-			free_stack(ra)
-			li	t0, branco
-			sb	t0, 0(a0)
-			ret
-		
-		
-		
-		UP3:
-			mv	a0, s0
-			mv	a1, s1
-			save_stack(ra)
-			jal 	GET_POSITION
-			free_stack(ra)
-			li	t0, preto
-			sb	t0, 0(a0)	#preenche a posi��o atual com preto
-			
-			addi	s1, s1, -9	#move o pixel nove posicoes para cima
-			
-			li	t1, 1
-			ble	s1, t1, LIMIT_UP
-			
-			mv	a0, s0
-			mv	a1, s1
-			save_stack(ra)
-			jal 	GET_POSITION
-			free_stack(ra)
-			li	t0, branco
-			sb	t0, 0(a0)	#preenche a nova posicao com branco
 			ret
 			
 		UP2:
@@ -380,26 +329,11 @@ MAIN:
 			ret
 			
 		UP2continue:
-			mv	a0, s0
-			mv	a1, s1
+			li	s5, 10
+			
 			save_stack(ra)
-			jal 	GET_POSITION
+			jal	MOV_UP
 			free_stack(ra)
-			li	t0, preto
-			sb	t0, 0(a0)	#preenche a posi��o atual com preto
-			
-			addi	s1, s1, -3	#move o pixel tres posicoes para cima
-			
-			li	t1, 1
-			ble	s1, t1, LIMIT_UP
-			
-			mv	a0, s0
-			mv	a1, s1
-			save_stack(ra)
-			jal 	GET_POSITION
-			free_stack(ra)
-			li	t0, branco
-			sb	t0, 0(a0)	#preenche a nova posicao com branco
 			ret
 			
 		UP1:
@@ -408,28 +342,14 @@ MAIN:
 			ret
 		
 		UP1continue:
-			mv	a0, s0
-			mv	a1, s1
+			li	s5, 20
+			
 			save_stack(ra)
-			jal 	GET_POSITION
+			jal	MOV_UP
 			free_stack(ra)
-			li	t0, preto
-			sb	t0, 0(a0)	#preenche a posi��o atual com preto
-			
-			addi	s1, s1, -1	#move o pixel uma pos para cima
-			
-			li	t1, 1
-			ble	s1, t1, LIMIT_UP
-			
-			mv	a0, s0
-			mv	a1, s1
-			save_stack(ra)
-			jal 	GET_POSITION
-			free_stack(ra)
-			li	t0, branco
-			sb	t0, 0(a0)	#preenche a nova posicao com branco
 			ret
 		
+		#impede que o pixel ultrapasse o limite superior da tela
 		LIMIT_UP:
 			li	s1, 1
 			mv	a0, s0
@@ -441,20 +361,96 @@ MAIN:
 			sb	t0, 0(a0)	#preenche a nova posicao com branco
 			ret			
 		
+		MOV_UP:
+			mv	a0, s0
+			mv	a1, s1
+			save_stack(ra)
+			jal 	GET_POSITION
+			free_stack(ra)
+			
+			bnez	s6, CONT_MOV_UP # se pintar == true, nao pinta px atual de preto
+			li	t0, preto
+			sb	t0, 0(a0)	#preenche a posicao atual com preto
+			
+			CONT_MOV_UP:
+			addi	s1, s1, -1	#move o pixel nove posicoes para cima
+			
+			li	t1, 1
+			ble	s1, t1, LIMIT_UP
+			
+			mv	a0, s0
+			mv	a1, s1
+			save_stack(ra)
+			jal 	GET_POSITION
+			free_stack(ra)
+			li	t0, branco
+			sb	t0, 0(a0)	#preenche a nova posicao com branco
+			ret
+			
+			
 		DOWN1:
 			li	t0, 2600
 			bgeu	s3, t0, DOWN1continue	#y > 2600 ? continue
 			ret
 		
 		DOWN1continue:
+			li	s5, 20
+			
+			save_stack(ra)
+			jal	MOV_DOWN
+			free_stack(ra)
+			ret
+		
+		DOWN2:
+			li	t0, 3300
+			bgeu	s3, t0, DOWN2continue	#y > 3300? continue
+			ret
+		
+		DOWN2continue:
+			li	s5, 10
+			
+			save_stack(ra)
+			jal	MOV_DOWN
+			free_stack(ra)
+			ret
+		
+		DOWN3:
+			li	t0, 4000
+			bgeu	s3, t0, DOWN3continue	#y > 4000? continue
+			ret
+		
+		DOWN3continue:
+			li	s5, 5
+			
+			save_stack(ra)
+			jal	MOV_DOWN
+			free_stack(ra)
+			ret
+		
+		#impede que pixel ultrapasse o limite inferior da tela
+		LIMIT_DOWN:
+			li	s1, 239
 			mv	a0, s0
 			mv	a1, s1
 			save_stack(ra)
 			jal	GET_POSITION
 			free_stack(ra)
+			li	t0, branco
+			sb	t0, 0(a0)
+			ret
+			
+		MOV_DOWN:
+			mv	a0, s0
+			mv	a1, s1
+			save_stack(ra)
+			jal	GET_POSITION
+			free_stack(ra)
+			
+			bnez	s6, CONT_MOV_DOWN # se pintar == true, nao pinta px atual de preto
 			li	t0, preto
 			sb	t0, 0(a0)	#preenche a pos atual com preto
 			
+			CONT_MOV_DOWN:
 			addi	s1, s1, 1	#move o pixel uma pos para baixo
 			
 			li	t1, 239
@@ -468,92 +464,27 @@ MAIN:
 			li	t0, branco
 			sb	t0, 0(a0)
 			ret
-		
-		DOWN2:
-			li	t0, 3300
-			bgeu	s3, t0, DOWN2continue	#y > 3300? continue
-			ret
-		
-		DOWN2continue:
-			mv	a0, s0
-			mv	a1, s1
-			save_stack(ra)
-			jal	GET_POSITION
-			free_stack(ra)
-			li	t0, preto
-			sb	t0, 0(a0)
-			
-			addi	s1,s1, 3	#move o pixel tres pos para baixo
-			
-			li	t1, 239
-			bge	s1, t1, LIMIT_DOWN
-			
-			mv	a0, s0
-			mv	a1, s1
-			save_stack(ra)
-			jal	GET_POSITION
-			free_stack(ra)
-			li	t0, branco
-			sb	t0,0(a0)
-			ret
-		
-		DOWN3:
-			li	t0, 4000
-			bgeu	s3, t0, DOWN3continue	#y > 4000? continue
-			ret
-		
-		DOWN3continue:
-			mv	a0, s0
-			mv	a1, s1
-			save_stack(ra)
-			jal	GET_POSITION
-			free_stack(ra)
-			li	t0, preto
-			sb	t0,0(a0)
-			
-			addi	s1,s1,9		#move nove pos para baixo
-			
-			li	t1, 239
-			bge	s1, t1, LIMIT_DOWN
-			
-			mv	a0,s0
-			mv	a1, s1
-			save_stack(ra)
-			jal	GET_POSITION
-			free_stack(ra)
-			li	t0, branco
-			sb	t0, 0(a0)
-			ret
-		
-		#impede que pixel ultrapasee o limite inferior da tela
-		LIMIT_DOWN:
-			li	s1, 239
-			mv	a0, s0
-			mv	a1, s1
-			save_stack(ra)
-			jal	GET_POSITION
-			free_stack(ra)
-			li	t0, branco
-			sb	t0, 0(a0)
-			ret
-	
 		TogglePainting:
-			not	s4,s4 # inverte bit de habilitacao do painting
+			not	s6,s6 # inverte bit de habilitacao do painting
 			ret
 			
 		DRAW_MOVEMENT:
+			bne s0,s9,DO_DRAW
+			beq s1,s10,END_DRAW_MOV
 			# x atual = s0
 			# y atual = s1
-			# x anterior = s4
-			# y anterior = s5
+			# x anterior = s9
+			# y anterior = s10
+			DO_DRAW:
 			mv	a0, s0
 			mv	a1, s1
-			mv	a2, s4
-			mv	a3, s5
+			mv	a2, s9
+			mv	a3, s10
 			li	a4, branco
 			li	a5, 0
 			li 	a7, 147
 			ecall
+			END_DRAW_MOV:
 			j continue13
 #a0 = x	
 #a1 = y

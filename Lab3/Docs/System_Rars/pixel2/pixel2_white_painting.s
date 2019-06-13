@@ -17,7 +17,7 @@
 .eqv preto 0x00
 .eqv branco 0xFF
 
-.data
+
 .text
 
 M_SetEcall(exceptionHandling)
@@ -27,14 +27,13 @@ MAIN:
 	li	a7, 148
 	ecall			#preencher de preto o display
 
-	mv	t0, s11
+	li	t0, branco
 	li	s0, 160		#s0 = x do pixel branco
 	li	s1, 120		#s1 = y do pixel branco
 	jal	GET_POSITION	
 	sb	t0, 0(a0)	#a0 = posicao do pixel
 	
-	li 	s6, 1 		# seletor de desenho (0 = false, 1 = true)
-	li	s11, 0xff	# cor = branco
+	li 	s6, 0 		# seletor de desenho (0 = false, 1 = true)
 
 	MAINLOOP:
 		li	a0, 50
@@ -145,7 +144,7 @@ MAIN:
 			j	continue11
 			
 		gotoTogglePainting:
-			#jal	TogglePainting
+			jal	TogglePainting
 			j	continue12
 		
 		LEFT3:
@@ -170,7 +169,7 @@ MAIN:
 			save_stack(ra)
 			jal 	GET_POSITION
 			free_stack(ra)
-			mv	t0, s11
+			li	t0, branco
 			sb	t0, 0(a0)	#preenche a nova posicao com branco
 			ret
 			
@@ -201,7 +200,7 @@ MAIN:
 			save_stack(ra)
 			jal 	GET_POSITION
 			free_stack(ra)
-			mv	t0, s11
+			li	t0, branco
 			sb	t0, 0(a0)	#preenche a nova posicao com branco
 			ret
 			
@@ -232,7 +231,7 @@ MAIN:
 			save_stack(ra)
 			jal 	GET_POSITION
 			free_stack(ra)
-			mv	t0, s11
+			li	t0, branco
 			sb	t0, 0(a0)	#preenche a nova posicao com branco
 			ret
 		
@@ -243,7 +242,7 @@ MAIN:
 			save_stack(ra)
 			jal 	GET_POSITION
 			free_stack(ra)
-			mv	t0, s11
+			li	t0, branco
 			sb	t0, 0(a0)	#preenche a nova posicao com branco
 			ret			
 		
@@ -274,7 +273,7 @@ MAIN:
 			save_stack(ra)
 			jal	GET_POSITION
 			free_stack(ra)
-			mv	t0, s11
+			li	t0, branco
 			sb	t0, 0(a0)
 			ret
 		
@@ -305,7 +304,7 @@ MAIN:
 			save_stack(ra)
 			jal	GET_POSITION
 			free_stack(ra)
-			mv	t0, s11
+			li	t0, branco
 			sb	t0,0(a0)
 			ret
 		
@@ -335,7 +334,7 @@ MAIN:
 			save_stack(ra)
 			jal	GET_POSITION
 			free_stack(ra)
-			mv	t0, s11
+			li	t0, branco
 			sb	t0, 0(a0)
 			ret
 			
@@ -346,7 +345,7 @@ MAIN:
 			save_stack(ra)
 			jal	GET_POSITION
 			free_stack(ra)
-			mv	t0, s11
+			li	t0, branco
 			sb	t0, 0(a0)
 			ret
 		
@@ -371,7 +370,7 @@ MAIN:
 			save_stack(ra)
 			jal 	GET_POSITION
 			free_stack(ra)
-			mv	t0, s11
+			li	t0, branco
 			sb	t0, 0(a0)	#preenche a nova posicao com branco
 			ret
 			
@@ -399,7 +398,7 @@ MAIN:
 			save_stack(ra)
 			jal 	GET_POSITION
 			free_stack(ra)
-			mv	t0, s11
+			li	t0, branco
 			sb	t0, 0(a0)	#preenche a nova posicao com branco
 			ret
 			
@@ -427,7 +426,7 @@ MAIN:
 			save_stack(ra)
 			jal 	GET_POSITION
 			free_stack(ra)
-			mv	t0, s11
+			li	t0, branco
 			sb	t0, 0(a0)	#preenche a nova posicao com branco
 			ret
 		
@@ -438,7 +437,7 @@ MAIN:
 			save_stack(ra)
 			jal 	GET_POSITION
 			free_stack(ra)
-			mv	t0, s11
+			li	t0, branco
 			sb	t0, 0(a0)	#preenche a nova posicao com branco
 			ret			
 		
@@ -466,7 +465,7 @@ MAIN:
 			save_stack(ra)
 			jal	GET_POSITION
 			free_stack(ra)
-			mv	t0, s11
+			li	t0, branco
 			sb	t0, 0(a0)
 			ret
 		
@@ -494,7 +493,7 @@ MAIN:
 			save_stack(ra)
 			jal	GET_POSITION
 			free_stack(ra)
-			mv	t0, s11
+			li	t0, branco
 			sb	t0,0(a0)
 			ret
 		
@@ -522,7 +521,7 @@ MAIN:
 			save_stack(ra)
 			jal	GET_POSITION
 			free_stack(ra)
-			mv	t0, s11
+			li	t0, branco
 			sb	t0, 0(a0)
 			ret
 		
@@ -534,32 +533,31 @@ MAIN:
 			save_stack(ra)
 			jal	GET_POSITION
 			free_stack(ra)
-			mv	t0, s11
+			li	t0, branco
 			sb	t0, 0(a0)
 			ret
 	
 		TogglePainting:
-			not	s4,s4 # inverte bit de habilitacao do painting
-			# gera cor
-			li 	a7, 41
-			ecall
-			li 	t0, 256
-			remu 	s11, a0, t0 # a0 = numero aleatorio mod 256 = cor
+			not	s6,s6 # inverte bit de habilitacao do painting
 			ret
 			
 		DRAW_MOVEMENT:
+			bne s0,s4,DO_DRAW
+			beq s1,s5,END_DRAW_MOVEMENT
 			# x atual = s0
 			# y atual = s1
 			# x anterior = s4
 			# y anterior = s5
+			DO_DRAW:
 			mv	a0, s0
 			mv	a1, s1
 			mv	a2, s4
 			mv	a3, s5
-			mv	a4, s11
+			li	a4, branco
 			li	a5, 0
 			li 	a7, 147
 			ecall
+			END_DRAW_MOVEMENT:
 			j continue13
 #a0 = x	
 #a1 = y
