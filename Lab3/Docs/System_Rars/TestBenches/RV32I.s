@@ -19,7 +19,7 @@ NB1:	.byte 0
 MSG:	.string "Endereco do erro : "
 MSG2:	.string "RV32I - Nao ha erros :)"
 
-.include "../macros2.s"
+.include "..\macros2.s"
 
 .text
 	M_SetEcall(exceptionHandling)
@@ -205,46 +205,8 @@ PULAERRO31: la t1, NH
 	lhu t0, 0(t1)			# testa LHU
 	sh  t0, 2(t1)
 	lhu t0, 2(t1)
-	bne t0, zero, PULAERRO32
+	bne t0, zero, SUCESSO
 	jal t0, ERRO
-	
-PULAERRO32: li t0, 2
-	csrrw zero,4,t0			# testa CSRRW
-	csrrwi t1,4,2			
-	beq t0,t1, PULAERRO33
-	jal t0,ERRO
-	
-PULAERRO33: csrrwi t1,4,2		# testa CSRRWI
-	li t0, 2
-	beq t0,t1,PULAERRO34
-	jal t0,ERRO
-	
-	
-PULAERRO34:
-  	csrrwi zero,4,0			# zera UIE
-	li t0,2
-	csrrc zero,4,t0			# testa CSRRC
-	csrrci t1,4,7			
-	li t0,0
-	beq t0,t1, PULAERRO35
-	jal t0,ERRO
-	
-PULAERRO35: csrrci t1,4,0		# testa CSRRCI
-	beq zero,t1,PULAERRO36
-	jal t0,ERRO
-	
-PULAERRO36: li t0, 2
-	csrrwi zero,4,0			# zera UIE
-	csrrs zero,4,t0			# testa CSRRS
-	csrrsi t1,4, 2			
-	beq t0,t1, PULAERRO37
-	jal t0,ERRO
-	
-PULAERRO37: csrrwi zero,4,2		# seta UIE = 2
-	csrrsi t1,4, 2			# testa CSRRSI
-	li t0, 2
-	beq t0,t1, SUCESSO
-	jal t0,ERRO	
 
 SUCESSO: bgt s11,zero,PULA1
    	li a0, 0x38
@@ -299,5 +261,5 @@ ERRO:	li a0, 0x07
 END: 	addi a7, zero, 10
 	ecall
 	
-.include "../SYSTEMv14.s"
+.include "..\SYSTEMv14.s"
 	
