@@ -390,14 +390,14 @@ wire [31:0] wCSWriteData;
 always @(*)
 	begin
 		case(wSCSRWSource)
-			3'b000: 	wCSWriteData <= wRead1;
-			3'b001: 	wCSWriteData <= wCSRead | wRead1;
-			3'b010: 	wCSWriteData <= wCSRead & ~(wRead1);
-			3'b011: 	wCSWriteData <= wRs1;
-			3'b100: 	wCSWriteData <= wCSRead | wRs1;
-			3'b101: 	wCSWriteData <= wCSRead & ~(wRs1);
-			3'b110: 	wCSWriteData <= wInstr;
-			3'b111: 	wCSWriteData <= PC;
+			3'b000: 	wCSWriteData <= wRead1; // valor lido do Rs1
+			3'b001: 	wCSWriteData <= wCSRead | wRead1; // valor lido do CSR bitwise-or valor lido do Rs1
+			3'b010: 	wCSWriteData <= wCSRead & ~(wRead1); // valor lido do CSR bitwise-and valor lido do Rs1 negado
+			3'b011: 	wCSWriteData <= wRs1; // Imediato
+			3'b100: 	wCSWriteData <= wCSRead | wRs1; // valor lido do CSR bitwise-or Imediato
+			3'b101: 	wCSWriteData <= wCSRead & ~(wRs1); // valor lido do CSR bitwise-and Imediato negado
+			3'b110: 	wCSWriteData <= wInstr; // Instrucao atual
+			3'b111: 	wCSWriteData <= PC; // PC atual
 			default: wCSWriteData <= wRead1;
 		endcase
 	end
