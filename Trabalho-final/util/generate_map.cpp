@@ -34,10 +34,14 @@ Esquemas do mapa:
 
 */
 int main(){
-	printf("fase2_obj: .byte ");
+	int k;
+	scanf("%d",&k);
+	char stringname[40];
+	sprintf(stringname, "fase%d_map.txt", k);
+	printf("fase%d_obj: .byte ",k);
 	string mapa;
 	ifstream map_in;
-	map_in.open("fase2_map.txt");
+	map_in.open(stringname);
 	for(int j=0;j<60;j++){
 		map_in >> mapa;
 		for(int i=0;i<80;i++){
@@ -50,14 +54,6 @@ int main(){
 				t = 1;
 				printf("0x01");
 			}
-			/*if(mapa[i] == 'A'){
-				t = 1;
-				printf("0x02");
-			}
-			if(mapa[i] == 'D'){
-				t = 1;
-				printf("0x03");
-			}*/
 			if(mapa[i] == 'G'){
 				t = 1;
 				printf("0x02");

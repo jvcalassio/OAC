@@ -287,20 +287,19 @@ BLACK_BLOCK_SCR:
 	la t0,display
 	lw a2,0(t0) # carrega display atual
 	call GET_POSITION
-	mv s0,a0 # endereco p/ comecar a printar
-	li s1,130 # largura
-	li s2,35 # altura
+	li s0,130 # largura
+	li s1,35 # altura
 	FOR_BLACK_BLOCK:
-		beqz s1,FIMF1_BLACK_BLOCK
-		sb zero,0(s0) # pixel preto na posicao
-		addi s1,s1,-1
-		addi s0,s0,1
+		beqz s0,FIMF1_BLACK_BLOCK
+		sb zero,0(a0) # pixel preto na posicao
+		addi s0,s0,-1
+		addi a0,a0,1
 		j FOR_BLACK_BLOCK
 		FIMF1_BLACK_BLOCK:
-			beqz s2,FIMF2_BLACK_BLOCK
-			addi s0,s0,190
-			li s1,130
-			addi s2,s2,-1
+			beqz s1,FIMF2_BLACK_BLOCK
+			addi a0,a0,190
+			li s0,130
+			addi s1,s1,-1
 			j FOR_BLACK_BLOCK
 			
 	FIMF2_BLACK_BLOCK:

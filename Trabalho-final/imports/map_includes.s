@@ -21,14 +21,14 @@ MAP_RETRIEVER:
 		jal LOOP_MAP_BUSY # espera ate terminar de enviar o sinal
 		
 	# Terminado de enviar o sinal do mapa desejado, recebe os bytes do mapa um por um
-	li t1,78600 # quantidade de bytes
-	RECV_MAP_BYTES: beqz t1,FIM_RECV_MAP_BYTES # se recebidos todos os bytes, termina
-		jal LOOP_MAP_READY # espera sinal ready acionar
-		lb t6,0(s2) # le o byte recebido
-		sb t6,0(s3) # salva o byte recebido no endereco correspondente do mapa
+	li s4,76800 # quantidade de bytes
+	RECV_MAP_BYTES: beqz s4,FIM_RECV_MAP_BYTES # se recebidos todos os bytes, termina
+		#jal LOOP_MAP_READY # espera sinal ready acionar
+		lb t1,0(s2) # le o byte recebido
+		sb t1,0(s3) # salva o byte recebido no endereco correspondente do mapa
 		jal LOOP_MAP_BUSY # espera sinal ready voltar para 0
 		addi s3,s3,1 # pula pro prox endereco no mapa
-		addi t1,t1,-1
+		addi s4,s4,-1
 		j RECV_MAP_BYTES
 		
 	FIM_RECV_MAP_BYTES:
@@ -45,10 +45,5 @@ MAP_RETRIEVER:
 		ret
 		
 	FIM_MAP_RETRIEVER: # recebeu todo o mapa desejado, retorna
-		# muda mapa para 0
-		sb zero,0(s1) # desliga recebimento de mapa
-		sb t0,0(s0) # start = 1
-		sb zero,0(s0) # start = 0
-		jal LOOP_MAP_BUSY
 		free_stack(ra)
 		ret

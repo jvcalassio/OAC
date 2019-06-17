@@ -31,8 +31,8 @@ movement_counter: .word 0 # contador de passos dos movimentos
 # Sem argumentos
 INIT_MARIO:
 	save_stack(ra)
-	la t0,fase 
-	lb t0,0(t0) # carrega numero da fase atual
+	la t1,fase 
+	lb t0,0(t1) # carrega numero da fase atual
 	li t1,1
 	beq t0,t1,INIT_MARIO_F1 # se fase atual for fase 1, printa mario parado na fase 1
 	li t1,2
@@ -97,8 +97,6 @@ SET_MARIO_MOVEMENT:
 
 # Pega a posicao do mario no map
 MARIO_MAP_POS:
-	save_stack(s0)
-	save_stack(s1)
 	la t0,pos_mario
 	lh s1,0(t0) # x do mario
 	lh s0,2(t0) # y do mario
@@ -108,8 +106,8 @@ MARIO_MAP_POS:
 	srli s1,s1,2 # x / 4 para alinhar com mapeamento
 	srli s0,s0,2 # y / 4 para alinhar com mapeamento
 	
-	la t0,fase
-	lb t0,0(t0)
+	la t1,fase
+	lb t0,0(t1)
 	li t1,1
 	beq t0,t1,MMPOS_FASE1
 	li t1,2
@@ -127,8 +125,6 @@ MARIO_MAP_POS:
 	add a0,a0,s1 # (y * 80) + n
 	
 	FIM_MMPOS:
-	free_stack(s1)
-	free_stack(s0)
 	ret
 	
 
@@ -831,8 +827,10 @@ MARIO_PULO_ESQ:
 MARIO_COLLISIONS:
 	save_stack(s0)
 	save_stack(ra)
+	save_stack(a0)
 	# considereando a mario position e state atual, verificar se o movimento desejado eh permitido
 	mario_mappos(s0)
+	free_stack(a0)
 	
 	li t0,1
 	beq a0,t0,VERIF_MV_DIR
@@ -960,6 +958,7 @@ MARIO_COLLISIONS:
 # a0 = degrau tipo A, degrau tipo D, 0 (sem degrau)
 ##################################################
 MARIO_VERIF_DEGRAU:
+	save_stack(ra)
 	mario_mappos(t0)
 	
 	lb t1,0(t0) # carrega byte da posicao
@@ -976,6 +975,7 @@ MARIO_VERIF_DEGRAU:
 	MV_DEGRAU_A:
 		li a0,0x02
 	FIM_MVDDEGRAU:
+		free_stack(ra)
 		ret
 
 # faz gravidade do mario
@@ -1087,10 +1087,14 @@ MARIO_DEATH:
 		lb t1,0(t0) # carrega numero da fase atual
 		li t0,1
 		beq t0,t1,MARIO_DEATH_FASE1 # se tiver na fase 1, reseta na fase1
+		li t0,2
+		beq t0,t1,MARIO_DEATH_FASE2 # se tiver na fase 2, reseta na fase2
 		tail GAME_OVER
 		
 		MARIO_DEATH_FASE1:
 			tail INIT_FASE1
+		MARIO_DEATH_FASE2:
+			tail INIT_FASE2
 	
 	
 	
@@ -1127,15 +1131,4 @@ MARIO_DEATH_SOUND:
 	li a3,127 # volume
 	li a7,31 # ecall som async
 	ecall
-	ret
-	
-# temporario
-PRINT_ACT_POS:
-	mario_mappos(t0)
-	
-	mv t1,a0
-	lb a0,0(t0)
-	li a7,34
-	ecall
-	mv a0,t1
 	ret

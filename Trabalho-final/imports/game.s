@@ -5,9 +5,9 @@
 .include "fases/fase1_obj.s"
 .include "fases/fase2_obj.s"
 
+.include "../sprites/bin/fase_current.s" # fase atual (inicialmente fase 1)
 # Variaveis de jogo
 display: .word DISPLAY0,DISPLAY1 # endereco do display utilizado no momento
-fase_current: .space 76800 # salva fase atual 
 
 fase: .byte 1 # primeira fase 
 level: .byte 1 # primeiro lvl
@@ -20,15 +20,13 @@ bonus_time: .word 0 # ultimo tempo de modificacao do bonus
 bonus: .word 0 # bonus inicial da fase
 .text
 	M_SetEcall(exceptionHandling)
-# Inicia o jogo (iniciando as variaveis)
+# Inicia o jogo (iniciando as variaveis) 
 INIT_GAME:
 	addi t0,zero,2
 	la t1,vidas
 	sb t0,0(t1) # reinicia a vida
 	la t0,score
 	sw zero,0(t0) # reinicia score
-	la t0,highscore
-	sw zero,0(t0) # reinicia highscore
 	la t0,last_key
 	sw zero,0(t0)
 	sw zero,4(t0) # reinicia last key
@@ -39,6 +37,14 @@ INIT_GAME:
 	la t0,level 
 	sb t1,0(t0) # seta lvl1
 	
+	# Como o jogo comeca na fase 1, nao precisa passar por "init fase1", e consequentemente, carregar
+	jal PRINT_FASE
+	call PRINT_TEXT_INITIAL
+	call INIT_MARIO
+	call INIT_DK_DANCA
+	call INIT_LADY
+	call INIT_BONUS
+	j MAINLOOP
 		
 # Inicia a fase 1
 INIT_FASE1:
@@ -51,7 +57,8 @@ INIT_FASE1:
 	call INIT_LADY
 	call INIT_BONUS
 	j MAINLOOP
-	
+
+# Inicia a fase 2
 INIT_FASE2:
 	jal LOADING_SCR
 	jal SET_FASE2
@@ -65,6 +72,10 @@ INIT_FASE2:
 
 # Imprime fase 1 na tela, e salva no indicador de fase atual
 SET_FASE1:
+	la t0,fase
+	lb t1,0(t0) # carrega fase atual
+	li t0,1
+	beq t0,t1,RET_LOADFASE1 # se ja estava na fase 1, nao precisa carregar denovo
 	DE1(LOADFASE1_DE1) # se estiver na DE1, carrega o mapa do USB serial
 	# do contrario, carregar do endereco no RARS
 	la s1,fase_current # endereco do mapa geral
@@ -90,10 +101,15 @@ SET_FASE1:
 	la t0,fase
 	li t1,1
 	sb t1,0(t0) # salva fase atual como 1
+	RET_LOADFASE1:
 	ret
 		
 # Imprime fase 1 na t ela, e salva no indicador de fase atual
 SET_FASE2:
+	la t0,fase
+	lb t1,0(t0)
+	li t0,2
+	beq t0,t1,RET_LOADFASE2 # se ja estava na fase 2, nao precisa carregar denovo
 	DE1(LOADFASE2_DE1) # se estiver na DE1, carrega o mapa do USB serial
 	# do contrario, carregar do endereco no RARS
 	la s1,fase_current # endereco do mapa geral
@@ -119,6 +135,7 @@ SET_FASE2:
 	la t0,fase
 	li t1,2
 	sb t1,0(t0) # salva fase 2
+	RET_LOADFASE2:
 	ret
 
 # Imprime a fase atual	
@@ -148,7 +165,7 @@ PRINT_FASE:
 # tecla 119 = W
 # tecla 115 = S
 # tecla 32 = espaco
-# fim anotacao temporaria
+# fim anotacao temporaria 
 MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	# mudar display
 	#la t0,display
@@ -168,21 +185,8 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	# Imprime variaveis de jogo (score, vidas, highscore, bonus)
 	call PRINT_TEXT
 	
-	la t0,pos_mario
-	lh t1,0(t0) # x do mario
-	lh t2,2(t0) # y do mario
-	
-	addi t1,t1,16 # +16 para saber posicao do pe direito do mario
-	addi t2,t2,16 # +16 --
-	srli t1,t1,2 # x / 4 para alinhar com mapeamento
-	srli t2,t2,2 # y / 4 para alinhar com mapeamento
-	
-	la t0,fase1_obj
-	li t3,80 # largura
-	mul t3,t2,t3 # (y * 80)
-	add t3,t3,t1 # (y * 80) + n
-	add t0,t0,t3 # endereco da posicao desejada
-	lb t0,0(t0) # carrega byte de t0
+	mario_mappos(a0)
+	lb t0,0(a0) # carrega byte de t0
 	andi t0,t0,0x80
 	bnez t0,GAME_VICTORY # verifica se esta na posicao de vitoria
 	
@@ -212,8 +216,6 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		ecall
 		sw a0,4(t0) # salva tempo
 		lw a0,0(t0) # retorna tecla
-	
-		#call PRINT_ACT_POS
 		
 		li t0,109
 		beq a0,t0,FIM # se tecla == M, sair  
@@ -243,7 +245,7 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		call DK_DANCA_LOOP
 		call LADY_LOOP
 		
-		li a0,20
+		li a0,10
 		li a7,32
 		ecall
 		
@@ -368,5 +370,5 @@ CONTINUE_MOVEMENT:
 .include "common.s"
 .include "mario.s"
 .include "environment.s"
-.include "SYSTEMv14.s"
 .include "map_includes.s"
+.include "SYSTEMv14.s"

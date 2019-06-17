@@ -157,38 +157,38 @@ LADY_LOOP:
 	
 	la	t4, var_lady
 	lw	t0, 0(t4)
-	li	t1, 15
+	li	t1, 10
 	beq	t0, t1, LADY_FRAME1
 
 	la	t4, var_lady
 	lw	t0, 0(t4)
+	li	t1, 15
+	beq	t0, t1, LADY_FRAME0
+	
+	la	t4, var_lady
+	lw	t0, 0(t4)
+	li	t1, 20
+	beq	t0, t1, LADY_FRAME1
+	
+	la	t4, var_lady
+	lw	t0, 0(t4)
+	li	t1, 25
+	beq	t0, t1, LADY_FRAME0
+	
+	la	t4, var_lady
+	lw	t0, 0(t4)
 	li	t1, 30
-	beq	t0, t1, LADY_FRAME0
-	
-	la	t4, var_lady
-	lw	t0, 0(t4)
-	li	t1, 45
 	beq	t0, t1, LADY_FRAME1
 	
 	la	t4, var_lady
 	lw	t0, 0(t4)
-	li	t1, 60
+	li	t1, 35
 	beq	t0, t1, LADY_FRAME0
 	
 	la	t4, var_lady
 	lw	t0, 0(t4)
-	li	t1, 75
+	li	t1, 40
 	beq	t0, t1, LADY_FRAME1
-	
-	#la	t4, var_lady
-	#lw	t0, 0(t4)
-	#li	t1, 90
-	#beq	t0, t1, LADY_FRAME0
-	
-	#la	t4, var_lady
-	#lw	t0, 0(t4)
-	#li	t1, 105
-	#beq	t0, t1, LADY_FRAME1
 	
 	#la	t4, var_lady
 	#lw	t0, 0(t4)
@@ -197,7 +197,7 @@ LADY_LOOP:
 	
 	la	t4, var_lady
 	lw	t0, 0(t4)
-	li	t1, 240
+	li	t1, 100
 	bge	t0, t1, LADY_RESET
 	
 	la	t4, var_lady
