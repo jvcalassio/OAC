@@ -68,7 +68,9 @@ DK_DANCA_LOOP:
 		
 		li	a0, 62
 		li	a1, 28
-		li	a2, DISPLAY0
+		#li	a2, DISPLAY0
+		la 	a2, display
+		lw	a2, 0(a2) # display atual
 		la	a3, fase_current
 		la	a4, dk_1
 		save_stack(ra)
@@ -77,7 +79,9 @@ DK_DANCA_LOOP:
 		
 		li	a0, 62
 		li	a1, 28
-		li	a2, DISPLAY0
+		#li	a2, DISPLAY0
+		la 	a2, display
+		lw	a2, 0(a2) # display atual
 		la	a3, dk_1
 		save_stack(ra)
 		call 	PRINT_OBJ
@@ -94,7 +98,9 @@ DK_DANCA_LOOP:
 
 		li	a0, 62
 		li	a1, 28
-		li	a2, DISPLAY0
+		#li	a2, DISPLAY0
+		la 	a2, display
+		lw	a2, 0(a2) # display atual
 		la	a3, fase_current
 		la	a4, dk_2
 		save_stack(ra)
@@ -103,7 +109,9 @@ DK_DANCA_LOOP:
 		
 		li	a0, 62
 		li	a1, 28
-		li	a2, DISPLAY0
+		#li	a2, DISPLAY0
+		la 	a2, display
+		lw	a2, 0(a2) # display atual
 		la	a3, dk_2
 		save_stack(ra)
 		call 	PRINT_OBJ
@@ -120,7 +128,9 @@ DK_DANCA_LOOP:
 
 		li	a0, 62
 		li	a1, 28
-		li	a2, DISPLAY0
+		#li	a2, DISPLAY0
+		la 	a2, display
+		lw	a2, 0(a2) # display atual
 		la	a3, fase_current
 		la	a4, dk_1
 		save_stack(ra)
@@ -129,7 +139,9 @@ DK_DANCA_LOOP:
 		
 		li	a0, 62
 		li	a1, 28
-		li	a2, DISPLAY0
+		#li	a2, DISPLAY0
+		la 	a2, display
+		lw	a2, 0(a2) # display atual
 		la	a3, dk_1
 		save_stack(ra)
 		call 	PRINT_OBJ_MIRROR
@@ -217,7 +229,9 @@ LADY_LOOP:
 		
 		li	a0, 113
 		li	a1, 25
-		li	a2, DISPLAY0
+		#li	a2, DISPLAY0
+		la	a2, display
+		lw 	a2, 0(a2)
 		la	a3, fase_current
 		la	a4, lady_p1
 		save_stack(ra)
@@ -226,7 +240,9 @@ LADY_LOOP:
 		
 		li	a0, 113
 		li	a1, 25
-		li	a2, DISPLAY0
+		#li	a2, DISPLAY0
+		la	a2, display
+		lw 	a2, 0(a2)
 		la	a3, lady_p1
 		save_stack(ra)
 		call PRINT_OBJ
@@ -243,7 +259,9 @@ LADY_LOOP:
 
 		li	a0, 113
 		li	a1, 25
-		li	a2, DISPLAY0
+		#li	a2, DISPLAY0
+		la	a2, display
+		lw	a2, 0(a2)
 		la	a3, fase_current
 		la	a4, lady_p2
 		save_stack(ra)
@@ -252,7 +270,9 @@ LADY_LOOP:
 		
 		li	a0, 113
 		li	a1, 25
-		li	a2, DISPLAY0
+		#li	a2, DISPLAY0
+		la	a2, display
+		lw	a2, 0(a2)
 		la	a3, lady_p2
 		save_stack(ra)
 		call PRINT_OBJ

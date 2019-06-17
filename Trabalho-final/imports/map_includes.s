@@ -1,8 +1,8 @@
 # Includes das fases (para ficar no final)
 .data
 # mapas (no RARS)
-.include "../sprites/bin/fase1.s"
-.include "../sprites/bin/fase2.s"
+#.include "../sprites/bin/fase1.s"
+#.include "../sprites/bin/fase2.s"
 
 .text
 # Recebe mapa atraves do USB na DE1
@@ -23,7 +23,7 @@ MAP_RETRIEVER:
 	# Terminado de enviar o sinal do mapa desejado, recebe os bytes do mapa um por um
 	li s4,76800 # quantidade de bytes
 	RECV_MAP_BYTES: beqz s4,FIM_RECV_MAP_BYTES # se recebidos todos os bytes, termina
-		#jal LOOP_MAP_READY # espera sinal ready acionar
+		jal LOOP_MAP_READY # espera sinal ready acionar
 		lb t1,0(s2) # le o byte recebido
 		sb t1,0(s3) # salva o byte recebido no endereco correspondente do mapa
 		jal LOOP_MAP_BUSY # espera sinal ready voltar para 0

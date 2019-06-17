@@ -80,7 +80,7 @@ SET_FASE1:
 	# do contrario, carregar do endereco no RARS
 	la s1,fase_current # endereco do mapa geral
 	li t0,76800
-	la t1,fase1
+	#la t1,fase1
 	addi t1,t1,8 # pula as words que indicam o tamanho da imagem
 	FOR_LOADFASE1:
 		beqz t0,FIM_LOADFASE1
@@ -114,7 +114,7 @@ SET_FASE2:
 	# do contrario, carregar do endereco no RARS
 	la s1,fase_current # endereco do mapa geral
 	li t0,76800
-	la t1,fase2
+	#la t1,fase2
 	addi t1,t1,8 # pula as words que indicam o tamanho da imagem
 	FOR_LOADFASE2:
 		beqz t0,FIM_LOADFASE2
@@ -247,7 +247,7 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		
 		li a0,10
 		li a7,32
-		ecall
+		#ecall
 		
 		j MAINLOOP
 	MPUP: tail MARIO_PULO_UP

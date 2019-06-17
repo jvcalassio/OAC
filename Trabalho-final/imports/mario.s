@@ -135,7 +135,7 @@ MOVE_MARIO_DIREITA:
 	
 	li a0,1
 	call MARIO_COLLISIONS # verifica permissao do movimento
-	beqz a0,FIM_MVMD_PAROU # se nao for permitido, so retorna
+	beqz a0,FIM_MVMD_RET # se nao for permitido, so retorna
 	
 	la t0,movement_counter
 	lw t1,0(t0) # contador de movimento
@@ -236,7 +236,7 @@ MOVE_MARIO_ESQUERDA:
 	
 	li a0,2
 	call MARIO_COLLISIONS # verifica permissao do movimento
-	beq a0,zero,FIM_MVME_PAROU # se nao for permitido, retorna
+	beq a0,zero,FIM_MVME_RET # se nao for permitido, retorna
 	
 	la t0,movement_counter
 	lw t1,0(t0) # contador de movimento
@@ -846,7 +846,7 @@ MARIO_COLLISIONS:
 		addi s0,s0,1 # posicao a frente
 		la t0,mario_state
 		lb t1,0(t0) # carrega byte de status
-		andi t1,t1,0x08 # verifica bit de escada no status
+		andi t1,t1,0x28 # verifica bit de escada e caindo no status
 		lb t0,0(s0)
 		andi t0,t0,0x08 # verifica bit de parede no mapa
 		or t0,t1,t0 # junta os dois bytes
@@ -884,10 +884,13 @@ MARIO_COLLISIONS:
 		la t0,mario_state
 		lb t1,0(t0) # carrega byte de status
 		andi t1,t1,0x08 # verifica bit de escada no status
+		lb t2,0(t0)
+		andi t2,t2,0x20 # verifica bit de caindo
 		lb t0,0(s0)
 		andi t0,t0,0x08 # verifica bit de parede no mapa
 		or t0,t1,t0 # junta os dois bytes
-		bne t0,zero,MARIO_CL_DENY # se qlqr um deler de 1 no bit, nao permite
+		or t0,t0,t2 # junta o byte de caindo
+		bne t0,zero,MARIO_CL_DENY # se qlqr um deles der 1 no bit, nao permite
 		# verifica se tem degrau subindo
 		la t0,pos_mario
 		lh a0,0(t0) # carrega x
@@ -992,6 +995,12 @@ MARIO_GRAVITY:
 	li t2,0x02
 	bne t1,t2,FIM_MARIO_GRAVITY # se for qualquer coisa exceto gravity, sai
 	# se for 0010 eh ponto de queda e tem q cair
+	# seta bit de caindo = 1
+	la t0,mario_state
+	lb t1,0(t0)
+	ori t1,t1,0x20
+	sb t1,0(t0) # salva status de caindo
+	
 	rmv_mario(mario_parado)
 	
 	addi s0,s0,80 # verificar linha abaixo

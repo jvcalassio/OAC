@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Gerenciamento de sprites de mapa do jogo
  * Recebe um byte referente a qual fase, e envia os
 bytes correspondentes, ate o final
@@ -63,7 +63,7 @@ int main()
 			while (fscanf(fd, "%d,", &enviar) == 1)
 			{
 				RS232_SendByte(cport_nr, enviar);
-				Sleep(0.25);
+				Sleep(0.15);
 			}
 
 			printf("Mapa enviado.\n");
