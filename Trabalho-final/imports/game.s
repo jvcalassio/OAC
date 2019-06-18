@@ -21,6 +21,11 @@ score: .word 0 # score atual
 last_key: .word 0,0 # ultima tecla pressionada (tecla, tempo)
 bonus_time: .word 0 # ultimo tempo de modificacao do bonus
 bonus: .word 0 # bonus inicial da fase
+
+# contadores
+ambient_sound_counter: .byte 0 # contador de qual o ultimo som da fase
+ambient_sound_timer: .word 0 # tempo de reproducao
+sounds: .byte 1 # sons ligados
 .text
 	M_SetEcall(exceptionHandling)
 # Inicia o jogo (iniciando as variaveis) 
@@ -39,6 +44,11 @@ INIT_GAME:
 	sb t1,0(t0) # seta fase1
 	la t0,level 
 	sb t1,0(t0) # seta lvl1
+	
+	la t0,ambient_sound_counter
+	sb zero,0(t0) # salva counter em 0
+	la t0,ambient_sound_timer
+	sw zero,0(t0)
 	
 	# Como o jogo comeca na fase 1, nao precisa passar por "init fase1", e consequentemente, carregar
 	jal PRINT_FASE
@@ -107,6 +117,10 @@ SET_FASE1:
 	la t0,fase
 	li t1,1
 	sb t1,0(t0) # salva fase atual como 1
+	la t0,ambient_sound_counter
+	sb zero,0(t0)
+	la t0,ambient_sound_timer
+	sw zero,0(t0)
 	RET_LOADFASE1:
 	ret
 		
@@ -141,6 +155,10 @@ SET_FASE2:
 	la t0,fase
 	li t1,2
 	sb t1,0(t0) # salva fase 2
+	la t0,ambient_sound_counter
+	sb zero,0(t0)
+	la t0,ambient_sound_timer
+	sw zero,0(t0)
 	RET_LOADFASE2:
 	ret
 
@@ -184,6 +202,9 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	#xori t1,t1,0x01
 	#sw t1,0(t0) # seta display
 	# fim mudar display
+	
+	# verifica e toca o som ambiente
+	call AMBIENT_SOUND
 	
 	# Modifica valores de variaveis (highscore, bonus)
 	call HIGHSCORE_BONUS_MANAGEMENT
@@ -251,14 +272,90 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		call DK_DANCA_LOOP
 		call LADY_LOOP
 		
-		li a0,10
+		li a0,30
 		li a7,32
-		#ecall
+		ecall
 		
 		j MAINLOOP
 	MPUP: tail MARIO_PULO_UP
 	MPDIR: tail MARIO_PULO_DIR
 	MPESQ: tail MARIO_PULO_ESQ
+
+# Reproduz som ambiente da fase
+AMBIENT_SOUND:
+	la t0,sounds
+	lb t1,0(t0)
+	beqz t1,FIM_AMBIENT_SOUND # sons desligados
+	
+	la t0,fase
+	lb t1,0(t0)
+	li t0,2
+	beq t0,t1,FIM_AMBIENT_SOUND # fase 2 nao tem som ambiente
+	
+	la t0,ambient_sound_timer
+	lw t1,0(t0)
+	gettime()
+	sub s0,a0,t1 # tempo atual - tempo do ultimo som
+	
+	la t0,fase
+	lb t1,0(t0)
+	addi t0,zero,1
+	beq t0,t1,AMBIENT_SOUND_F1
+	addi t0,zero,3
+	beq t0,t1,AMBIENT_SOUND_F3
+	j FIM_AMBIENT_SOUND # fase 2 nao tem som ambiente
+	
+	AMBIENT_SOUND_F1:
+		la t0,ambient_sound_counter
+		lb t1,0(t0) # carrega contador
+		slli t1,t1,3 # multiplica por 8 (pra pegar o valor correto)
+		la t0,NOTAS_NIVEL1
+		add t0,t0,t1 # chega na posicao da nota atual
+		lw t1,4(t0) # carrega duracao
+		ble s0,t1,FIM_AMBIENT_SOUND # se nota atual nao tiver acabado, apenas retorna
+		# se ja tiver acabado, atualiza o timer, contador e reproduz nova nota
+		# verifica se ja chegou no fim das notas
+		la t0,ambient_sound_counter
+		lb t1,0(t0)
+		li t2,5
+		bge t1,t2,RESET_ASCOUNTER
+		CONT_ASCOUNTER:
+		addi t1,t1,1
+		sb t1,0(t0) # salva novo valor do contador
+		slli t1,t1,3 # mul 8
+		la t0,NOTAS_NIVEL1
+		add t0,t0,t1 # pula pro end correto
+		lw a0,0(t0) # carrega nota
+		lw a1,4(t0) # carrega duracao
+		li a2,80
+		li a3,30 # volume
+		li a7,31
+		ecall
+		la t0,ambient_sound_counter
+		lb t1,0(t0)
+		li t0,0
+		beq t0,t1,DELAY_SOUNDF1
+		la t0,ambient_sound_timer
+		gettime()
+		sw a0,0(t0)
+		j FIM_AMBIENT_SOUND
+		
+	AMBIENT_SOUND_F3:
+		j FIM_AMBIENT_SOUND
+	
+	DELAY_SOUNDF1: # faz o atraso de 300ms da primeira nota do som da fase1
+		la t0,ambient_sound_timer
+		gettime()
+		addi a0,a0,300
+		sw a0,0(t0)
+		j FIM_AMBIENT_SOUND
+		
+	RESET_ASCOUNTER:
+		addi t1,zero,-1
+		j CONT_ASCOUNTER
+		
+	FIM_AMBIENT_SOUND:
+		ret
 
 # Imprime tela de vitoria (temporaria)
 # Passa para proxima fase

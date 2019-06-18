@@ -157,6 +157,9 @@ MOVE_MARIO_DIREITA:
 		addi t1,zero,1
 		sw t1,0(t0) # salva q fez passo 1
 		
+		li a0,0
+		call MARIO_STEP_SOUND
+		
 		j FIM_MVMD_ANDANDO
 	
 	MVMD_P2: # faz passo 2
@@ -168,6 +171,9 @@ MOVE_MARIO_DIREITA:
 		la t0,movement_counter
 		addi t1,zero,2
 		sw t1,0(t0) # salva q fez passo 2
+		
+		li a0,1
+		call MARIO_STEP_SOUND
 		
 		j FIM_MVMD_RET
 		
@@ -257,7 +263,10 @@ MOVE_MARIO_ESQUERDA:
 		la t0,movement_counter
 		addi t1,zero,1
 		sw t1,0(t0) # salva q fez passo 1
-
+		
+		li a0,0
+		call MARIO_STEP_SOUND
+		
 		j FIM_MVME_ANDANDO
 	
 	MVME_P2: # faz passo 2
@@ -269,6 +278,9 @@ MOVE_MARIO_ESQUERDA:
 		la t0,movement_counter
 		addi t1,zero,2
 		sw t1,0(t0) # salva q fez passo 2
+		
+		li a0,1
+		call MARIO_STEP_SOUND
 		
 		j FIM_MVME_RET
 	
@@ -1012,7 +1024,7 @@ MARIO_GRAVITY:
 	j MARIO_DEATH
 	
 	PRINT_FALL_MARIO_GRAVITY:
-		set_mario_move(0,4,mario_parado)
+		set_mario_move(0,4,mario_andando_p2)
 		call PRINT_OBJ # printa mario posicao abaixo
 		li a0,20
 		li a7,32
@@ -1068,7 +1080,7 @@ MARIO_DEATH:
 	la a0,mario_morto
 	jal MARIO_DEATH_ANIM
 	call PRINT_OBJ # printa mario no chao
-	addi a0,zero,300
+	addi a0,zero,200
 	li a7,32
 	ecall # sleep do tempo de duracao
 	# fim da animacao
@@ -1145,6 +1157,10 @@ MARIO_DEATH_ANIM:
 # toca som do mario morrendo
 # a0 = numero do som atual
 MARIO_DEATH_SOUND:
+	la t0,sounds
+	lb t1,0(t0)
+	beqz t1,FIM_MARIO_DEATH_SOUND # sons desligados
+	
 	la t0,NOTAS_MARIOMORRE
 	addi t1,zero,12
 	mv t2,a0
@@ -1161,4 +1177,25 @@ MARIO_DEATH_SOUND:
 	li a3,127 # volume
 	li a7,31 # ecall som async
 	ecall
-	ret
+	FIM_MARIO_DEATH_SOUND:
+		ret
+
+# Toca som de passo do mario
+# a0 = passo (0 ou 1)
+MARIO_STEP_SOUND:
+	la t0,sounds
+	lb t1,0(t0)
+	beqz t1,FIM_MARIO_STEP_SOUND # sons desligados
+	
+	slli a0,a0,3
+	# toca som do passo a0
+	la t0,NOTAS_PASSOS
+	add t0,t0,a0
+	lw a0,0(t0)
+	lw a1,4(t0) # carrega duracao
+	li a2,80
+	li a3,127
+	li a7,31
+	ecall
+	FIM_MARIO_STEP_SOUND:
+		ret

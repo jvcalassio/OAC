@@ -412,6 +412,9 @@ INIT_BONUS:
 
 # sons iniciais das fases
 INIT_SOUND:
+	la t0,sounds
+	lb t1,0(t0)
+	beqz t1,FIM_INIT_SOUND # sons desligados
 	# toca som de fase start
 	la t0,NOTAS_FASE_START
 	la t1,NUM_FASE_START
@@ -438,25 +441,15 @@ INIT_SOUND:
 	li a0,100
 	li a7,32
 	ecall
-	
-	la t0,fase
-	lb t0,0(t0)
-	addi t1,zero,1
-	beq t0,t1,INIT_SOUND_F1
-	addi t1,zero,2
-	beq t0,t1,INIT_SOUND_F2
-	j FIM_INIT_SOUND
-	
-	INIT_SOUND_F1: # inicia som de loop da fase 1
-		j FIM_INIT_SOUND
-		
-	INIT_SOUND_F2:
-	
 	FIM_INIT_SOUND:
 		ret
 
 # Toca o som de fase completa		
 SOUND_CLEARSTAGE:
+	la t0,sounds
+	lb t1,0(t0)
+	beqz t1,FIM_SOUND_CLEARSTAGE # sons desligados
+	
 	la t0,NOTAS_FASE_CLEAR
 	la t1,NUM_FASE_CLEAR
 	lw t1,0(t1) # numero de notas
