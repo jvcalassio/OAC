@@ -26,20 +26,14 @@
 
 # pega a posicao do mario no map
 .macro mario_mappos(%result)
-	la t0,pos_mario
-	lh t1,0(t0) # x do mario
-	lh t2,2(t0) # y do mario
-	
-	addi t1,t1,16 # +16 para saber posicao do pe direito do mario
-	addi t2,t2,20 # +16 --
-	srli t1,t1,2 # x / 4 para alinhar com mapeamento
-	srli t2,t2,2 # y / 4 para alinhar com mapeamento
-	
-	la t0,fase1_obj
-	li t3,80
-	mul t3,t2,t3 # (y * 80)
-	add t3,t3,t1 # (y * 80) + n
-	add %result,t0,t3 # endereco da posicao desejada
+	call MARIO_MAP_POS
+	add %result,a1,a0
+.end_macro
+
+# recebe tempo atual
+.macro gettime()
+	addi a7,zero,30
+	ecall
 .end_macro
 
 # Enderecos
@@ -51,5 +45,16 @@
 .eqv CTRL_BTN_ADDR 0xFF20021C
 
 # Constantes de jogo
-.eqv START_MARIO_X_FASE1 84
-.eqv START_MARIO_Y_FASE1 199
+#.eqv START_MARIO_X_FASE1 84
+#.eqv START_MARIO_Y_FASE1 199
+.eqv START_MARIO_X_FASE1 222
+.eqv START_MARIO_Y_FASE1 46
+.eqv START_MARIO_X_FASE2 52
+.eqv START_MARIO_Y_FASE2 183
+
+.eqv STARTING_BONUS 5000
+
+# Controlador USB
+.eqv USB_CTRL_ADDR 0xff200122
+.eqv USB_RECV_ADDR 0xff200120
+.eqv USB_SEND_ADDR 0xff200121

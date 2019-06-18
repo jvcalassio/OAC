@@ -36,7 +36,3 @@ NUM_PASSOS: .word 4
 # lista de nota,duração,nota,duração,nota,duração,...
 NOTAS_PASSOS: 								# a2 = 120
 	62,30,65,30,62,30,69,30, # Tocar em looping
-
-
-
-.text

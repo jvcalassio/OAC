@@ -13,8 +13,9 @@ Esquemas do mapa:
 
 0000 = ar					= .
 0001 = chao					= C
-0010 = degrau p esquerda	= A 
-0011 = degrau p direita		= D
+//0010 = degrau p esquerda		= A 
+//0011 = degrau p direita		= D
+0010 = gravidade			= G
 0100 = escada 				= E
 0101 = fim escada 			= T
 1000 = parede				= P
@@ -33,10 +34,14 @@ Esquemas do mapa:
 
 */
 int main(){
-	printf("fase1_obj: .byte ");
+	int k;
+	scanf("%d",&k);
+	char stringname[40];
+	sprintf(stringname, "fase%d_map.txt", k);
+	printf("fase%d_obj: .byte ",k);
 	string mapa;
 	ifstream map_in;
-	map_in.open("fase1_map.txt");
+	map_in.open(stringname);
 	for(int j=0;j<60;j++){
 		map_in >> mapa;
 		for(int i=0;i<80;i++){
@@ -49,13 +54,9 @@ int main(){
 				t = 1;
 				printf("0x01");
 			}
-			if(mapa[i] == 'A'){
+			if(mapa[i] == 'G'){
 				t = 1;
 				printf("0x02");
-			}
-			if(mapa[i] == 'D'){
-				t = 1;
-				printf("0x03");
 			}
 			if(mapa[i] == 'E'){
 				t = 1;
