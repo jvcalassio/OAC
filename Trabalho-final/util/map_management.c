@@ -63,7 +63,7 @@ int main()
 			while (fscanf(fd, "%d,", &enviar) == 1)
 			{
 				RS232_SendByte(cport_nr, enviar);
-				Sleep(0.15);
+				//Sleep(0.15);
 			}
 
 			printf("Mapa enviado.\n");
