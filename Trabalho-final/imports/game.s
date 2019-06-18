@@ -2,6 +2,9 @@
 .include "macros2.s"
 
 .data
+# Sons
+.include "../sounds/som.s"
+
 .include "fases/fase1_obj.s"
 .include "fases/fase2_obj.s"
 
@@ -44,6 +47,7 @@ INIT_GAME:
 	call INIT_DK_DANCA
 	call INIT_LADY
 	call INIT_BONUS
+	call INIT_SOUND
 	j MAINLOOP
 		
 # Inicia a fase 1
@@ -56,6 +60,7 @@ INIT_FASE1:
 	call INIT_DK_DANCA
 	call INIT_LADY
 	call INIT_BONUS
+	call INIT_SOUND
 	j MAINLOOP
 
 # Inicia a fase 2
@@ -68,6 +73,7 @@ INIT_FASE2:
 	call INIT_DK_DANCA
 	call INIT_LADY
 	call INIT_BONUS
+	call INIT_SOUND
 	j MAINLOOP
 
 # Imprime fase 1 na tela, e salva no indicador de fase atual
@@ -257,6 +263,8 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 # Imprime tela de vitoria (temporaria)
 # Passa para proxima fase
 GAME_VICTORY:
+	# toca som de vitoria
+	call SOUND_CLEARSTAGE
 	# Adiciona bonus ao score
 	la t0,bonus
 	lw t1,0(t0) # carrega bonus atual

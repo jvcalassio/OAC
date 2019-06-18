@@ -16,9 +16,6 @@
 .include "../sprites/bin/mario_morrendo_x.s"
 .include "../sprites/bin/mario_morto.s"
 
-# Sons
-.include "../sounds/mario_sounds.s"
-
 # Variaveis
 mario_state: .byte 0 # salva estado atual do mario
 pulo_px: .byte 0,0 # salva pixels movidos no pulo
@@ -1030,57 +1027,74 @@ MARIO_GRAVITY:
 MARIO_DEATH:
 	# animacao e som de morte do mario
 	# recebe mario morrendo y inicialmente
+	mv a0,zero
+	jal MARIO_DEATH_SOUND
 	la a0,mario_morrendo_x
 	jal MARIO_DEATH_ANIM
 	call PRINT_OBJ # faz mario virado pra um lado
 	
+	addi a0,zero,1
+	jal MARIO_DEATH_SOUND
 	la a0,mario_morrendo_y
 	jal MARIO_DEATH_ANIM
 	call PRINT_OBJ_MIRRORY # faz mario de cabeca pra baixo
 	
+	addi a0,zero,2
+	jal MARIO_DEATH_SOUND
 	la a0,mario_morrendo_x
 	jal MARIO_DEATH_ANIM
 	call PRINT_OBJ_MIRROR # faz mario virado pro outro lado
 	
+	addi a0,zero,3
+	jal MARIO_DEATH_SOUND
 	la a0,mario_morrendo_x
 	jal MARIO_DEATH_ANIM
 	call PRINT_OBJ # faz mario virado pra um lado
 	
+	addi a0,zero,4
+	jal MARIO_DEATH_SOUND
 	la a0,mario_morrendo_y
 	jal MARIO_DEATH_ANIM
 	call PRINT_OBJ_MIRRORY # faz mario de cabeca pra baixo
 	
+	addi a0,zero,5
+	jal MARIO_DEATH_SOUND
 	la a0,mario_morrendo_x
 	jal MARIO_DEATH_ANIM
 	call PRINT_OBJ_MIRROR # faz mario virado pro outro lado
 	
-	addi a0,zero,0
+	addi a0,zero,12
 	jal MARIO_DEATH_SOUND
 	la a0,mario_morto
 	jal MARIO_DEATH_ANIM
 	call PRINT_OBJ # printa mario no chao
+	addi a0,zero,300
+	li a7,32
+	ecall # sleep do tempo de duracao
 	# fim da animacao
-	addi a0,zero,1
+	addi a0,zero,13
 	jal MARIO_DEATH_SOUND
-	li a0,300
+	mv a0,a1
 	li a7,32
-	ecall
-	addi a0,zero,2
+	ecall # sleep do tempo de duracao
+	
+	addi a0,zero,14
 	jal MARIO_DEATH_SOUND
-	li a0,300
+	mv a0,a1
 	li a7,32
-	ecall
-	addi a0,zero,3
+	ecall # sleep do tempo de duracao
+	
+	addi a0,zero,15
 	jal MARIO_DEATH_SOUND
-	li a0,400
+	mv a0,a1
 	li a7,32
-	ecall
-	addi a0,zero,4
+	ecall # sleep do tempo de duracao
+	
+	addi a0,zero,16
 	jal MARIO_DEATH_SOUND
-	li a0,40
+	mv a0,a1
 	li a7,32
-	ecall
-
+	ecall # sleep do tempo de duracao
 	# verifica se ainda tem vidas
 	la t0,vidas
 	lb t1,0(t0)	
@@ -1131,12 +1145,19 @@ MARIO_DEATH_ANIM:
 # toca som do mario morrendo
 # a0 = numero do som atual
 MARIO_DEATH_SOUND:
-	la t0,mario_death
+	la t0,NOTAS_MARIOMORRE
+	addi t1,zero,12
+	mv t2,a0
 	slli a0,a0,3 # multiplica por 8
 	add t0,t0,a0 # pula pra posicao do audio desejado
 	lw a0,0(t0) # carrega nota
 	lw a1,4(t0) # carrega duracao
-	li a2,80 # instrumento
+	bge t2,t1,MARIO_DEATH_SOUND_PT2 # se passou primeira parte, toca instrumento 80
+	li a2,74 # instrumento primeira parte
+	j CONT_MARIO_DEATH_SOUND
+	MARIO_DEATH_SOUND_PT2:
+	li a2,80 # instrumento segunda parte
+	CONT_MARIO_DEATH_SOUND:
 	li a3,127 # volume
 	li a7,31 # ecall som async
 	ecall

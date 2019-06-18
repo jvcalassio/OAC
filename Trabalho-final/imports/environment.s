@@ -28,6 +28,7 @@ INIT_DK_DANCA:
 	sw	t0, 8(t4)	#var1 = 20000
 	li	t0, 150
 	sw	t0, 12(t4)	#var_2 = 30000
+	j DK_DANCA_FRAME0 # printa primeiro frame
 	ret
 
 DK_DANCA_LOOP:
@@ -159,10 +160,11 @@ INIT_LADY:
 	
 	la	t4, var_lady
 	sw	zero, 0(t4)
-	ret
+	save_stack(ra)
+	j LADY_FRAME0 # printa primeiro frame da lady
 	
 LADY_LOOP:
-	
+	save_stack(ra)
 	la	t4, var_lady
 	lw	t0, 0(t4)
 	beq	t0, zero, LADY_FRAME0
@@ -217,13 +219,13 @@ LADY_LOOP:
 	addi	t0, t0, 1
 	sw	t0, 0(t4)
 	
-	ret
+	j FIM_LADY_LOOP
 	
 	LADY_RESET:
 		
 		la	t4, var_lady
 		sw	zero, 0(t4)
-		ret
+		j FIM_LADY_LOOP
 			
 	LADY_FRAME0:
 		
@@ -234,9 +236,7 @@ LADY_LOOP:
 		lw 	a2, 0(a2)
 		la	a3, fase_current
 		la	a4, lady_p1
-		save_stack(ra)
 		call CLEAR_OBJPOS
-		free_stack(ra)
 		
 		li	a0, 113
 		li	a1, 25
@@ -244,19 +244,16 @@ LADY_LOOP:
 		la	a2, display
 		lw 	a2, 0(a2)
 		la	a3, lady_p1
-		save_stack(ra)
 		call PRINT_OBJ
-		free_stack(ra)
 		
 		la	t4, var_lady
 		lw	t0, 0(t4)
 		addi	t0, t0, 1
 		sw	t0, 0(t4)
 		
-		ret
+		j FIM_LADY_LOOP
 		
 	LADY_FRAME1:
-
 		li	a0, 113
 		li	a1, 25
 		#li	a2, DISPLAY0
@@ -264,9 +261,7 @@ LADY_LOOP:
 		lw	a2, 0(a2)
 		la	a3, fase_current
 		la	a4, lady_p2
-		save_stack(ra)
 		call CLEAR_OBJPOS
-		free_stack(ra)
 		
 		li	a0, 113
 		li	a1, 25
@@ -274,15 +269,15 @@ LADY_LOOP:
 		la	a2, display
 		lw	a2, 0(a2)
 		la	a3, lady_p2
-		save_stack(ra)
 		call PRINT_OBJ
-		free_stack(ra)
 		
 		la	t4, var_lady
 		lw	t0, 0(t4)
 		addi	t0, t0, 1
 		sw	t0, 0(t4)
 		
+	FIM_LADY_LOOP:
+		free_stack(ra)
 		ret
 
 # Imprime textos auxiliares de jogo
@@ -414,3 +409,71 @@ INIT_BONUS:
 	li t1,STARTING_BONUS
 	sw t1,0(t0)
 	ret
+
+# sons iniciais das fases
+INIT_SOUND:
+	# toca som de fase start
+	la t0,NOTAS_FASE_START
+	la t1,NUM_FASE_START
+	lw t1,0(t1) # numero de notas
+	li a2,80
+	li a3,127
+	LOOP_INIT_SOUND:
+		beqz t1,FIM_LOOP_INIT_SOUND
+		lw a0,0(t0)
+		lw a1,4(t0)
+		li a7,31
+		ecall
+		mv a0,a1
+		li a7,32
+		ecall
+		addi t1,t1,-1
+		addi t0,t0,8
+		j LOOP_INIT_SOUND
+		
+	FIM_LOOP_INIT_SOUND:
+	li a3,0
+	li a7,31
+	ecall
+	li a0,100
+	li a7,32
+	ecall
+	
+	la t0,fase
+	lb t0,0(t0)
+	addi t1,zero,1
+	beq t0,t1,INIT_SOUND_F1
+	addi t1,zero,2
+	beq t0,t1,INIT_SOUND_F2
+	j FIM_INIT_SOUND
+	
+	INIT_SOUND_F1: # inicia som de loop da fase 1
+		j FIM_INIT_SOUND
+		
+	INIT_SOUND_F2:
+	
+	FIM_INIT_SOUND:
+		ret
+
+# Toca o som de fase completa		
+SOUND_CLEARSTAGE:
+	la t0,NOTAS_FASE_CLEAR
+	la t1,NUM_FASE_CLEAR
+	lw t1,0(t1) # numero de notas
+	li a2,80
+	li a3,127
+	FOR_SOUND_CLEARSTAGE:
+		beqz t1,FIM_SOUND_CLEARSTAGE
+		lw a0,0(t0)
+		lw a1,4(t0)
+		li a7,31
+		ecall
+		mv a0,a1
+		li a7,32
+		ecall
+		addi t0,t0,8
+		addi t1,t1,-1
+		j FOR_SOUND_CLEARSTAGE
+	FIM_SOUND_CLEARSTAGE:
+	ret
+
