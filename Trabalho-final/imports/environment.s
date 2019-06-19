@@ -381,13 +381,12 @@ PRINT_TEXT:
 	li a1,30
 	li a2,5
 	li a3,0x0007
-	li a4,0
+	la t0,display
+	lw a4,0(t0)
+	andi a4,a4,0x20
+	srli a4,a4,5 # carrega display atual
 	li a7,101
-	ecall # imprime quantidade de vidas atualmente no display 0
-	la t0,vidas
-	lb a0,0(t0)
-	li a4,1
-	ecall # imprime quantidade de vidas no display 1
+	ecall # imprime quantidade de vidas atualmente
 	ret
 
 # Muda valores do highscore e bonus

@@ -52,6 +52,7 @@ INIT_GAME:
 	sw zero,0(t0)
 	
 	# Como o jogo comeca na fase 1, nao precisa passar por "init fase1", e consequentemente, carregar
+	jal SET_FASE2
 	jal PRINT_FASE
 	call PRINT_TEXT_INITIAL
 	call INIT_MARIO
@@ -110,7 +111,7 @@ SET_FASE1:
 	# do contrario, carregar do endereco no RARS
 	la s1,fase_current # endereco do mapa geral
 	li t0,76800
-	#la t1,fase1
+	la t1,fase1
 	addi t1,t1,8 # pula as words que indicam o tamanho da imagem
 	FOR_LOADFASE1:
 		beqz t0,FIM_LOADFASE1
@@ -148,7 +149,7 @@ SET_FASE2:
 	# do contrario, carregar do endereco no RARS
 	la s1,fase_current # endereco do mapa geral
 	li t0,76800
-	#la t1,fase2
+	la t1,fase2
 	addi t1,t1,8 # pula as words que indicam o tamanho da imagem
 	FOR_LOADFASE2:
 		beqz t0,FIM_LOADFASE2
@@ -174,7 +175,7 @@ SET_FASE2:
 	la t0,ambient_sound_timer
 	sw zero,0(t0)
 	RET_LOADFASE2:
-	ret
+		ret
 	
 # Imprime fase 3 no fase current, e salva no indicador de fase atual
 SET_FASE3:
@@ -212,7 +213,7 @@ SET_FASE3:
 	la t0,ambient_sound_timer
 	sw zero,0(t0)
 	RET_LOADFASE3:
-	ret
+		ret
 
 # Imprime a fase atual na tela
 PRINT_FASE:
