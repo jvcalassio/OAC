@@ -133,7 +133,7 @@ DK_DANCA_LOOP:
 		
 	SET_POSDK:
 		la	t0, fase
-		lw	t0, 0(t0)
+		lb	t0, 0(t0)
 		li	t1, 1
 		beq	t0, t1, SET_POSDK0
 		li	t1, 2
@@ -146,7 +146,7 @@ DK_DANCA_LOOP:
 		li	a1, 28
 		ret
 	SET_POSDK1:
-		li	a0, 140
+		li	a0, 138
 		li	a1, 28
 		ret
 # Faz danca da lady na fase 1
