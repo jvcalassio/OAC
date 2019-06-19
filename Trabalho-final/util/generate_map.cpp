@@ -16,6 +16,7 @@ Esquemas do mapa:
 //0010 = degrau p esquerda		= A 
 //0011 = degrau p direita		= D
 0010 = gravidade			= G
+0011 = morte certa			= M
 0100 = escada 				= E
 0101 = fim escada 			= T
 1000 = parede				= P
@@ -57,6 +58,10 @@ int main(){
 			if(mapa[i] == 'G'){
 				t = 1;
 				printf("0x02");
+			}
+			if(mapa[i] == 'M'){
+				t = 1;
+				printf("0x03");
 			}
 			if(mapa[i] == 'E'){
 				t = 1;
