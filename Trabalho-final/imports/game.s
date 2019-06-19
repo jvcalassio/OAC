@@ -26,6 +26,7 @@ bonus: .word 0 # bonus inicial da fase
 ambient_sound_counter: .byte 0 # contador de qual o ultimo som da fase
 ambient_sound_timer: .word 0 # tempo de reproducao
 sounds: .byte 1 # sons ligados
+given_extra_life: .byte 0 # flag de vida extra concedida ou nao
 .text
 	M_SetEcall(exceptionHandling)
 # Inicia o jogo (iniciando as variaveis) 
@@ -85,8 +86,21 @@ INIT_FASE2:
 	call INIT_BONUS
 	call INIT_SOUND
 	j MAINLOOP
+	
+# Inicia a fase 3
+INIT_FASE3:
+	jal LOADING_SCR
+	jal SET_FASE3
+	jal PRINT_FASE
+	call PRINT_TEXT_INITIAL
+	call INIT_MARIO
+	call INIT_DK_DANCA
+	call INIT_LADY
+	call INIT_BONUS
+	call INIT_SOUND
+	j MAINLOOP
 
-# Imprime fase 1 na tela, e salva no indicador de fase atual
+# Imprime fase 1 no fase current, e salva no indicador de fase atual
 SET_FASE1:
 	la t0,fase
 	lb t1,0(t0) # carrega fase atual
@@ -124,7 +138,7 @@ SET_FASE1:
 	RET_LOADFASE1:
 	ret
 		
-# Imprime fase 1 na t ela, e salva no indicador de fase atual
+# Imprime fase 2 no fase current, e salva no indicador de fase atual
 SET_FASE2:
 	la t0,fase
 	lb t1,0(t0)
@@ -161,8 +175,46 @@ SET_FASE2:
 	sw zero,0(t0)
 	RET_LOADFASE2:
 	ret
+	
+# Imprime fase 3 no fase current, e salva no indicador de fase atual
+SET_FASE3:
+	la t0,fase
+	lb t1,0(t0)
+	li t0,3
+	beq t0,t1,RET_LOADFASE3 # se ja estava na fase 3, nao precisa carregar denovo
+	DE1(LOADFASE3_DE1) # se estiver na DE1, carrega o mapa do USB serial
+	# do contrario, carregar do endereco no RARS
+	la s1,fase_current # endereco do mapa geral
+	li t0,76800
+	la t1,fase3
+	addi t1,t1,8 # pula as words que indicam o tamanho da imagem
+	FOR_LOADFASE3:
+		beqz t0,FIM_LOADFASE3
+		lb t2,0(t1) # carrega byte do mapa
+		sb t2,0(s1) # grava byte no current
+		addi t1,t1,1
+		addi s1,s1,1
+		addi t0,t0,-1
+		j FOR_LOADFASE3
+	
+	LOADFASE3_DE1:
+		save_stack(ra)
+		li a0,3
+		call MAP_RETRIEVER
+		free_stack(ra)
+			
+	FIM_LOADFASE3:
+	la t0,fase
+	li t1,3
+	sb t1,0(t0) # salva fase 3
+	la t0,ambient_sound_counter
+	sb zero,0(t0)
+	la t0,ambient_sound_timer
+	sw zero,0(t0)
+	RET_LOADFASE3:
+	ret
 
-# Imprime a fase atual	
+# Imprime a fase atual na tela
 PRINT_FASE:
 	la t0,display
 	lw s0,0(t0) # primeiro display
@@ -272,10 +324,19 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		call DK_DANCA_LOOP
 		call LADY_LOOP
 		
+		la t0,level
+		lb t1,0(t0) # carrega lvl atual
+		# escolhe sleep baseado no lvl
+		li t0,-5
+		mul t1,t1,t0 # lvl x -5
+		li t0,-30
+		ble t1,t0,MAINLOOP_RET_SLEEP0 # se o coeficiente der menor ou igual a -30, joga sem sleep
+		# do contrario, faz sleep de 30 - coeficiente ms
 		li a0,30
+		sub a0,a0,t1
 		li a7,32
 		ecall
-		
+		MAINLOOP_RET_SLEEP0: # sem sleep
 		j MAINLOOP
 	MPUP: tail MARIO_PULO_UP
 	MPDIR: tail MARIO_PULO_DIR
@@ -318,8 +379,8 @@ AMBIENT_SOUND:
 		la t0,ambient_sound_counter
 		lb t1,0(t0)
 		li t2,5
-		bge t1,t2,RESET_ASCOUNTER
-		CONT_ASCOUNTER:
+		bge t1,t2,RESET_ASCOUNTERF1
+		CONT_ASCOUNTERF1:
 		addi t1,t1,1
 		sb t1,0(t0) # salva novo valor do contador
 		slli t1,t1,3 # mul 8
@@ -328,19 +389,49 @@ AMBIENT_SOUND:
 		lw a0,0(t0) # carrega nota
 		lw a1,4(t0) # carrega duracao
 		li a2,80
-		li a3,30 # volume
+		li a3,50 # volume
 		li a7,31
 		ecall
 		la t0,ambient_sound_counter
 		lb t1,0(t0)
-		li t0,0
-		beq t0,t1,DELAY_SOUNDF1
+		beqz t1,DELAY_SOUNDF1 # se tiver na primeira nota, faz a pausa
 		la t0,ambient_sound_timer
 		gettime()
 		sw a0,0(t0)
 		j FIM_AMBIENT_SOUND
 		
 	AMBIENT_SOUND_F3:
+		la t0,ambient_sound_counter
+		lb t1,0(t0) # carrega contador
+		slli t1,t1,3 # multiplica por 8 (pra pegar o valor correto)
+		la t0,NOTAS_NIVEL3
+		add t0,t0,t1 # chega na posicao da nota atual
+		lw t1,4(t0) # carrega duracao
+		ble s0,t1,FIM_AMBIENT_SOUND # se nota atual nao tiver acabado, apenas retorna
+		# se ja tiver acabado, atualiza o timer, contador e reproduz nova nota
+		# verifica se ja chegou no fim das notas
+		la t0,ambient_sound_counter
+		lb t1,0(t0)
+		li t2,2
+		bge t1,t2,RESET_ASCOUNTERF3
+		CONT_ASCOUNTERF3:
+		addi t1,t1,1
+		sb t1,0(t0) # salva novo valor do contador
+		slli t1,t1,3 # mul 8
+		la t0,NOTAS_NIVEL3
+		add t0,t0,t1 # pula pro end correto
+		lw a0,0(t0) # carrega nota
+		lw a1,4(t0) # carrega duracao
+		li a2,80
+		li a3,50 # volume
+		li a7,31
+		ecall
+		la t0,ambient_sound_counter
+		lb t1,0(t0)
+		beqz t1,DELAY_SOUNDF3 # se tiver na ultima nota, faz a pausa
+		la t0,ambient_sound_timer
+		gettime()
+		sw a0,0(t0)
 		j FIM_AMBIENT_SOUND
 	
 	DELAY_SOUNDF1: # faz o atraso de 300ms da primeira nota do som da fase1
@@ -350,9 +441,20 @@ AMBIENT_SOUND:
 		sw a0,0(t0)
 		j FIM_AMBIENT_SOUND
 		
-	RESET_ASCOUNTER:
+	DELAY_SOUNDF3: # faz o atraso de 300ms da primeira nota do som da fase1
+		la t0,ambient_sound_timer
+		gettime()
+		addi a0,a0,200
+		sw a0,0(t0)
+		j FIM_AMBIENT_SOUND
+		
+	RESET_ASCOUNTERF1:
 		addi t1,zero,-1
-		j CONT_ASCOUNTER
+		j CONT_ASCOUNTERF3
+		
+	RESET_ASCOUNTERF3:
+		addi t1,zero,-1
+		j CONT_ASCOUNTERF3
 		
 	FIM_AMBIENT_SOUND:
 		ret
@@ -374,32 +476,21 @@ GAME_VICTORY:
 	lb t1,0(t0) # carrega fase atual
 	li t0,1
 	beq t0,t1,INIT_FASE2
-	#li t0,2
-	#beq t0,t1,INIT_FASE3
+	li t0,2
+	beq t0,t1,INIT_FASE3
+	li t0,3
+	beq t0,t1,NEXT_LVL # se estava na fase 3, passa para o prox lvl e volta p/ fase 1
 	
-	
-	# se nenhuma das fases, apenas ganha
-	la t0,display
-	lw s0,0(t0)
-	li s2,DISPLAY1
-	li t0,76800 # 320 * 240 pixels, tamanho total da imagem
-	FORVICTORY: # tela preta
-		beqz t0,FIMFORVICTORY
-		sb zero,0(s0)
-		sb zero,0(s2)
-		addi s0,s0,1
-		addi s2,s2,1
-		addi t0,t0,-1
-		j FORVICTORY
-	FIMFORVICTORY:
-		la a0,victory_text
-		li a1,80
-		li a2,50
-		li a3,0x00ff
-		li a4,0
-		li a7,104
-		ecall
+	# se nenhum dos casos, apenas finaliza
 	j FIM
+	
+# Passa para o proximo lvl
+NEXT_LVL:
+	la t0,level
+	lb t1,0(t0)
+	addi t1,t1,1
+	sb t1,0(t0) # salva prox lvl
+	j INIT_FASE1 # volta p/ fase 1
 	
 # Imprime tela de carregando
 LOADING_SCR:

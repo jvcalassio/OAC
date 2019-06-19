@@ -10,6 +10,7 @@ var_lady: .word 0
 victory_text: .string "PARABENS VC VENCEU"
 gameover_text: .string "GAME OVER"
 loading_text: .string "CARREGANDO"
+level_text: .string "LV"
 blank: .string " " # lembrar de apagar
 up_text: .string "UP"
 highscore_text: .string "HIGHSCORE"
@@ -285,7 +286,7 @@ PRINT_TEXT_INITIAL:
 	la a0,up_text
 	li a1,40
 	li a2,5
-	li a3,0x00ff
+	li a3,0x0007
 	li a4,0
 	li a7,104
 	ecall # imprime "UP" no display 0
@@ -296,7 +297,7 @@ PRINT_TEXT_INITIAL:
 	la a0,highscore_text
 	li a1,190
 	li a2,5
-	li a3,0x00ff
+	li a3,0x0007
 	li a4,0
 	li a7,104
 	ecall # imprime "HIGHSCORE" no display 0
@@ -304,15 +305,26 @@ PRINT_TEXT_INITIAL:
 	li a4,1
 	ecall # imprime "HIGHSCORE" no display 1
 	
-	la t0,vidas
-	lb a0,0(t0)
-	li a1,30
+	la a0,level_text
+	li a1,274
 	li a2,5
-	li a3,0x00ff
+	li a3,0x00d9
+	li a4,0
+	li a7,104
+	ecall # imprime "LV" no display 0
+	la a0,level_text
+	li a4,1
+	ecall # imprime "LV" no display 1
+	
+	la t0,level
+	lb a0,0(t0)
+	li a1,294
+	li a2,5
+	li a3,0x00d9
 	li a4,0
 	li a7,101
 	ecall # imprime quantidade de vidas atualmente no display 0
-	la t0,vidas
+	la t0,level
 	lb a0,0(t0)
 	li a4,1
 	ecall # imprime quantidade de vidas no display 1
@@ -346,15 +358,36 @@ PRINT_TEXT:
 	
 	la t0,bonus
 	lw a0,0(t0)
-	li a1,265
+	li a1,274
 	li a2,30
-	li a3,0x00ff
 	la t0,display
 	lw a4,0(t0) # carrega display atual
 	andi a4,a4,0x20
 	srli a4,a4,5
 	li a7,101
+	la t0,fase
+	lb t1,0(t0) # carrega fase atual
+	li t0,3
+	beq t0,t1,PRINT_TEXT_BONUS3 # imprime bonus amarelo (fase3)
+	li a3,0x00f9
+	j FIM_PRINT_TEXT
+	PRINT_TEXT_BONUS3:
+	li a3,0x006f
+	FIM_PRINT_TEXT:
 	ecall  # imprime bonus
+	
+	la t0,vidas
+	lb a0,0(t0)
+	li a1,30
+	li a2,5
+	li a3,0x0007
+	li a4,0
+	li a7,101
+	ecall # imprime quantidade de vidas atualmente no display 0
+	la t0,vidas
+	lb a0,0(t0)
+	li a4,1
+	ecall # imprime quantidade de vidas no display 1
 	ret
 
 # Muda valores do highscore e bonus
@@ -370,9 +403,13 @@ HIGHSCORE_BONUS_MANAGEMENT:
 	la t0,bonus_time
 	lw t1,0(t0)
 	sub t2,a0,t1 # tempo atual - ultimo tempo de sub do highscore
-	li t1,3000 # 3 segundos
-	bge t2,t1,SUB_BONUS # se a dif de tempo >= 3s, subtrai o valor do bonus
+	li t1,2000 # 2 segundos
+	bge t2,t1,SUB_BONUS # se a dif de tempo >= 2s, subtrai o valor do bonus
 	
+	HBONUS_MANAG_CONT2:
+	la t0,given_extra_life
+	lb t1,0(t0)
+	beqz t1,CHECK_EXTRA_LIFE # se ainda nao deu vida extra, verifica se pode
 	j FIM_HBONUS_MANAGEMENT
 	
 	ADD_HIGHSCORE: # muda highscore caso score seja maior
@@ -390,9 +427,24 @@ HIGHSCORE_BONUS_MANAGEMENT:
 		lw t1,0(t0)
 		addi t1,t1,-100 # subtrai 100 do bonus
 		sw t1,0(t0) # grava novo bonus
-		bgez t1,FIM_HBONUS_MANAGEMENT # se bonus > 0, continua
+		bgez t1,HBONUS_MANAG_CONT2 # se bonus > 0, continua
 		# se bonus <= 0, mario morre
 		tail MARIO_DEATH
+		
+	CHECK_EXTRA_LIFE: # da a vida extra caso o score ultrapasse 20.000
+		la t0,score
+		lw t1,0(t0) # carrega score atual
+		li t0,20000
+		bge t1,t0,GIVE_EXTRA_LIFE # se score >= 20k, da a vida
+		j FIM_HBONUS_MANAGEMENT	  # do contrario, nao faz nada
+		GIVE_EXTRA_LIFE:
+			la t0,vidas
+			lb t1,0(t0)
+			addi t1,t1,1
+			sb t1,0(t0) # vida extra concedida
+			la t0,given_extra_life
+			addi t1,zero,1
+			sb t1,0(t0) # marca flag como concedida
 		
 	FIM_HBONUS_MANAGEMENT:
 		ret
@@ -405,10 +457,23 @@ INIT_BONUS:
 	sw a0,0(t0)
 	
 	# grava bonus inicial
-	la t0,bonus
-	li t1,STARTING_BONUS
-	sw t1,0(t0)
-	ret
+	# pega lvl para saber qual adicional
+	la t0,level
+	lb t1,0(t0)
+	li t0,4
+	bge t1,t0,STARTING_BONUS_8K # se lvl >= 4, recebe sempre 8000 de bonus inicial
+	addi t2,t1,-1 # -1 pra ajustar o bonus recebido por lvl
+	li t0,1000
+	mul t2,t2,t0 # x 1000
+	j CONT_STARTING_BONUS
+	STARTING_BONUS_8K:
+		li t2,3000
+	CONT_STARTING_BONUS:
+		la t0,bonus
+		li t1,STARTING_BONUS
+		add t1,t1,t2 # adiciona bonus por lvl
+		sw t1,0(t0)
+		ret
 
 # sons iniciais das fases
 INIT_SOUND:

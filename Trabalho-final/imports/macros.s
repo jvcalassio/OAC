@@ -47,12 +47,14 @@
 # Constantes de jogo
 #.eqv START_MARIO_X_FASE1 84
 #.eqv START_MARIO_Y_FASE1 199
-.eqv START_MARIO_X_FASE1 222
-.eqv START_MARIO_Y_FASE1 46
+.eqv START_MARIO_X_FASE1 222 # retirar
+.eqv START_MARIO_Y_FASE1 46 # retirar
 .eqv START_MARIO_X_FASE2 52
 .eqv START_MARIO_Y_FASE2 183
+.eqv START_MARIO_X_FASE3 92
+.eqv START_MARIO_Y_FASE3 199
 
-.eqv STARTING_BONUS 5000
+.eqv STARTING_BONUS 5100 # 100 adicionais por causa do tempo dos sons do comeco
 
 # Controlador USB
 .eqv USB_CTRL_ADDR 0xff200122

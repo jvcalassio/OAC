@@ -34,6 +34,8 @@ INIT_MARIO:
 	beq t0,t1,INIT_MARIO_F1 # se fase atual for fase 1, printa mario parado na fase 1
 	li t1,2
 	beq t0,t1,INIT_MARIO_F2 # se fase atual for fase 2, printa mario parado na fase 2
+	li t1,3
+	beq t0,t1,INIT_MARIO_F3 # se fase atual for fase 3, printa mario parado na fase 3
 	j FIM_INIT_MARIO
 	
 	INIT_MARIO_F1:
@@ -47,6 +49,13 @@ INIT_MARIO:
 		la t0,pos_mario
 		sw zero,0(t0) # zera pos mario
 		set_mario_move(START_MARIO_X_FASE2,START_MARIO_Y_FASE2,mario_parado)
+		call PRINT_OBJ # printa mario na posicao inicial, reseta pos mario
+		j FIM_INIT_MARIO
+		
+	INIT_MARIO_F3:
+		la t0,pos_mario
+		sw zero,0(t0) # zera pos mario
+		set_mario_move(START_MARIO_X_FASE3,START_MARIO_Y_FASE3,mario_parado)
 		call PRINT_OBJ # printa mario na posicao inicial, reseta pos mario
 		
 	FIM_INIT_MARIO:
@@ -109,6 +118,8 @@ MARIO_MAP_POS:
 	beq t0,t1,MMPOS_FASE1
 	li t1,2
 	beq t0,t1,MMPOS_FASE2
+	li t1,3
+	beq t0,t1,MMPOS_FASE1 ############################## LEMBRAR DE COLOCAR MAPA DA FASE 3 AQUI
 	j FIM_MMPOS
 	
 	MMPOS_FASE1:
@@ -868,7 +879,7 @@ MARIO_COLLISIONS:
 		addi a1,a1,16
 		la a2,fase_current # carrega endereco da fase atual
 		call GET_POSITION
-		lb t0,0(a0)
+		lb t0,0(a0) # t0 = pixel ao lado
 		li t2,0x46
 		bne t0,t2,VERIF_MV_DIR_DOWNDEG # se px ao lado nao for chao, verifica se tem descida
 		call MV_1PXUP # se px ao lado for chao, sobe 1px
@@ -1124,12 +1135,16 @@ MARIO_DEATH:
 		beq t0,t1,MARIO_DEATH_FASE1 # se tiver na fase 1, reseta na fase1
 		li t0,2
 		beq t0,t1,MARIO_DEATH_FASE2 # se tiver na fase 2, reseta na fase2
+		li t0,3
+		beq t0,t1,MARIO_DEATH_FASE3 # se tiver na fase 3, reseta na fase3
 		tail GAME_OVER
 		
 		MARIO_DEATH_FASE1:
 			tail INIT_FASE1
 		MARIO_DEATH_FASE2:
 			tail INIT_FASE2
+		MARIO_DEATH_FASE3:
+			tail INIT_FASE3
 	
 	
 	
