@@ -3,7 +3,7 @@
 .include "../sprites/bin/dk_2.s"
 .include "../sprites/bin/lady_p1.s"
 .include "../sprites/bin/lady_p2.s"
-var_dk: .word 0,0,0,0
+var_dk: .word 0
 var_lady: .word 0
 
 # strings de jogo
@@ -20,19 +20,12 @@ bonus_text: .string "BONUS"
 
 # Faz danca do Donkey Kong fase 1
 INIT_DK_DANCA:
-	
 	la	t4, var_dk
 	sw	zero, 0(t4)	#var_i = 0
-	li	t0, 50
-	sw	t0, 4(t4)	#var0 = 10000
-	li	t0, 100
-	sw	t0, 8(t4)	#var1 = 20000
-	li	t0, 150
-	sw	t0, 12(t4)	#var_2 = 30000
-	j DK_DANCA_FRAME0 # printa primeiro frame
 	ret
 
 DK_DANCA_LOOP:
+	save_stack(ra)
 	
 	la	t4, var_dk
 	lw	t0, 0(t4)	#i
@@ -40,132 +33,132 @@ DK_DANCA_LOOP:
 	
 	la	t4, var_dk
 	lw	t0, 0(t4)	#i
-	lw	t1, 4(t4)	#10000
-	beq	t0, t1, DK_DANCA_FRAME1	#i==10000? goto FRAME1
+	li	t1, 50		#50
+	beq	t0, t1, DK_DANCA_FRAME1	#i==50? goto FRAME1
 	
 	la	t4, var_dk
 	lw	t0, 0(t4)	#i
-	lw	t2, 8(t4)	#20000
-	beq	t0, t2, DK_DANCA_FRAME2	#i==20000? goto FRAME2
+	li	t1, 100		#100
+	beq	t0, t1, DK_DANCA_FRAME2	#i==100? goto FRAME2
 	
 	la	t4, var_dk
 	lw	t0, 0(t4)	#i
-	lw	t3, 12(t4)	#30000
-	bge	t0, t3, DK_DANCA_RESET	#i>=30000? goto RESETi
+	li	t1, 150		#150
+	bge	t0, t1, DK_DANCA_RESET	#i>=150? goto RESETi
 	
 	la	t4, var_dk
 	lw	t0, 0(t4)
 	addi 	t0, t0, 1	#i++
 	sw	t0, 0(t4)
 	
-	ret
+	j	FIM_DK_DANCA
 
 	DK_DANCA_RESET:
-
 		la	t4, var_dk
 		sw	zero, 0(t4)	#i=0
 		ret
 
 	DK_DANCA_FRAME0:
-		
-		li	a0, 62
-		li	a1, 28
+		#setar a posicao de x e y
+		jal	SET_POSDK
 		#li	a2, DISPLAY0
 		la 	a2, display
 		lw	a2, 0(a2) # display atual
 		la	a3, fase_current
 		la	a4, dk_1
-		save_stack(ra)
 		call	CLEAR_OBJPOS
-		free_stack(ra)
-		
-		li	a0, 62
-		li	a1, 28
+			
+		jal	 SET_POSDK
 		#li	a2, DISPLAY0
 		la 	a2, display
 		lw	a2, 0(a2) # display atual
 		la	a3, dk_1
-		save_stack(ra)
 		call 	PRINT_OBJ
-		free_stack(ra)
 		
 		la	t4, var_dk
 		lw	t0, 0(t4)
 		addi 	t0, t0, 1	#i++
 		sw	t0, 0(t4)
 
-		ret
+		j	FIM_DK_DANCA
 
 	DK_DANCA_FRAME1:
-
-		li	a0, 62
-		li	a1, 28
+		jal	SET_POSDK
 		#li	a2, DISPLAY0
 		la 	a2, display
 		lw	a2, 0(a2) # display atual
 		la	a3, fase_current
 		la	a4, dk_2
-		save_stack(ra)
 		call	CLEAR_OBJPOS
-		free_stack(ra)
 		
-		li	a0, 62
-		li	a1, 28
+		jal	SET_POSDK
 		#li	a2, DISPLAY0
 		la 	a2, display
 		lw	a2, 0(a2) # display atual
 		la	a3, dk_2
-		save_stack(ra)
 		call 	PRINT_OBJ
-		free_stack(ra)
 		
 		la	t4, var_dk
 		lw	t0, 0(t4)
 		addi 	t0, t0, 1	#i++
 		sw	t0, 0(t4)
 		
-		ret
+		j	FIM_DK_DANCA
 		
 	DK_DANCA_FRAME2:
-
-		li	a0, 62
-		li	a1, 28
+		jal	SET_POSDK
 		#li	a2, DISPLAY0
 		la 	a2, display
 		lw	a2, 0(a2) # display atual
 		la	a3, fase_current
 		la	a4, dk_1
-		save_stack(ra)
 		call	CLEAR_OBJPOS
-		free_stack(ra)
 		
-		li	a0, 62
-		li	a1, 28
+		jal	SET_POSDK
 		#li	a2, DISPLAY0
 		la 	a2, display
 		lw	a2, 0(a2) # display atual
 		la	a3, dk_1
-		save_stack(ra)
 		call 	PRINT_OBJ_MIRROR
-		free_stack(ra)
 		
 		la	t4, var_dk
 		lw	t0, 0(t4)
 		addi 	t0, t0, 1	#i++
 		sw	t0, 0(t4)
 		
+		j	FIM_DK_DANCA	
+	
+	FIM_DK_DANCA:
+		free_stack(ra)
 		ret
-
+		
+	SET_POSDK:
+		la	t0, fase
+		lb	t0, 0(t0)
+		li	t1, 1
+		beq	t0, t1, SET_POSDK0
+		li	t1, 2
+		beq	t0, t1, SET_POSDK0
+		li	t1, 3
+		beq	t0, t1, SET_POSDK1
+	
+	SET_POSDK0:
+		li	a0, 62
+		li	a1, 28
+		ret
+	SET_POSDK1:
+		li	a0, 138
+		li	a1, 28
+		ret
 # Faz danca da lady na fase 1
 INIT_LADY:
-	
 	la	t4, var_lady
 	sw	zero, 0(t4)
-	save_stack(ra)
-	j LADY_FRAME0 # printa primeiro frame da lady
+	ret
 	
 LADY_LOOP:
 	save_stack(ra)
+	
 	la	t4, var_lady
 	lw	t0, 0(t4)
 	beq	t0, zero, LADY_FRAME0
@@ -220,16 +213,14 @@ LADY_LOOP:
 	addi	t0, t0, 1
 	sw	t0, 0(t4)
 	
-	j FIM_LADY_LOOP
+	j	FIM_LADY
 	
 	LADY_RESET:
-		
 		la	t4, var_lady
 		sw	zero, 0(t4)
-		j FIM_LADY_LOOP
+		ret
 			
 	LADY_FRAME0:
-		
 		li	a0, 113
 		li	a1, 25
 		#li	a2, DISPLAY0
@@ -252,7 +243,7 @@ LADY_LOOP:
 		addi	t0, t0, 1
 		sw	t0, 0(t4)
 		
-		j FIM_LADY_LOOP
+		j	FIM_LADY
 		
 	LADY_FRAME1:
 		li	a0, 113
@@ -277,7 +268,9 @@ LADY_LOOP:
 		addi	t0, t0, 1
 		sw	t0, 0(t4)
 		
-	FIM_LADY_LOOP:
+		j	FIM_LADY
+	
+	FIM_LADY:
 		free_stack(ra)
 		ret
 

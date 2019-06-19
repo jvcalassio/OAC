@@ -874,6 +874,7 @@ MARIO_COLLISIONS:
 		andi t0,t0,0x08 # verifica bit de parede no mapa
 		or t0,t1,t0 # junta os dois bytes
 		bne t0,zero,MARIO_CL_DENY # se qlqr um deles der 1 no bit desejado, nao permite
+		lb t0,0(s0) # carrega byte do mapa
 		# verifica se tem degrau subindo
 		la t0,pos_mario
 		lh a0,0(t0) # carrega x

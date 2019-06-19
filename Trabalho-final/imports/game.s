@@ -53,7 +53,7 @@ INIT_GAME:
 	sw zero,0(t0)
 	
 	# Como o jogo comeca na fase 1, nao precisa passar por "init fase1", e consequentemente, carregar
-	#jal SET_FASE2
+	jal SET_FASE3  
 	jal PRINT_FASE
 	call PRINT_TEXT_INITIAL
 	call INIT_MARIO
@@ -168,8 +168,8 @@ SET_FASE2:
 		free_stack(ra)
 			
 	FIM_LOADFASE2:
-	la t0,fase
-	li t1,2
+	la t0,fase 
+	li t1,2 
 	sb t1,0(t0) # salva fase 2
 	la t0,ambient_sound_counter
 	sb zero,0(t0)
@@ -188,7 +188,7 @@ SET_FASE3:
 	# do contrario, carregar do endereco no RARS
 	la s1,fase_current # endereco do mapa geral
 	li t0,76800
-	#la t1,fase3
+	la t1,fase3
 	addi t1,t1,8 # pula as words que indicam o tamanho da imagem
 	FOR_LOADFASE3:
 		beqz t0,FIM_LOADFASE3
@@ -270,6 +270,9 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	lb t0,0(a0) # carrega byte de t0
 	andi t0,t0,0x80
 	bnez t0,GAME_VICTORY # verifica se esta na posicao de vitoria
+	lb t0,0(a0)
+	li t1,0x03
+	beq t0,t1,GOTO_MARIO_DEATH # se mario estiver em posicao de morte, morre
 	
 	jal CONTINUE_MOVEMENT
 	
@@ -564,6 +567,9 @@ CONTINUE_MOVEMENT:
 	FIM_CONTINUE_MOVEMENT:	
 		free_stack(ra)
 		ret
+ 
+GOTO_MARIO_DEATH:
+	tail MARIO_DEATH
 
 .include "common.s"
 .include "mario.s"
