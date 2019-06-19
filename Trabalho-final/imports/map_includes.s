@@ -1,9 +1,9 @@
 # Includes das fases (para ficar no final)
 .data
 # mapas (no RARS)
-.include "../sprites/bin/fase1.s"
-.include "../sprites/bin/fase2.s"
-.include "../sprites/bin/fase3.s"
+#.include "../sprites/bin/fase1.s"
+#.include "../sprites/bin/fase2.s"
+#.include "../sprites/bin/fase3.s"
 
 .text
 # Recebe mapa atraves do USB na DE1

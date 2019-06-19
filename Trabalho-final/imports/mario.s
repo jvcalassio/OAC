@@ -119,7 +119,7 @@ MARIO_MAP_POS:
 	li t1,2
 	beq t0,t1,MMPOS_FASE2
 	li t1,3
-	beq t0,t1,MMPOS_FASE1 ############################## LEMBRAR DE COLOCAR MAPA DA FASE 3 AQUI
+	beq t0,t1,MMPOS_FASE3 ############################## LEMBRAR DE COLOCAR MAPA DA FASE 3 AQUI
 	j FIM_MMPOS
 	
 	MMPOS_FASE1:
@@ -127,6 +127,9 @@ MARIO_MAP_POS:
 	j MMPOS_CONTINUE
 	MMPOS_FASE2:
 	la a1,fase2_obj
+	j MMPOS_CONTINUE
+	MMPOS_FASE3:
+	la a1,fase3_obj
 	MMPOS_CONTINUE:
 	li a0,80
 	mul a0,s0,a0 # (y * 80)

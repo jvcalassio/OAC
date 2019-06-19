@@ -7,6 +7,7 @@
 
 .include "fases/fase1_obj.s"
 .include "fases/fase2_obj.s"
+.include "fases/fase3_obj.s"
 
 .include "../sprites/bin/fase_current.s" # fase atual (inicialmente fase 1)
 # Variaveis de jogo
@@ -52,7 +53,7 @@ INIT_GAME:
 	sw zero,0(t0)
 	
 	# Como o jogo comeca na fase 1, nao precisa passar por "init fase1", e consequentemente, carregar
-	jal SET_FASE2
+	#jal SET_FASE2
 	jal PRINT_FASE
 	call PRINT_TEXT_INITIAL
 	call INIT_MARIO
@@ -111,7 +112,7 @@ SET_FASE1:
 	# do contrario, carregar do endereco no RARS
 	la s1,fase_current # endereco do mapa geral
 	li t0,76800
-	la t1,fase1
+	#la t1,fase1
 	addi t1,t1,8 # pula as words que indicam o tamanho da imagem
 	FOR_LOADFASE1:
 		beqz t0,FIM_LOADFASE1
@@ -149,7 +150,7 @@ SET_FASE2:
 	# do contrario, carregar do endereco no RARS
 	la s1,fase_current # endereco do mapa geral
 	li t0,76800
-	la t1,fase2
+	#la t1,fase2
 	addi t1,t1,8 # pula as words que indicam o tamanho da imagem
 	FOR_LOADFASE2:
 		beqz t0,FIM_LOADFASE2
@@ -187,7 +188,7 @@ SET_FASE3:
 	# do contrario, carregar do endereco no RARS
 	la s1,fase_current # endereco do mapa geral
 	li t0,76800
-	la t1,fase3
+	#la t1,fase3
 	addi t1,t1,8 # pula as words que indicam o tamanho da imagem
 	FOR_LOADFASE3:
 		beqz t0,FIM_LOADFASE3
@@ -476,7 +477,7 @@ GAME_VICTORY:
 	la t0,fase
 	lb t1,0(t0) # carrega fase atual
 	li t0,1
-	beq t0,t1,INIT_FASE2
+	beq t0,t1,INIT_FASE3
 	li t0,2
 	beq t0,t1,INIT_FASE3
 	li t0,3
