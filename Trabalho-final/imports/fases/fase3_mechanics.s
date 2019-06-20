@@ -15,111 +15,249 @@ F3_CHECK_BLOCK:
 	bne t0,t1,FIM_F3_CHECK_BLOCK # se nao for fase 3, nao faz nada
 	la t0,pos_mario
 	lh t1,2(t0) # Y do mario
-	li t2,190
+	li t2,185
 	bgt t1,t2,FIM_F3_CHECK_BLOCK # nivel terro, faz nada
 	li t2,150
 	bgt t1,t2,F3CB_LVL1 # se y <= 190 && y > 150, esta no primeiro nivel
-	#li t2,110
-	#bgt t1,t2,F3CB_LVL2 # se y <= 150 && y > 110, esta no segundo nivel
-	#li t2,70
-	#bgt t1,t2,F3CB_LVL3 # se y <= 110 && y > 70, esta no terceiro nivel
-	#bgtz t1,F3CB_LV4 # se y <= 70, esta no quarto nivel
+	li t2,110
+	bgt t1,t2,F3CB_LVL2 # se y <= 150 && y > 110, esta no segundo nivel
+	li t2,70
+	bgt t1,t2,F3CB_LVL3 # se y <= 110 && y > 70, esta no terceiro nivel
+	bgtz t1,F3CB_LVL4 # se y <= 70, esta no quarto nivel
 	j FIM_F3_CHECK_BLOCK # nenhum deles, apenas sai
 	
 	# Em cada nivel, verifica X para setar flag ou remover bloco
 	# col 1 = right 100, left 92
 	F3CB_LVL1:
-		la t0,fase3_passingthru
-		lb t1,0(t0) # verifica se esta passando por um degrau
-		beqz t1,F3_CHECK_HOTPOS_L1 # se nao estiver passando, procura setar um passando caso tenha
-		# se estiver passando, e for rtl ou ltr, procura onde fechar p/ finalizar e tirar bloco
-		li t0,1
-		beq t0,t1,F3_CHECKL1_RTL
-		li t0,2
-		beq t0,t1,F3_CHECKL1_LTR
+		la t0,pos_mario
+		lh t1,0(t0) # x do mario
+		# verifica primeira coluna
+		slti t0,t1,100 # primeira coluna final
+		slti t2,t1,84 # primeira coluna inicio
+		add t0,t0,t2 # t0 + t2
+		# se t0 == 1, esta no meio. se t0 == 0, esta depois. se t0 == 2, esta antes
+		li t2,1
+		beq t0,t2,F3_SET_PS
+		la t2,fase3_passingthru
+		lb t3,0(t2) # carrega passingthru
+		add t3,t3,t0 # soma com o resultado
+		li t2,3 # se resultado da soma for 3 (esta antes e passinthru = 1), remove bloco
+		beq t3,t2,BLOCK7_REMOVE
+		la t2,fase3_passingthru # verificar se passou p/ direita
+		lb t3,0(t2)
+		slti t2,t1,121
+		add t0,t0,t2 # se x >= 104 && x <= 120, t0 = 1
+		add t0,t0,t3 # + passingthru
+		li t2,2
+		beq t0,t2,BLOCK7_REMOVE
+		# verifica segunda coluna
+		slti t0,t1,220 # segunda coluna final
+		slti t2,t1,204 # segunda coluna inicio
+		add t0,t0,t2
+		li t2,1
+		beq t0,t2,F3_SET_PS
+		la t2,fase3_passingthru
+		lb t3,0(t2) # carrega passingthru
+		add t3,t3,t0 # soma com resultado
+		li t2,3 # se result for 3, esta antes e pt = 1, remove o bloco
+		beq t3,t2,BLOCK8_REMOVE
+		la t2,fase3_passingthru # verificar se passou p/ direita
+		lb t3,0(t2)
+		add t3,t3,t0 # passingthru + t0. se t3 = 1, entao mario esta depois do bloco
+		li t2,1
+		beq t3,t2,BLOCK8_REMOVE
 		j FIM_F3_CHECK_BLOCK
-		F3_CHECK_HOTPOS_L1:
-			la t0,pos_mario
-			lh t1,0(t0) # X do mario
-			slti t0,t1,100
-			slti t2,t1,110
-			add t0,t0,t2
-			li t2,1
-			beq t0,t2,F3_SET_RTL # 100 ao 110
-			slti t0,t1,86
-			slti t2,t1,92
-			add t0,t0,t2
-			li t2,1
-			beq t0,t2,F3_SET_LTR # 86 ao 92
-			slti t0,t1,220
-			slti t2,t1,230
-			add t0,t0,t2
-			li t2,1
-			beq t0,t2,F3_SET_RTL # 220 ao 230
-			slti t0,t1,206
-			slti t2,t1,212
-			add t0,t0,t2
-			li t2,1
-			beq t0,t2,F3_SET_LTR # 206 ao 212
-			# se nenhum, so sai
-			j FIM_F3_CHECK_BLOCK
-		# verifica posicao da direita p/ esquerda
-		F3_CHECKL1_RTL:
-			la t0,pos_mario
-			lh t1,0(t0) # x do mario
-			li t0,80
-			beq t0,t1,BLOCK7_REMOVE
-			#blt t1,t0,F3_RESET_PS
-			li t0,202
-			beq t0,t1,BLOCK8_REMOVE
-			slti t2,t1,111
-			slti t0,t1,202
-			add t0,t0,t2
-			li t2,1
-			beq t0,t2,F3_RESET_PS
-			j FIM_F3_CHECK_BLOCK
-		F3_CHECKL1_LTR:
-			la t0,pos_mario
-			lh t1,0(t0) # x do mario
-			li t0,100
-			beq t0,t1,BLOCK7_REMOVE
-			slti t0,t1,111
-			slti t2,t1,211
-			add t0,t0,t2
-			li t2,1
-			#bgt t1,t0,F3_RESET_PS
-			beq t2,t0,F3_RESET_PS
-			li t0,220
-			beq t0,t1,BLOCK8_REMOVE
-			j FIM_F3_CHECK_BLOCK
+		
+	F3CB_LVL2:
+		la t0,pos_mario
+		lh t1,0(t0) # x do mario
+		# verifica primeira coluna
+		slti t0,t1,100 # primeira coluna final
+		slti t2,t1,84 # primeira coluna inicio
+		add t0,t0,t2 # t0 + t2
+		# se t0 == 1, esta no meio. se t0 == 0, esta depois. se t0 == 2, esta antes
+		li t2,1
+		beq t0,t2,F3_SET_PS
+		la t2,fase3_passingthru
+		lb t3,0(t2) # carrega passingthru
+		add t3,t3,t0 # soma com o resultado
+		li t2,3 # se resultado da soma for 3 (esta antes e passinthru = 1), remove bloco
+		beq t3,t2,BLOCK5_REMOVE
+		la t2,fase3_passingthru # verificar se passou p/ direita
+		lb t3,0(t2)
+		slti t2,t1,121
+		add t0,t0,t2 # se x >= 104 && x <= 120, t0 = 1
+		add t0,t0,t3 # + passingthru
+		li t2,2
+		beq t0,t2,BLOCK5_REMOVE
+		# verifica segunda coluna
+		slti t0,t1,220 # segunda coluna final
+		slti t2,t1,204 # segunda coluna inicio
+		add t0,t0,t2
+		li t2,1
+		beq t0,t2,F3_SET_PS
+		la t2,fase3_passingthru
+		lb t3,0(t2) # carrega passingthru
+		add t3,t3,t0 # soma com resultado
+		li t2,3 # se result for 3, esta antes e pt = 1, remove o bloco
+		beq t3,t2,BLOCK6_REMOVE
+		la t2,fase3_passingthru # verificar se passou p/ direita
+		lb t3,0(t2)
+		add t3,t3,t0 # passingthru + t0. se t3 = 1, entao mario esta depois do bloco
+		li t2,1
+		beq t3,t2,BLOCK6_REMOVE
+		j FIM_F3_CHECK_BLOCK
+		
+	F3CB_LVL3:
+		la t0,pos_mario
+		lh t1,0(t0) # x do mario
+		# verifica primeira coluna
+		slti t0,t1,100 # primeira coluna final
+		slti t2,t1,84 # primeira coluna inicio
+		add t0,t0,t2 # t0 + t2
+		# se t0 == 1, esta no meio. se t0 == 0, esta depois. se t0 == 2, esta antes
+		li t2,1
+		beq t0,t2,F3_SET_PS
+		la t2,fase3_passingthru
+		lb t3,0(t2) # carrega passingthru
+		add t3,t3,t0 # soma com o resultado
+		li t2,3 # se resultado da soma for 3 (esta antes e passinthru = 1), remove bloco
+		beq t3,t2,BLOCK3_REMOVE
+		la t2,fase3_passingthru # verificar se passou p/ direita
+		lb t3,0(t2)
+		slti t2,t1,121
+		add t0,t0,t2 # se x >= 104 && x <= 120, t0 = 1
+		add t0,t0,t3 # + passingthru
+		li t2,2
+		beq t0,t2,BLOCK3_REMOVE
+		# verifica segunda coluna
+		slti t0,t1,220 # segunda coluna final
+		slti t2,t1,204 # segunda coluna inicio
+		add t0,t0,t2
+		li t2,1
+		beq t0,t2,F3_SET_PS
+		la t2,fase3_passingthru
+		lb t3,0(t2) # carrega passingthru
+		add t3,t3,t0 # soma com resultado
+		li t2,3 # se result for 3, esta antes e pt = 1, remove o bloco
+		beq t3,t2,BLOCK4_REMOVE
+		la t2,fase3_passingthru # verificar se passou p/ direita
+		lb t3,0(t2)
+		add t3,t3,t0 # passingthru + t0. se t3 = 1, entao mario esta depois do bloco
+		li t2,1
+		beq t3,t2,BLOCK4_REMOVE
+		j FIM_F3_CHECK_BLOCK
+		
+	F3CB_LVL4:
+		la t0,pos_mario
+		lh t1,0(t0) # x do mario
+		# verifica primeira coluna
+		slti t0,t1,100 # primeira coluna final
+		slti t2,t1,84 # primeira coluna inicio
+		add t0,t0,t2 # t0 + t2
+		# se t0 == 1, esta no meio. se t0 == 0, esta depois. se t0 == 2, esta antes
+		li t2,1
+		beq t0,t2,F3_SET_PS
+		la t2,fase3_passingthru
+		lb t3,0(t2) # carrega passingthru
+		add t3,t3,t0 # soma com o resultado
+		li t2,3 # se resultado da soma for 3 (esta antes e passinthru = 1), remove bloco
+		beq t3,t2,BLOCK1_REMOVE
+		la t2,fase3_passingthru # verificar se passou p/ direita
+		lb t3,0(t2)
+		slti t2,t1,121
+		add t0,t0,t2 # se x >= 104 && x <= 120, t0 = 1
+		add t0,t0,t3 # + passingthru
+		li t2,2
+		beq t0,t2,BLOCK1_REMOVE
+		# verifica segunda coluna
+		slti t0,t1,220 # segunda coluna final
+		slti t2,t1,204 # segunda coluna inicio
+		add t0,t0,t2
+		li t2,1
+		beq t0,t2,F3_SET_PS
+		la t2,fase3_passingthru
+		lb t3,0(t2) # carrega passingthru
+		add t3,t3,t0 # soma com resultado
+		li t2,3 # se result for 3, esta antes e pt = 1, remove o bloco
+		beq t3,t2,BLOCK2_REMOVE
+		la t2,fase3_passingthru # verificar se passou p/ direita
+		lb t3,0(t2)
+		add t3,t3,t0 # passingthru + t0. se t3 = 1, entao mario esta depois do bloco
+		li t2,1
+		beq t3,t2,BLOCK2_REMOVE
+		j FIM_F3_CHECK_BLOCK
 			
+	BLOCK1_REMOVE:
+		la t0,fase3_passingthru
+		sb zero,0(t0)
+		mv a0,zero
+		jal VERIF_GIVEN_BLOCK
+		jal F3_CLEAR_BLOCK
+		j FIM_F3_CHECK_BLOCK
+		
+	BLOCK2_REMOVE:
+		la t0,fase3_passingthru
+		sb zero,0(t0)
+		li a0,1
+		jal VERIF_GIVEN_BLOCK
+		jal F3_CLEAR_BLOCK
+		j FIM_F3_CHECK_BLOCK
+		
+	BLOCK3_REMOVE:
+		la t0,fase3_passingthru
+		sb zero,0(t0)
+		li a0,2
+		jal VERIF_GIVEN_BLOCK
+		jal F3_CLEAR_BLOCK
+		j FIM_F3_CHECK_BLOCK
+		
+	BLOCK4_REMOVE:
+		la t0,fase3_passingthru
+		sb zero,0(t0)
+		li a0,3
+		jal VERIF_GIVEN_BLOCK
+		jal F3_CLEAR_BLOCK
+		j FIM_F3_CHECK_BLOCK
+		
+	BLOCK5_REMOVE:
+		la t0,fase3_passingthru
+		sb zero,0(t0)
+		li a0,4
+		jal VERIF_GIVEN_BLOCK
+		jal F3_CLEAR_BLOCK
+		j FIM_F3_CHECK_BLOCK
+		
+	BLOCK6_REMOVE:
+		la t0,fase3_passingthru
+		sb zero,0(t0)
+		li a0,5
+		jal VERIF_GIVEN_BLOCK
+		jal F3_CLEAR_BLOCK
+		j FIM_F3_CHECK_BLOCK
 		
 	BLOCK7_REMOVE:
+		la t0,fase3_passingthru
+		sb zero,0(t0)
 		li a0,6
 		jal VERIF_GIVEN_BLOCK
 		jal F3_CLEAR_BLOCK
-		la t0,fase3_passingthru
-		sb zero,0(t0)
 		j FIM_F3_CHECK_BLOCK
 		
 	BLOCK8_REMOVE:
+		la t0,fase3_passingthru
+		sb zero,0(t0)
 		li a0,7
 		jal VERIF_GIVEN_BLOCK
 		jal F3_CLEAR_BLOCK
-		la t0,fase3_passingthru
-		sb zero,0(t0)
 		j FIM_F3_CHECK_BLOCK
 		
-	# seta right to left
-	F3_SET_RTL:
+	# seta passingthru
+	F3_SET_PS:
 		la t0,fase3_passingthru
+		lb t1,0(t0)
+		bnez t1,FIM_F3_CHECK_BLOCK
 		li t1,1
-		sb t1,0(t0)
-		j FIM_F3_CHECK_BLOCK
-	# seta left to right
-	F3_SET_LTR:
-		la t0,fase3_passingthru
-		li t1,2
 		sb t1,0(t0)
 		j FIM_F3_CHECK_BLOCK
 	# reseta passingthru
@@ -163,21 +301,41 @@ F3_CHECK_BLOCK:
 F3_ADD_BLOCKS:
 	save_stack(ra)
 	# primeira coluna
+	la t0,fase3_obj
+	li t1,3707
+	add t0,t0,t1 # soma posicao do bloco
+	li t1,0x01
+	sb t1,0(t0) # salva chao no map
 	li a0,96
 	li a1,184
 	la a2,fase_current
 	la a3,fase3_golden_block
 	call PRINT_OBJ
+	la t0,fase3_obj
+	li t1,2907
+	add t0,t0,t1 # soma posicao do bloco
+	li t1,0x01
+	sb t1,0(t0) # salva chao no map
 	li a0,96
 	li a1,144
 	la a2,fase_current
 	la a3,fase3_golden_block
 	call PRINT_OBJ
+	la t0,fase3_obj
+	li t1,2107
+	add t0,t0,t1 # soma posicao do bloco
+	li t1,0x01
+	sb t1,0(t0) # salva chao no map
 	li a0,96
 	li a1,104
 	la a2,fase_current
 	la a3,fase3_golden_block
 	call PRINT_OBJ
+	la t0,fase3_obj
+	li t1,1307
+	add t0,t0,t1 # soma posicao do bloco
+	li t1,0x01
+	sb t1,0(t0) # salva chao no map
 	li a0,96
 	li a1,64
 	la a2,fase_current
@@ -185,21 +343,41 @@ F3_ADD_BLOCKS:
 	call PRINT_OBJ
 	
 	# segunda coluna
+	la t0,fase3_obj
+	li t1,3736
+	add t0,t0,t1 # soma posicao do bloco
+	li t1,0x01
+	sb t1,0(t0) # salva chao no map
 	li a0,216
 	li a1,184
 	la a2,fase_current
 	la a3,fase3_golden_block
 	call PRINT_OBJ
+	la t0,fase3_obj
+	li t1,2936
+	add t0,t0,t1 # soma posicao do bloco
+	li t1,0x01
+	sb t1,0(t0) # salva chao no map
 	li a0,216
 	li a1,144
 	la a2,fase_current
 	la a3,fase3_golden_block
 	call PRINT_OBJ
+	la t0,fase3_obj
+	li t1,2136
+	add t0,t0,t1 # soma posicao do bloco
+	li t1,0x01
+	sb t1,0(t0) # salva chao no map
 	li a0,216
 	li a1,104
 	la a2,fase_current
 	la a3,fase3_golden_block
 	call PRINT_OBJ
+	la t0,fase3_obj
+	li t1,1336
+	add t0,t0,t1 # soma posicao do bloco
+	li t1,0x01
+	sb t1,0(t0) # salva chao no map
 	li a0,216
 	li a1,64
 	la a2,fase_current
@@ -208,6 +386,8 @@ F3_ADD_BLOCKS:
 	
 	la t0,fase3_given_blocks
 	sb zero,0(t0) # reseta contador de golden blocks
+	la t0,fase3_passingthru
+	sb zero,0(t0) # reseta ps
 	free_stack(ra)
 	ret
 # Remove um bloco dourado da fase 3
@@ -244,6 +424,11 @@ F3_CLEAR_BLOCK:
 		la a2,fase_current
 		la a3,fase3_black_block
 		call PRINT_OBJ # limpa no sprite da fase, caso o mario passe por cima
+		la t0,fase3_obj
+		li t1,1307
+		add t0,t0,t1 # soma posicao do bloco
+		li t1,0x02
+		sb t1,0(t0) # salva chao no map
 		j FIM_F3_CLEAR_BLOCK
 	
 	F3_CLEAR_BLOCK_2:
@@ -258,6 +443,11 @@ F3_CLEAR_BLOCK:
 		la a2,fase_current
 		la a3,fase3_black_block
 		call PRINT_OBJ # limpa no sprite da fase, caso o mario passe por cima
+		la t0,fase3_obj
+		li t1,1336
+		add t0,t0,t1 # soma posicao do bloco
+		li t1,0x02
+		sb t1,0(t0) # salva chao no map
 		j FIM_F3_CLEAR_BLOCK
 		
 	F3_CLEAR_BLOCK_3:
@@ -272,6 +462,11 @@ F3_CLEAR_BLOCK:
 		la a2,fase_current
 		la a3,fase3_black_block
 		call PRINT_OBJ # limpa no sprite da fase, caso o mario passe por cima
+		la t0,fase3_obj
+		li t1,2107
+		add t0,t0,t1 # soma posicao do bloco
+		li t1,0x02
+		sb t1,0(t0) # salva chao no map
 		j FIM_F3_CLEAR_BLOCK
 		
 	F3_CLEAR_BLOCK_4:
@@ -286,6 +481,11 @@ F3_CLEAR_BLOCK:
 		la a2,fase_current
 		la a3,fase3_black_block
 		call PRINT_OBJ # limpa no sprite da fase, caso o mario passe por cima
+		la t0,fase3_obj
+		li t1,2136
+		add t0,t0,t1 # soma posicao do bloco
+		li t1,0x02
+		sb t1,0(t0) # salva gravity no map
 		j FIM_F3_CLEAR_BLOCK
 		
 	F3_CLEAR_BLOCK_5:
@@ -300,6 +500,11 @@ F3_CLEAR_BLOCK:
 		la a2,fase_current
 		la a3,fase3_black_block
 		call PRINT_OBJ # limpa no sprite da fase, caso o mario passe por cima
+		la t0,fase3_obj
+		li t1,2907
+		add t0,t0,t1 # soma posicao do bloco
+		li t1,0x02
+		sb t1,0(t0) # salva chao no map
 		j FIM_F3_CLEAR_BLOCK
 		
 	F3_CLEAR_BLOCK_6:
@@ -314,6 +519,11 @@ F3_CLEAR_BLOCK:
 		la a2,fase_current
 		la a3,fase3_black_block
 		call PRINT_OBJ # limpa no sprite da fase, caso o mario passe por cima
+		la t0,fase3_obj
+		li t1,2936
+		add t0,t0,t1 # soma posicao do bloco
+		li t1,0x02
+		sb t1,0(t0) # salva gravity no map
 		j FIM_F3_CLEAR_BLOCK
 		
 	F3_CLEAR_BLOCK_7:
@@ -328,6 +538,11 @@ F3_CLEAR_BLOCK:
 		la a2,fase_current
 		la a3,fase3_black_block
 		call PRINT_OBJ # limpa no sprite da fase, caso o mario passe por cima
+		la t0,fase3_obj
+		li t1,3707
+		add t0,t0,t1 # soma posicao do bloco
+		li t1,0x02
+		sb t1,0(t0) # salva como gravity no map
 		j FIM_F3_CLEAR_BLOCK
 		
 	F3_CLEAR_BLOCK_8:
@@ -342,6 +557,11 @@ F3_CLEAR_BLOCK:
 		la a2,fase_current
 		la a3,fase3_black_block
 		call PRINT_OBJ # limpa no sprite da fase, caso o mario passe por cima
+		la t0,fase3_obj
+		li t1,3736
+		add t0,t0,t1 # soma posicao do bloco
+		li t1,0x02
+		sb t1,0(t0) # salva gravity no map
 	
 	FIM_F3_CLEAR_BLOCK:
 		free_stack(ra)

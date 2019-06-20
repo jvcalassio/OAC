@@ -884,9 +884,11 @@ MARIO_COLLISIONS:
 		la a2,fase_current # carrega endereco da fase atual
 		call GET_POSITION
 		lb t0,0(a0) # t0 = pixel ao lado
+		li t2,128
+		beq t0,t2,MVDIR_PXUP # se for piso azul
 		li t2,0x46
 		bne t0,t2,VERIF_MV_DIR_DOWNDEG # se px ao lado nao for chao, verifica se tem descida
-		call MV_1PXUP # se px ao lado for chao, sobe 1px
+		MVDIR_PXUP: call MV_1PXUP # se px ao lado for chao, sobe 1px
 		j MARIO_CL_ALLOW
 		# verifica se tem degrau descendo
 		VERIF_MV_DIR_DOWNDEG: 
@@ -924,9 +926,11 @@ MARIO_COLLISIONS:
 		la a2,fase_current # carrega endereco da fase atual
 		call GET_POSITION
 		lb t0,0(a0)
+		li t2,128
+		beq t0,t2,MVESQ_PXUP # se for piso azul
 		li t2,0x46
 		bne t0,t2,VERIF_MV_ESQ_DOWNDEG # se px ao lado nao for chao, verifica se tem descida
-		call MV_1PXUP # se px ao lado for chao, sobe 1px
+		MVESQ_PXUP: call MV_1PXUP # se px ao lado for chao, sobe 1px
 		j MARIO_CL_ALLOW
 		# verifica se tem degrau descendo
 		VERIF_MV_ESQ_DOWNDEG:
