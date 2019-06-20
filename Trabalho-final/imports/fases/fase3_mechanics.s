@@ -2,6 +2,8 @@
 .include "../../sprites/bin/fase3_golden_block.s"
 .include "../../sprites/bin/fase3_blue_block.s"
 .include "../../sprites/bin/coracao.s"
+.include "../../sprites/bin/dk_5.s"
+.include "../../sprites/bin/dk_6.s"
 fase3_given_blocks: .byte 0 # blocos removidos
 fase3_black_block: .word 8, 7 # bloco preto
 	     .byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,199
@@ -656,7 +658,8 @@ F3_WIN_ANIM:
 			sleep(200)
 		# fazer o dk caindo
 		FOR_LOOP_DK_CAINDO:
-			
+	############################################
+	# DK CAINDO AQUI
 	############################################
 	
 	# Imprimir piso do lv4 completo
@@ -701,8 +704,33 @@ F3_WIN_ANIM:
 		
 	# Tocar som de vitoria aqui tananannananan anananana nanananan
 	# Fazer animacao dos pes do dk mexendo aqui
+	# fazer o dk brabo
+	li s0,13 # qtd de transicoes
+	li s1,138 # x do dk
+	li s2,156 # y do dk
+	LOOP_DK_BRABO2_ANIM: # faz o dk balancando os bracos
+		beqz s0,FIM_LOOP_DK_BRABO2_ANIM
+		mv a0,s1
+		mv a1,s2
+		la a2,display
+		lw a2,0(a2) # display atual
+		li t0,2
+		remu t0,s0,t0 # t0 = s0 mod 2
+		beqz t0,DKBRABO2_2 # se i par, printa dk6. se i impar, printa dk5
+		DKBRABO2_1:
+		la a3,dk_5
+		j CONT_DK_BRABO2
+		DKBRABO2_2:
+		la a3,dk_6 
+		CONT_DK_BRABO2: 
+		call PRINT_OBJ
+		sleep(200)
+		addi s0,s0,-1
+		j LOOP_DK_BRABO2_ANIM
+	
+	FIM_LOOP_DK_BRABO2_ANIM:
+		sleep(200)
 	
 	FIM_F3_WIN_ANIM: # animacao finalizada, sleep (temporario) e retorna
 		free_stack(ra)
-		sleep(8000)
 		ret
