@@ -411,17 +411,13 @@ MOVE_MARIO_CIMA:
 		set_mario_move(0,-2,mario_escada_p1)
 		call PRINT_OBJ # printa sprite de subindo
 		
-		li a0,30
-		li a7,32
-		ecall # sleep de 40ms
+		sleep(30)
 		
 		rmv_mario(mario_escada_p1)
 		set_mario_move(0,-2,mario_escada_p2)
 		call PRINT_OBJ
 		
-		li a0,30
-		li a7,32
-		ecall # sleep de mais 40ms
+		sleep(30)
 		
 		rmv_mario(mario_escada_p2)
 		set_mario_move(0,-4,mario_costas)
@@ -479,17 +475,13 @@ MOVE_MARIO_BAIXO:
 		set_mario_move(0,2,mario_escada_p1)
 		call PRINT_OBJ # printa sprite de subindo
 		
-		li a0,30
-		li a7,32
-		ecall # sleep de 30ms
+		sleep(30)
 		
 		rmv_mario(mario_escada_p1)
 		set_mario_move(0,2,mario_escada_p2)
 		call PRINT_OBJ
 		
-		li a0,30
-		li a7,32
-		ecall # sleep de mais 30ms
+		sleep(30)
 		
 		rmv_mario(mario_escada_p2)
 		set_mario_move(0,4,mario_escada)
@@ -1045,9 +1037,7 @@ MARIO_GRAVITY:
 	PRINT_FALL_MARIO_GRAVITY:
 		set_mario_move(0,4,mario_andando_p2)
 		call PRINT_OBJ # printa mario posicao abaixo
-		li a0,20
-		li a7,32
-		#ecall # sleep 20ms queda
+		sleep(20) # questionavel, avaliar desempenho
 	
 	FIM_MARIO_GRAVITY:
 		free_stack(s0)
@@ -1099,9 +1089,7 @@ MARIO_DEATH:
 	la a0,mario_morto
 	jal MARIO_DEATH_ANIM
 	call PRINT_OBJ # printa mario no chao
-	addi a0,zero,200
-	li a7,32
-	ecall # sleep do tempo de duracao
+	sleep(200)
 	# fim da animacao
 	addi a0,zero,13
 	jal MARIO_DEATH_SOUND
@@ -1161,9 +1149,7 @@ MARIO_DEATH:
 MARIO_DEATH_ANIM:
 	save_stack(ra)
 	mv s0,a0
-	li a0,300 # sleep de 300ms
-	li a7,32
-	ecall
+	sleep(300)
 	
 	rmv_mario(mario_morrendo_y)
 	la t0,pos_mario

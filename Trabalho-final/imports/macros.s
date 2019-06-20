@@ -36,6 +36,12 @@
 	ecall
 .end_macro
 
+.macro sleep(%tempo)
+	li a0,%tempo
+	li a7,32
+	ecall
+.end_macro
+
 # Enderecos
 .eqv DISPLAY0 0xff000000
 .eqv DISPLAY1 0xff100000

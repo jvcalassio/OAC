@@ -1,5 +1,7 @@
 .data
 .include "../../sprites/bin/fase3_golden_block.s"
+.include "../../sprites/bin/fase3_blue_block.s"
+.include "../../sprites/bin/coracao.s"
 fase3_given_blocks: .byte 0 # blocos removidos
 fase3_black_block: .word 8, 7 # bloco preto
 	     .byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,199
@@ -565,4 +567,142 @@ F3_CLEAR_BLOCK:
 	
 	FIM_F3_CLEAR_BLOCK:
 		free_stack(ra)
+		ret
+
+# Faz a animacao de vitoria na fase 3.
+F3_WIN_ANIM:
+	# fazer bloco preto iniciando em (100,30) de 120 de largura e 185 de altura
+	save_stack(ra)
+	li a0,96
+	li a1,0
+	la t0,display
+	lw a2,0(t0) # carrega display atual
+	call GET_POSITION
+	li s0,128 # largura
+	li s1,215 # altura
+	FOR_F3_WINANIM_BLACK_BLOCK:
+		beqz s0,FIMF1_F3_WINANIM_BLACK_BLOCK
+		sb zero,0(a0) # pixel preto na posicao
+		addi s0,s0,-1
+		addi a0,a0,1
+		j FOR_F3_WINANIM_BLACK_BLOCK
+		FIMF1_F3_WINANIM_BLACK_BLOCK:
+			beqz s1,FIMF2_F3_WINANIM_BLACK_BLOCK
+			addi a0,a0,192
+			li s0,128
+			addi s1,s1,-1
+			j FOR_F3_WINANIM_BLACK_BLOCK
+			
+	FIMF2_F3_WINANIM_BLACK_BLOCK:
+		# imprime o chao azul onde o dk cai
+		li s0,14 # 14 blocos
+		li s1,104 # x inicial = 104
+		li s2,208 # y inicial = 209
+		li s3,2 # (qtd-1) de fileiras de blue blocks
+		FOR_PRINT_BLUE_BLOCK1:
+			beqz s0,FOR_PRINT_BLUE_BLOCK2
+			mv a0,s1
+			mv a1,s2
+			la a2,display
+			lw a2,0(a2) # display atual
+			la a3,fase3_blue_block
+			call PRINT_OBJ
+			addi s1,s1,8 # posicao pro prox bloco
+			addi s0,s0,-1
+			j FOR_PRINT_BLUE_BLOCK1
+			FOR_PRINT_BLUE_BLOCK2: # printou a fileira? print a proxima
+				beqz s3,DK_FALLING_ANIM
+				li s0,14
+				li s1,104
+				addi s2,s2,-8
+				addi s3,s3,-1
+				j FOR_PRINT_BLUE_BLOCK1
+	
+	# Apos fundo preto e printar chaos, fazer animacao do DK
+	DK_FALLING_ANIM:
+		# fazer o dk brabo
+		li s0,8 # qtd de transicoes
+		li s1,138 # x do dk
+		li s2,26 # y do dk
+		LOOP_DK_BRABO_ANIM: # faz o dk balancando os bracos
+			beqz s0,FIM_LOOP_DK_BRABO_ANIM
+			mv a0,s1
+			mv a1,s2
+			la a2,display
+			lw a2,0(a2) # display atual
+			la a3,dk_1
+			li t0,2
+			remu t0,s0,t0 # t0 = s0 mod 2
+			beqz t0,DKBRABO_2 # se i par, printa normal. se i impar, printa espelhado
+			DKBRABO_1:
+			call PRINT_OBJ_MIRROR
+			j CONT_DK_BRABO
+			DKBRABO_2:
+			call PRINT_OBJ
+			CONT_DK_BRABO:
+			sleep(200)
+			mv a0,s1
+			mv a1,s2
+			la t0,display
+			lw a2,0(t0) # display atual
+			#lw a3,0(t0) # printar preto
+			la a3,fase_current
+			la a4,dk_1
+			call CLEAR_OBJPOS # remove dk anterior
+			addi s0,s0,-1
+			j LOOP_DK_BRABO_ANIM
+		
+		FIM_LOOP_DK_BRABO_ANIM:
+			sleep(200)
+		# fazer o dk caindo
+		FOR_LOOP_DK_CAINDO:
+			
+	############################################
+	
+	# Imprimir piso do lv4 completo
+	li s0,16 # 16 blocos
+	li s1,96 # x inicial
+	li s2,64 # y inicial
+	FOR_PRINT_BLUE_BLOCK3:
+		beqz s0,FIM_FOR_PRINT_BLUE_BLOCK3
+		mv a0,s1
+		mv a1,s2
+		la a2,display
+		lw a2,0(a2) # display atual
+		la a3,fase3_blue_block
+		call PRINT_OBJ
+		addi s1,s1,8 # posicao pro prox bloco
+		addi s0,s0,-1
+		j FOR_PRINT_BLUE_BLOCK3
+		
+	# Apos piso impresso, imprimir mario e lady com coracao
+	FIM_FOR_PRINT_BLUE_BLOCK3:
+		# imprime lady
+		li a0,112 # x
+		li a1,41 # y
+		la a2,display
+		lw a2,0(a2) # display atual
+		la a3,lady_p2
+		call PRINT_OBJ
+		# imprime mario
+		li a0,192
+		li a1,47
+		la a2,display
+		lw a2,0(a2) # display atual
+		la a3,mario_parado
+		call PRINT_OBJ_MIRROR
+		# imprime coracao
+		li a0,153
+		li a1,39
+		la a2,display
+		lw a2,0(a2) # display atual
+		la a3,coracao
+		call PRINT_OBJ
+		
+	# Tocar som de vitoria aqui tananannananan anananana nanananan
+	# Fazer animacao dos pes do dk mexendo aqui
+	
+	FIM_F3_WIN_ANIM: # animacao finalizada, sleep (temporario) e retorna
+		free_stack(ra)
+		sleep(8000)
 		ret

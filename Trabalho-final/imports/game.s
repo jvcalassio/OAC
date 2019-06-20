@@ -323,6 +323,9 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		li t0,113 # Q = pulo esq
 		beq a0,t0,BCALL_MV_MARIO_PULO_ESQ
 		
+		li t0,'n' # N = prox fase (hack)
+		beq a0,t0,GAME_VICTORY 
+		
 	MAINLOOP_RET:
 		call DK_DANCA_LOOP
 		call LADY_LOOP
@@ -493,8 +496,13 @@ CHECK_VICTORY:
 # Imprime tela de vitoria (temporaria)
 # Passa para proxima fase
 GAME_VICTORY:
+	la t0,fase
+	lb t1,0(t0)
+	li t0,3
+	beq t0,t1,GAME_VICTORY_SKIPSOUND
 	# toca som de vitoria
 	call SOUND_CLEARSTAGE
+	GAME_VICTORY_SKIPSOUND:
 	# Adiciona bonus ao score
 	la t0,bonus
 	lw t1,0(t0) # carrega bonus atual
@@ -517,6 +525,8 @@ GAME_VICTORY:
 	
 # Passa para o proximo lvl
 NEXT_LVL:
+	# Como so passa de lvl apos a animacao da fase 3, chama ela aqui
+	call F3_WIN_ANIM
 	la t0,level
 	lb t1,0(t0)
 	addi t1,t1,1
