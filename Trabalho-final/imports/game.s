@@ -53,7 +53,8 @@ INIT_GAME:
 	sw zero,0(t0)
 	
 	# Como o jogo comeca na fase 1, nao precisa passar por "init fase1", e consequentemente, carregar
-	jal SET_FASE3  
+	jal SET_FASE3
+	call F3_ADD_BLOCKS
 	jal PRINT_FASE
 	call PRINT_TEXT_INITIAL
 	call INIT_MARIO
@@ -93,6 +94,7 @@ INIT_FASE2:
 INIT_FASE3:
 	jal LOADING_SCR
 	jal SET_FASE3
+	call F3_ADD_BLOCKS
 	jal PRINT_FASE
 	call PRINT_TEXT_INITIAL
 	call INIT_MARIO
@@ -112,7 +114,7 @@ SET_FASE1:
 	# do contrario, carregar do endereco no RARS
 	la s1,fase_current # endereco do mapa geral
 	li t0,76800
-	#la t1,fase1
+	la t1,fase1
 	addi t1,t1,8 # pula as words que indicam o tamanho da imagem
 	FOR_LOADFASE1:
 		beqz t0,FIM_LOADFASE1
@@ -134,11 +136,11 @@ SET_FASE1:
 	li t1,1
 	sb t1,0(t0) # salva fase atual como 1
 	la t0,ambient_sound_counter
-	sb zero,0(t0)
+	sb zero,0(t0) # reseta contador do som
 	la t0,ambient_sound_timer
-	sw zero,0(t0)
+	sw zero,0(t0) # reseta timer do som
 	RET_LOADFASE1:
-	ret
+		ret
 		
 # Imprime fase 2 no fase current, e salva no indicador de fase atual
 SET_FASE2:
@@ -170,11 +172,11 @@ SET_FASE2:
 	FIM_LOADFASE2:
 	la t0,fase 
 	li t1,2 
-	sb t1,0(t0) # salva fase 2
+	sb t1,0(t0) # salva fase atual como 2
 	la t0,ambient_sound_counter
-	sb zero,0(t0)
+	sb zero,0(t0) # reseta contador do som
 	la t0,ambient_sound_timer
-	sw zero,0(t0)
+	sw zero,0(t0) # reseta timer do som
 	RET_LOADFASE2:
 		ret
 	
@@ -183,7 +185,7 @@ SET_FASE3:
 	la t0,fase
 	lb t1,0(t0)
 	li t0,3
-	beq t0,t1,RET_LOADFASE3 # se ja estava na fase 3, nao precisa carregar denovo
+	beq t0,t1,RET_LOADFASE3 # se ja estava na fase 3, nao precisa carregar denovo, apenas os blocos
 	DE1(LOADFASE3_DE1) # se estiver na DE1, carrega o mapa do USB serial
 	# do contrario, carregar do endereco no RARS
 	la s1,fase_current # endereco do mapa geral
@@ -198,21 +200,23 @@ SET_FASE3:
 		addi s1,s1,1
 		addi t0,t0,-1
 		j FOR_LOADFASE3
-	
+		
 	LOADFASE3_DE1:
 		save_stack(ra)
 		li a0,3
 		call MAP_RETRIEVER
 		free_stack(ra)
-			
+	
 	FIM_LOADFASE3:
-	la t0,fase
-	li t1,3
-	sb t1,0(t0) # salva fase 3
-	la t0,ambient_sound_counter
-	sb zero,0(t0)
-	la t0,ambient_sound_timer
-	sw zero,0(t0)
+		la t0,fase
+		li t1,3
+		sb t1,0(t0) # salva fase atual como 3
+		la t0,ambient_sound_counter
+		sb zero,0(t0) # reseta contador do som
+		la t0,ambient_sound_timer
+		sw zero,0(t0) # reseta timer do som
+		#la t0,fase3_given_blocks
+		#sb zero,0(t0) # reseta contador de golden blocks na fase 3
 	RET_LOADFASE3:
 		ret
 
@@ -266,13 +270,7 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	# Imprime variaveis de jogo (score, vidas, highscore, bonus)
 	call PRINT_TEXT
 	
-	mario_mappos(a0)
-	lb t0,0(a0) # carrega byte de t0
-	andi t0,t0,0x80
-	bnez t0,GAME_VICTORY # verifica se esta na posicao de vitoria
-	lb t0,0(a0)
-	li t1,0x03
-	beq t0,t1,GOTO_MARIO_DEATH # se mario estiver em posicao de morte, morre
+	jal CHECK_VICTORY
 	
 	jal CONTINUE_MOVEMENT
 	
@@ -328,6 +326,7 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	MAINLOOP_RET:
 		call DK_DANCA_LOOP
 		call LADY_LOOP
+		call F3_CHECK_BLOCK
 		
 		la t0,level
 		lb t1,0(t0) # carrega lvl atual
@@ -464,6 +463,33 @@ AMBIENT_SOUND:
 	FIM_AMBIENT_SOUND:
 		ret
 
+# Faz as verificacoes de vitoria nas fases
+CHECK_VICTORY:
+	la t0,fase
+	lb t1,0(t0)
+	li t0,3
+	beq t0,t1,CHECK_VICTORY_F1
+	# Verifica posicao de vitoria nas fases 1 e 2
+	CHECK_VICTORY_F0:
+		save_stack(ra)
+		mario_mappos(a0)
+		free_stack(ra)
+		lb t0,0(a0) # carrega byte de t0
+		andi t0,t0,0x80
+		bnez t0,GAME_VICTORY # verifica se esta na posicao de vitoria
+		lb t0,0(a0)
+		li t1,0x03
+		beq t0,t1,GOTO_MARIO_DEATH # se mario estiver em posicao de morte, morre
+		j FIM_CHECK_VICTORY
+	# Verifica posicao de vitoria na fase 3
+	CHECK_VICTORY_F1:
+		la t0,fase3_given_blocks
+		lb t1,0(t0)
+		li t0,0xffffffff
+		beq t0,t1,GAME_VICTORY # se completou todos os pedacos, vitoria
+		
+	FIM_CHECK_VICTORY:
+		ret
 # Imprime tela de vitoria (temporaria)
 # Passa para proxima fase
 GAME_VICTORY:
@@ -574,5 +600,6 @@ GOTO_MARIO_DEATH:
 .include "common.s"
 .include "mario.s"
 .include "environment.s"
+.include "fases/fase3_mechanics.s"
 .include "map_includes.s"
 .include "SYSTEMv14.s"

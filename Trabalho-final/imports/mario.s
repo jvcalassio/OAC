@@ -119,7 +119,7 @@ MARIO_MAP_POS:
 	li t1,2
 	beq t0,t1,MMPOS_FASE2
 	li t1,3
-	beq t0,t1,MMPOS_FASE3 ############################## LEMBRAR DE COLOCAR MAPA DA FASE 3 AQUI
+	beq t0,t1,MMPOS_FASE3
 	j FIM_MMPOS
 	
 	MMPOS_FASE1:

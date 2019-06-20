@@ -305,3 +305,10 @@ BLACK_BLOCK_SCR:
 	FIMF2_BLACK_BLOCK:
 		free_stack(ra)
 		ret
+
+####################################################################
+# Da pontos ao jogador						   #
+# a0 = quantidade de pontos					   #
+# a1 = x do objeto						   #
+# a2 = y do objeto						   #
+####################################################################
