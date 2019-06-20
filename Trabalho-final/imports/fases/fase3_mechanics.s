@@ -4,6 +4,7 @@
 .include "../../sprites/bin/coracao.s"
 .include "../../sprites/bin/dk_5.s"
 .include "../../sprites/bin/dk_6.s"
+.include "../../sprites/bin/dk_7.s"
 fase3_given_blocks: .byte 0 # blocos removidos
 fase3_black_block: .word 8, 7 # bloco preto
 	     .byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,199
@@ -657,11 +658,40 @@ F3_WIN_ANIM:
 		FIM_LOOP_DK_BRABO_ANIM:
 			sleep(200)
 		# fazer o dk caindo
-		FOR_LOOP_DK_CAINDO:
-	############################################
-	# DK CAINDO AQUI
-	############################################
-	
+		li s0,138 # x do dk
+		li s1,74 # y do dk (inicialmente)
+		FOR_DK_CAINDO:
+			li t0,156
+			bge s1,t0,FIM_FALLING_ANIM # se chegar na pos final
+			# printa dk uma posicao abaixo
+			mv a0,s0
+			addi a1,s1,0
+			la t0,display
+			lw a2,0(t0) # display atual
+			la a3,dk_7
+			call PRINT_OBJ
+			# limpa pxs acima dele (na linha superior)
+			addi s2,zero,188
+			FOR_DK_CAINDO_CLEAR:
+				beq s2,s0,FIM_DK_CAINDO_CLEAR
+				mv a0,s2
+				mv a1,s1
+				la t0,display
+				lw a2,0(t0)
+				call GET_POSITION
+				addi s2,s2,-1
+				j FOR_DK_CAINDO_CLEAR
+				
+			FIM_DK_CAINDO_CLEAR:
+				#sleep(5)
+				addi s1,s1,4
+				j FOR_DK_CAINDO
+				
+		############################################
+		# DK CAINDO AQUI
+		############################################
+	FIM_FALLING_ANIM:
+	#sleep(10)
 	# Imprimir piso do lv4 completo
 	li s0,16 # 16 blocos
 	li s1,96 # x inicial
@@ -708,7 +738,7 @@ F3_WIN_ANIM:
 	li s0,13 # qtd de transicoes
 	li s1,138 # x do dk
 	li s2,156 # y do dk
-	LOOP_DK_BRABO2_ANIM: # faz o dk balancando os bracos
+	LOOP_DK_BRABO2_ANIM: # faz o dk balancando as pernas
 		beqz s0,FIM_LOOP_DK_BRABO2_ANIM
 		mv a0,s1
 		mv a1,s2
