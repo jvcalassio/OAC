@@ -1,0 +1,13 @@
+resultados dos testbenches
+
+clock 0011 - 174759 - uniciclo rv32i
+clock 0010 - 45033 - multiciclo rv32i
+clock 0010 - 195359 - pipeline rv32i
+
+clock 0101 - 31675 - uniciclo rv32im
+clock 0010 - 16897 - multiciclo rv32im
+clock 0010 - 51923 - pipeline rv32im
+
+clock 1011 - 15349 - uniciclo rv32imf
+clock 0001 - 25819 - multiciclo rv32imf
+clock 0010 - 53272 - pipeline rv32imf
