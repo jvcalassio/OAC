@@ -28,8 +28,8 @@ Esquemas do mapa:
 
 0000 = nada
 0001 = chao quebradico (fase 3)	= F
-0010 = item bonus (500 pts)		= B
-0100 = martelo					= M
+0010 = item bonus (800 pts)		= B
+0100 = martelo					= H
 1000 = vitoria					= V (ar), W (chao)
 
 
@@ -82,6 +82,10 @@ int main(){
 			if(mapa[i] == 'W'){
 				t = 1;
 				printf("0x81");
+			}
+			if(mapa[i] == 'B'){
+				t = 1;
+				printf("0x21");
 			}
 			if(j == 59 && t == 1){
 				if(i != 79){

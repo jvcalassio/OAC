@@ -3,6 +3,9 @@
 .include "../sprites/bin/dk_2.s"
 .include "../sprites/bin/lady_p1.s"
 .include "../sprites/bin/lady_p2.s"
+.include "../sprites/bin/bolsa.s"
+.include "../sprites/bin/guardachuva.s"
+.include "../sprites/bin/martelo_y.s"
 var_dk: .word 0
 var_lady: .word 0
 
@@ -15,6 +18,9 @@ blank: .string " " # lembrar de apagar
 up_text: .string "UP"
 highscore_text: .string "HIGHSCORE"
 bonus_text: .string "BONUS"
+
+# variaveis dos coletaveis
+fase3_items: .byte 0 # martelo piso 3 | martelo piso 2 | guarda chuva piso 4 | bolsa | guarda chuva piso 2
 
 .text
 
@@ -466,6 +472,236 @@ INIT_BONUS:
 		add t1,t1,t2 # adiciona bonus por lvl
 		sw t1,0(t0)
 		ret
+
+# Cria os itens (coletaveis) em cada fase	
+INIT_ITEMS:
+	save_stack(ra)
+	la t0,fase
+	lb t1,0(t0)
+	li t0,1
+	beq t0,t1,INIT_ITEMS_F1
+	li t0,2
+	beq t0,t1,INIT_ITEMS_F2
+	li t0,3
+	beq t0,t1,INIT_ITEMS_F3
+	j FIM_INIT_ITEMS
+	
+	INIT_ITEMS_F1:
+		j FIM_INIT_ITEMS
+		
+	INIT_ITEMS_F2:
+		j FIM_INIT_ITEMS
+		
+	INIT_ITEMS_F3:
+		# printa guarda chuvas
+		li a0,74
+		li a1,47
+		la a2,display
+		lw a2,0(a2)
+		la a3,guardachuva
+		call PRINT_OBJ
+		li a0,225
+		li a1,127
+		la a2,display
+		lw a2,0(a2)
+		la a3,guardachuva
+		call PRINT_OBJ
+		# printa bolsa
+		li a0,106
+		li a1,133
+		la a2,display
+		lw a2,0(a2)
+		la a3,bolsa
+		call PRINT_OBJ
+		# printa martelos
+		li a0,50
+		li a1,111
+		la a2,display
+		lw a2,0(a2)
+		la a3,martelo_y
+		call PRINT_OBJ
+		li a0,158
+		li a1,72
+		la a2,display
+		lw a2,0(a2)
+		la a3,martelo_y
+		call PRINT_OBJ
+		
+		la t0,fase3_items
+		sb zero,0(t0)
+	
+	FIM_INIT_ITEMS:
+		free_stack(ra)
+		ret
+
+# Verifica se o mario coletou algum item (na posicao atual)	
+CHECK_ITEMS:
+	save_stack(ra)
+	la t0,fase
+	lb t1,0(t0)
+	li t0,1
+	beq t0,t1,CHECK_ITEMS_F1
+	li t0,2
+	beq t0,t1,CHECK_ITEMS_F2
+	li t0,3
+	beq t0,t1,CHECK_ITEMS_F3
+	j FIM_CHECK_ITEMS
+	
+	CHECK_ITEMS_F1:
+		j FIM_CHECK_ITEMS
+		
+	CHECK_ITEMS_F2:
+		j FIM_CHECK_ITEMS
+		
+	CHECK_ITEMS_F3:
+		la t0,pos_mario
+		lh t1,2(t0) # y do mario
+		li t0,144
+		bge t1,t0,FIM_CHECK_ITEMS # abaixo do 2 andar nao tem coletaveis
+		li t0,124
+		bge t1,t0,CHECK_ITEMS_F3_LV2 # verifica itens do segundo andar
+		li t0,64
+		blt t1,t0,CHECK_ITEMS_F3_LV4 # verifica itens do quarto andar
+		j FIM_CHECK_ITEMS
+		CHECK_ITEMS_F3_LV2:
+			# verificar bolsa
+			la t0,pos_mario
+			lh t1,0(t0) # x do mario
+			slti t0,t1,116 # x < 116 ?
+			slti t2,t1,105 # x < 106 ?
+			add t0,t0,t2 # soma
+			li a0,1 # item 1 (bolsa)
+			li a1,3 # fase 3
+			li t2,1
+			beq t0,t2,REMOVE_ITEM # se x > 106 && x < 116, pega o item e remove do mapa
+			addi t1,t1,18 # verificar vindo pela esquerda
+			slti t0,t1,116
+			slti t2,t1,105
+			add t0,t0,t2
+			li a0,1 # item 1 (bolsa)
+			li a1,3 # fase 3
+			li t2,1
+			beq t0,t2,REMOVE_ITEM
+			# verificar guarda chuva
+			la t0,pos_mario
+			lh t1,0(t0) # x do mario
+			slti t0,t1,240 # x < 243 ?
+			slti t2,t1,225 # x < 225 ?
+			add t0,t0,t2 # soma
+			li a0,0 # item 0 (guarda chuva)
+			li a1,3 # fase 3
+			li t2,1
+			beq t0,t2,REMOVE_ITEM # se x > 225 && x < 243, pega o item e remove do mapa
+			addi t1,t1,18 # verificar vindo pela esquerda
+			slti t0,t1,240
+			slti t2,t1,225
+			add t0,t0,t2
+			li a0,0 # item 0 (guarda chuva)
+			li a1,3 # fase 3
+			li t2,1
+			beq t0,t2,REMOVE_ITEM
+			j FIM_CHECK_ITEMS
+			
+		CHECK_ITEMS_F3_LV4:
+			# verificar guarda chuva
+			la t0,pos_mario
+			lh t1,0(t0) # x do mario
+			slti t0,t1,92 # x < 92 ?
+			slti t2,t1,74 # x < 74 ?
+			add t0,t0,t2 # soma
+			li a0,2 # item 2 (guarda chuva 4o andar)
+			li a1,3 # fase 3
+			li t2,1
+			beq t0,t2,REMOVE_ITEM # se x > 74 && x < 92, pega o item e remove do mapa
+			addi t1,t1,18 # verificar vindo pela esquerda
+			slti t0,t1,92
+			slti t2,t1,74
+			add t0,t0,t2
+			li a0,2 # item 0 (guarda chuva 4o andar)
+			li a1,3 # fase 3
+			li t2,1
+			beq t0,t2,REMOVE_ITEM
+			
+		
+	FIM_CHECK_ITEMS:
+		free_stack(ra)
+		ret
+
+# Remove um item coletavel do map e o sprite da tela
+# a0 = numero do item
+# a1 = fase (p/ nao ter q fazer a verificacao novamente)
+REMOVE_ITEM:
+	li t0,3
+	beq a1,t0,RMV_ITEM_F3
+	j FIM_REMOVE_ITEM
+	
+	RMV_ITEM_F3: # verifica e remove itens da fase 3
+		# da os pontos
+		li t1,1
+		sll t0,t1,a0 # procura bit do item desejado
+		la t1,fase3_items
+		lb t1,0(t1) # carrega byte dos itens da fase
+		and t1,t1,t0 # procura bit do item desejado
+		bnez t1,FIM_REMOVE_ITEM # se nao der 0, o item ja foi pego
+		
+		la t0,score
+		lw t1,0(t0)
+		addi t1,t1,800
+		sw t1,0(t0)
+		# remove o item a1
+		beqz a0,RMV_F3_ITEM1
+		li t0,1
+		beq a0,t0,RMV_F3_ITEM2
+		li t0,2
+		beq a0,t0,RMV_F3_ITEM3
+		j FIM_REMOVE_ITEM
+		
+		RMV_F3_ITEM1:
+			# remove bolsa
+			li a0,225
+			li a1,127
+			la a2,display
+			lw a2,0(a2)
+			la a3,fase_current
+			la a4,guardachuva
+			call CLEAR_OBJPOS # remove sprite
+			la t0,fase3_items
+			lb t1,0(t0)
+			ori t1,t1,0x01 # adiciona bit do item 0
+			sb t1,0(t0) # seta como coletado
+			j FIM_REMOVE_ITEM
+			
+		RMV_F3_ITEM2:
+			# remove bolsa
+			li a0,106
+			li a1,133
+			la a2,display
+			lw a2,0(a2)
+			la a3,fase_current
+			la a4,bolsa
+			call CLEAR_OBJPOS # remove sprite
+			la t0,fase3_items
+			lb t1,0(t0)
+			ori t1,t1,0x02 # adiciona bit do item 1
+			sb t1,0(t0) # seta como coletado
+			j FIM_REMOVE_ITEM
+			
+		RMV_F3_ITEM3:
+			# remove bolsa
+			li a0,74
+			li a1,47
+			la a2,display
+			lw a2,0(a2)
+			la a3,fase_current
+			la a4,guardachuva
+			call CLEAR_OBJPOS # remove sprite
+			la t0,fase3_items
+			lb t1,0(t0)
+			ori t1,t1,0x04 # adiciona bit do item 1
+			sb t1,0(t0) # seta como coletado
+	
+	FIM_REMOVE_ITEM:
+		j FIM_CHECK_ITEMS
 
 # sons iniciais das fases
 INIT_SOUND:

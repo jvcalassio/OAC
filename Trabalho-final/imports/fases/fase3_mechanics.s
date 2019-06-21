@@ -574,15 +574,36 @@ F3_CLEAR_BLOCK:
 
 # Faz a animacao de vitoria na fase 3.
 F3_WIN_ANIM:
-	# fazer bloco preto iniciando em (100,30) de 120 de largura e 185 de altura
 	save_stack(ra)
+	call PRINT_FASE
+	li a0,269
+	li a1,22
+	la t0,display
+	lw a2,0(t0)
+	call GET_POSITION # pega pos do label do bonus
+	li s0,42 # largura
+	li s1,19 # altura
+	FFWABB_0: # limpa o label de bonus p/ cutscene
+		beqz s0,FIM_FFWABB0
+		sb zero,0(a0)
+		addi a0,a0,1
+		addi s0,s0,-1
+		j FFWABB_0
+		FIM_FFWABB0:
+			beqz s1,FIM_FFWABB1
+			addi a0,a0,278
+			li s0,42
+			addi s1,s1,-1
+			j FFWABB_0
+	FIM_FFWABB1:
+	# fazer bloco preto iniciando em (96,25) de 128 de largura e 185 de altura
 	li a0,96
-	li a1,0
+	li a1,25
 	la t0,display
 	lw a2,0(t0) # carrega display atual
 	call GET_POSITION
 	li s0,128 # largura
-	li s1,215 # altura
+	li s1,185 # altura
 	FOR_F3_WINANIM_BLACK_BLOCK:
 		beqz s0,FIMF1_F3_WINANIM_BLACK_BLOCK
 		sb zero,0(a0) # pixel preto na posicao
@@ -687,9 +708,6 @@ F3_WIN_ANIM:
 				addi s1,s1,4
 				j FOR_DK_CAINDO
 				
-		############################################
-		# DK CAINDO AQUI
-		############################################
 	FIM_FALLING_ANIM:
 	#sleep(10)
 	# Imprimir piso do lv4 completo

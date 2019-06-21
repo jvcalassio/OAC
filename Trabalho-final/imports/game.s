@@ -40,6 +40,8 @@ INIT_GAME:
 	la t0,last_key
 	sw zero,0(t0)
 	sw zero,4(t0) # reinicia last key
+	la t0,given_extra_life
+	sb zero,0(t0) # reinicia vida extra concedida
 	
 	li t1,1
 	la t0,fase
@@ -61,6 +63,7 @@ INIT_GAME:
 	call INIT_DK_DANCA
 	call INIT_LADY
 	call INIT_BONUS
+	call INIT_ITEMS
 	call INIT_SOUND
 	j MAINLOOP
 		
@@ -74,6 +77,7 @@ INIT_FASE1:
 	call INIT_DK_DANCA
 	call INIT_LADY
 	call INIT_BONUS
+	call INIT_ITEMS
 	call INIT_SOUND
 	j MAINLOOP
 
@@ -87,6 +91,7 @@ INIT_FASE2:
 	call INIT_DK_DANCA
 	call INIT_LADY
 	call INIT_BONUS
+	call INIT_ITEMS
 	call INIT_SOUND
 	j MAINLOOP
 	
@@ -101,6 +106,7 @@ INIT_FASE3:
 	call INIT_DK_DANCA
 	call INIT_LADY
 	call INIT_BONUS
+	call INIT_ITEMS
 	call INIT_SOUND
 	j MAINLOOP
 
@@ -269,6 +275,8 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	
 	# Imprime variaveis de jogo (score, vidas, highscore, bonus)
 	call PRINT_TEXT
+	
+	call CHECK_ITEMS 
 	
 	jal CHECK_VICTORY
 	
