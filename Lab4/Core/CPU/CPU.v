@@ -231,7 +231,7 @@ wire			 wCEscrevePCCond;
 wire			 wCEscrevePCBack;
 wire	[ 1:0] wCOrigAULA;
 wire	[ 1:0] wCOrigBULA;	 
-wire	[ 1:0] wCMem2Reg;
+wire	[ 2:0] wCMem2Reg;
 wire	[ 1:0] wCOrigPC;
 wire			 wCIouD;
 wire			 wCRegWrite;
@@ -239,6 +239,12 @@ wire			 wCMemWrite;
 wire			 wCMemRead;
 wire	[ 4:0] wCALUControl;	 
 wire	[ 5:0] wCState;	
+wire 			 wCSRegWrite;
+wire 			 wUCAUSEWrite;
+wire 			 wUEPCWrite;
+wire [ 1:0]	 wCSType;
+wire [31:0]  wUCAUSEData;
+wire [ 2:0]  wCSRWSource;
 `ifdef RV32IMF
 wire			 wFPALUReady;
 wire 			 wCFRegWrite;
@@ -268,7 +274,14 @@ Control_MULTI CONTROL0 (
    .oMemWrite(wCMemWrite),
 	.oMemRead(wCMemRead),
 	.oALUControl(wCALUControl),
-	.oState(wCState)
+	.oState(wCState),
+	.oCSRegWrite(wCSRegWrite),
+	.oUCAUSEWrite(wUCAUSEWrite),
+	.oUEPCWrite(wUEPCWrite),
+	.oCSType(wCSType),
+	.oUCAUSEData(wUCAUSEData),
+	.oCSRWSource(wCSRWSource),
+	.oBreak(oBreak)
 `ifdef RV32IMF
 	,
 	.iFPALUReady(wFPALUReady),
@@ -330,6 +343,12 @@ Datapath_MULTI DATAPATH0 (
    .wCMemWrite(wCMemWrite),
 	.wCMemRead(wCMemRead),
 	.wCALUControl(wCALUControl),	 
+	.wCSRegWrite(wCSRegWrite),
+	.wUCAUSEWrite(wUCAUSEWrite),
+	.wUEPCWrite(wUEPCWrite),
+	.wCSType(wCSType),
+	.wUCAUSEData(wUCAUSEData),
+	.wCSRWSource(wCSRWSource),
 `ifdef RV32IMF
 	.wFPALUReady(wFPALUReady),
 	.wCFRegWrite(wCFRegWrite),
