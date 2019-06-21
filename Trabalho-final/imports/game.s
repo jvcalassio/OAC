@@ -26,7 +26,7 @@ bonus: .word 0 # bonus inicial da fase
 # contadores
 ambient_sound_counter: .byte 0 # contador de qual o ultimo som da fase
 ambient_sound_timer: .word 0 # tempo de reproducao
-sounds: .byte 1 # sons ligados
+sounds: .byte 0 # sons ligados
 given_extra_life: .byte 0 # flag de vida extra concedida ou nao
 .text
 	M_SetEcall(exceptionHandling)
