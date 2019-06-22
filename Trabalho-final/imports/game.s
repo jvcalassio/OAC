@@ -276,8 +276,13 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	# Imprime variaveis de jogo (score, vidas, highscore, bonus)
 	call PRINT_TEXT
 	
-	call CHECK_ITEMS 
+	# Verifica se esta em uma posicao de item
+	call CHECK_ITEMS
 	
+	# Verifica se precisa remover algum texto
+	call CHECK_POINTS_TIMER
+	
+	# Verifica se esta na posicao de vitoria
 	jal CHECK_VICTORY
 	
 	jal CONTINUE_MOVEMENT

@@ -291,11 +291,12 @@ F3_CHECK_BLOCK:
 		lb t1,0(t0)
 		or t1,t1,a0 # adiciona bit
 		sb t1,0(t0)
-		la t0,score
-		lw t1,0(t0)
-		addi t1,t1,100
-		sw t1,0(t0) # adiciona +100 no score
-		ret # retorna pra funcao COLxLVLy
+		#la t0,score
+		#lw t1,0(t0)
+		#addi t1,t1,100
+		#sw t1,0(t0) # adiciona +100 no score
+		# pontos movidos p/ clearblock
+		ret # retorna pra funcao BLOCKxREMOVE
 	
 	
 	FIM_F3_CHECK_BLOCK:
@@ -434,6 +435,11 @@ F3_CLEAR_BLOCK:
 		add t0,t0,t1 # soma posicao do bloco
 		li t1,0x02
 		sb t1,0(t0) # salva chao no map
+		# da os pontos
+		li a0,100
+		li a1,96
+		li a2,64
+		call GIVE_POINTS
 		j FIM_F3_CLEAR_BLOCK
 	
 	F3_CLEAR_BLOCK_2:
@@ -453,6 +459,10 @@ F3_CLEAR_BLOCK:
 		add t0,t0,t1 # soma posicao do bloco
 		li t1,0x02
 		sb t1,0(t0) # salva chao no map
+		li a0,100
+		li a1,216
+		li a2,64
+		call GIVE_POINTS
 		j FIM_F3_CLEAR_BLOCK
 		
 	F3_CLEAR_BLOCK_3:
@@ -472,6 +482,10 @@ F3_CLEAR_BLOCK:
 		add t0,t0,t1 # soma posicao do bloco
 		li t1,0x02
 		sb t1,0(t0) # salva chao no map
+		li a0,100
+		li a1,96
+		li a2,104
+		call GIVE_POINTS
 		j FIM_F3_CLEAR_BLOCK
 		
 	F3_CLEAR_BLOCK_4:
@@ -491,6 +505,10 @@ F3_CLEAR_BLOCK:
 		add t0,t0,t1 # soma posicao do bloco
 		li t1,0x02
 		sb t1,0(t0) # salva gravity no map
+		li a0,100
+		li a1,216
+		li a2,104
+		call GIVE_POINTS
 		j FIM_F3_CLEAR_BLOCK
 		
 	F3_CLEAR_BLOCK_5:
@@ -510,6 +528,10 @@ F3_CLEAR_BLOCK:
 		add t0,t0,t1 # soma posicao do bloco
 		li t1,0x02
 		sb t1,0(t0) # salva chao no map
+		li a0,100
+		li a1,96
+		li a2,144
+		call GIVE_POINTS
 		j FIM_F3_CLEAR_BLOCK
 		
 	F3_CLEAR_BLOCK_6:
@@ -529,6 +551,10 @@ F3_CLEAR_BLOCK:
 		add t0,t0,t1 # soma posicao do bloco
 		li t1,0x02
 		sb t1,0(t0) # salva gravity no map
+		li a0,100
+		li a1,216
+		li a2,144
+		call GIVE_POINTS
 		j FIM_F3_CLEAR_BLOCK
 		
 	F3_CLEAR_BLOCK_7:
@@ -548,6 +574,10 @@ F3_CLEAR_BLOCK:
 		add t0,t0,t1 # soma posicao do bloco
 		li t1,0x02
 		sb t1,0(t0) # salva como gravity no map
+		li a0,100
+		li a1,96
+		li a2,184
+		call GIVE_POINTS
 		j FIM_F3_CLEAR_BLOCK
 		
 	F3_CLEAR_BLOCK_8:
@@ -567,6 +597,10 @@ F3_CLEAR_BLOCK:
 		add t0,t0,t1 # soma posicao do bloco
 		li t1,0x02
 		sb t1,0(t0) # salva gravity no map
+		li a0,100
+		li a1,216
+		li a2,184
+		call GIVE_POINTS
 	
 	FIM_F3_CLEAR_BLOCK:
 		free_stack(ra)

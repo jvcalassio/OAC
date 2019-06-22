@@ -61,6 +61,7 @@
 .eqv START_MARIO_Y_FASE3 199
 
 .eqv STARTING_BONUS 5100 # 100 adicionais por causa do tempo dos sons do comeco
+.eqv POINTS_TEXT_TIME 200 # tempo de exibicao do texto de pontos adquiridos
 
 # Controlador USB
 .eqv USB_CTRL_ADDR 0xff200122

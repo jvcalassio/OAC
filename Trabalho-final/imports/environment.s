@@ -20,8 +20,12 @@ highscore_text: .string "HIGHSCORE"
 bonus_text: .string "BONUS"
 
 # variaveis dos coletaveis
+fase1_items: .byte 0 # martelo quarto andar | martelo terceiro andar
+fase2_items: .byte 0 # bolsa | guarda chuva
 fase3_items: .byte 0 # martelo piso 3 | martelo piso 2 | guarda chuva piso 4 | bolsa | guarda chuva piso 2
-
+# outros
+points_timer: .word 0,0 # variaveis do tempo de exibicao do texto de pontos ganhos (max 2 simultaneo)
+points_pos: .half 0,0,0,0 # texto 1 (x,y) , texto 2 (x,y)
 .text
 
 # Faz danca do Donkey Kong fase 1
@@ -644,10 +648,18 @@ REMOVE_ITEM:
 		and t1,t1,t0 # procura bit do item desejado
 		bnez t1,FIM_REMOVE_ITEM # se nao der 0, o item ja foi pego
 		
-		la t0,score
-		lw t1,0(t0)
-		addi t1,t1,800
-		sw t1,0(t0)
+		#la t0,score
+		#lw t1,0(t0)
+		#addi t1,t1,800
+		#sw t1,0(t0)
+		mv s0,a0
+		li a0,800
+		la t0,pos_mario
+		lh a1,0(t0) # x do mario
+		lh a2,2(t0) # y do mario
+		addi a2,a2,-8 # acima do y do mario (p/ nao sobrepor)
+		call GIVE_POINTS
+		mv a0,s0
 		# remove o item a1
 		beqz a0,RMV_F3_ITEM1
 		li t0,1
@@ -702,6 +714,79 @@ REMOVE_ITEM:
 	
 	FIM_REMOVE_ITEM:
 		j FIM_CHECK_ITEMS
+
+# Verifica se eh necessario remove algum dos textos de pontos ganhos (se passar o tempo)		
+CHECK_POINTS_TIMER:
+	la t0,points_timer
+	lw t1,0(t0)
+	bnez t1,CHECK_POINTS_TIMER1
+	j CHECK_POINTS_TIMER2
+	CHECK_POINTS_TIMER1:
+		gettime() # pega tempo atual
+		sub t1,a0,t1 # tempo atual - tempo de inicio do texto1
+		li t2,POINTS_TEXT_TIME # tempo de exibicao em ms
+		li a0,0
+		bge t1,t2,CLEAR_POINTS_POS
+		# verifica o segundo texto
+	CHECK_POINTS_TIMER2:
+		lw t1,4(t0)
+		beqz t1,FIM_CHECK_POINTS_TIMER # se nao tiver timer, so sai
+		# se tiver
+		gettime()
+		sub t1,a0,t1 # tempo atual - tempo de inicio do texto2
+		li t2,POINTS_TEXT_TIME # tempo de exibicao em ms
+		li a0,1
+		bge t1,t2,CLEAR_POINTS_POS
+		j FIM_CHECK_POINTS_TIMER
+	# limpa na posicao a0 = qual dos textos (0 ou 1) 24x8 pixels
+	CLEAR_POINTS_POS:
+		save_stack(ra)
+		# se a0 = 0, pegar o points_pos 0 e 2
+		# se a0 = 1, pegar o points_pos 4 e 6
+		slli a0,a0,2 # 0 << 2 = 0, 1 << 2 = 4
+		save_stack(a0)
+		la t0,points_pos
+		add t0,t0,a0
+		lh a0,0(t0) # carrega x do texto
+		lh a1,2(t0) # carrega y do texto
+		save_stack(a0)
+		save_stack(a1) # salva x e y p/ uso na prox chamada
+		la t0,display
+		lw a2,0(t0) # carrega display
+		call GET_POSITION
+		mv s0,a0 # salva end no display
+		free_stack(a1)
+		free_stack(a0) # retorna x e y
+		la a2,fase_current
+		call GET_POSITION # pega end do mapa
+		mv s1,a0 # salva o end no mapa
+		li s2,24 # largura do bloco
+		li s3,8 # altura do bloco
+		FOR_CLEAR_POINTS_POS:
+			beqz s2,FOR_CLEAR_POINTS_POS1
+			lb t0,0(s1) # carrega do mapa
+			sb t0,0(s0) # salva no display
+			addi s1,s1,1
+			addi s0,s0,1
+			addi s2,s2,-1
+			j FOR_CLEAR_POINTS_POS
+			FOR_CLEAR_POINTS_POS1:
+				beqz s3,FIM_CLEAR_POINTS_POS
+				li s2,24
+				addi s0,s0,296
+				addi s1,s1,296
+				addi s3,s3,-1
+				j FOR_CLEAR_POINTS_POS
+		FIM_CLEAR_POINTS_POS:
+			free_stack(a0)
+			free_stack(ra)
+			la t0,points_timer
+			add t0,t0,a0 # soma com a chamada correspondente
+			sw zero,0(t0) # grava 0 p/ saber q nao esta utilizando
+		
+	FIM_CHECK_POINTS_TIMER:
+		ret
+
 
 # sons iniciais das fases
 INIT_SOUND:

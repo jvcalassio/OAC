@@ -309,6 +309,52 @@ BLACK_BLOCK_SCR:
 ####################################################################
 # Da pontos ao jogador						   #
 # a0 = quantidade de pontos					   #
-# a1 = x do objeto						   #
-# a2 = y do objeto						   #
+# a1 = x do texto de pontos					   #
+# a2 = y do texto de pontos					   #
 ####################################################################
+GIVE_POINTS:
+	save_stack(ra)
+	la t0,score
+	lw t1,0(t0) # carrega score atual
+	add t1,t1,a0 # soma os pontos a ser adicionados
+	sw t1,0(t0) # da os pontos
+	
+	la t0,points_timer
+	lw t1,0(t0) # carrega primeiro contador de pontos
+	bnez t1,GIVE_POINTS_TRY2 # se primeiro ja tiver sendo usado, tenta usar o segundo
+		# a0 definido na chamada da funcao
+		# a1 definido na chamada da funcao
+		# a2 definido na chamada da funcao
+		la t0,points_pos
+		sh a1,0(t0) # salva x do texto
+		sh a2,2(t0) # salva y do texto
+		li a3,0xc7ff # fundo transparente, texto branco
+		li a4,0 # frame 0 TEMPORARIO MUDAR PRO DISPLAY ATUAL
+		li a7,101
+		ecall
+		gettime()
+		la t0,points_timer
+		sw a0,0(t0) # salva tempo do texto de pontos
+		j FIM_GIVE_POINTS
+		
+		
+	GIVE_POINTS_TRY2:
+	lw t1,4(t0) # carrega segundo contador
+	bnez t1,FIM_GIVE_POINTS # caso o segundo tbm esteja sendo usado, nao mostra o texto (pontos ja concedidos)
+		# a0 definido na chamada da funcao
+		# a1 definido na chamada da funcao
+		# a2 definido na chamada da funcao
+		la t0,points_pos
+		sh a1,4(t0) # salva x do texto
+		sh a2,6(t0) # salva y do texto
+		li a3,0xc7ff # fundo transparente, texto branco
+		li a4,0 # frame 0 TEMPORARIO MUDAR PRO DISPLAY ATUAL
+		li a7,101
+		ecall
+		gettime()
+		la t0,points_timer
+		sw a0,4(t0) # salva tempo do texto de pontos
+	
+	FIM_GIVE_POINTS:
+		free_stack(ra)
+		ret
