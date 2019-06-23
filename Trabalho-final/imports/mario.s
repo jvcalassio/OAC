@@ -15,6 +15,12 @@
 .include "../sprites/bin/mario_morrendo_y.s"
 .include "../sprites/bin/mario_morrendo_x.s"
 .include "../sprites/bin/mario_morto.s"
+.include "../sprites/bin/mario_andando_p1_martelo_baixo.s"
+.include "../sprites/bin/mario_andando_p1_martelo_cima.s"
+.include "../sprites/bin/mario_andando_p2_martelo_baixo.s"
+.include "../sprites/bin/mario_andando_p2_martelo_cima.s"
+.include "../sprites/bin/mario_parado_martelo_baixo.s"
+.include "../sprites/bin/mario_parado_martelo_cima.s"
 
 # Variaveis
 mario_state: .byte 0 # salva estado atual do mario
@@ -22,6 +28,10 @@ pulo_px: .byte 0,0 # salva pixels movidos no pulo
 pos_mario: .half 0,0 # salva posicao atual do mario (x,y)
 
 movement_counter: .word 0 # contador de passos dos movimentos
+mario_hammer_timer: .word 0 # contador de tempo do martelo
+mario_hammer_type: .byte 0 # tipo de animacao do martelo (1 = baixo, 0 = cima)
+map_backup_info: .half 0,0,0,0 # (x,y),(largura,altura)
+map_backup_data: .space 176
 .text
 
 # Printa o Mario na posicao inicial
@@ -80,6 +90,7 @@ REMOVE_MARIO:
 	lh a1,2(t0) # carrega y
 	la a2,display
 	lw a2,0(a2) # carrega display atual
+#	lw a2,4(a2) # display anterior (caso mudar displays esteja ligado)
 	la a3,fase_current
 	call CLEAR_OBJPOS # limpa mario na posicao atual
 	free_stack(ra)
@@ -164,8 +175,29 @@ MOVE_MARIO_DIREITA:
 	MVMD_P1: # faz passo 1
 		rmv_mario(mario_parado)
 		
-		set_mario_move(2,0,mario_andando_p1) # se move 1px pra direita
+		la t0,mario_state
+		lb t1,0(t0)
+		andi t1,t1,0x10 # verifica se esta com martelo
+		beqz t1,MVMD_P1_NORM
+		# se estiver com martelo, faz animacao
+		la t0,mario_hammer_type
+		lb t1,0(t0) # carrega tipo do martelo
+		beqz t1,MVMD_P1_HAMMER_T0
+			sb zero,0(t0) # salva tipo 0 p/ prox
+			set_mario_move(2,0,mario_andando_p1_martelo_baixo) # se == 1, faz tipo 1
+			j CONT_MVMD_P1
+		MVMD_P1_HAMMER_T0:
+			li t1,1
+			sb t1,0(t0) # salva tipo 1 p/ prox
+			set_mario_move(2,0,mario_andando_p1_martelo_cima) # se == 0, faz tipo 0
+			j CONT_MVMD_P1
+		MVMD_P1_NORM:
+			set_mario_move(2,0,mario_andando_p1) # se move 1px pra direita
+		CONT_MVMD_P1:
 		call PRINT_OBJ # printa mario passo 1 na tela
+		
+		li a0,1
+		call MARIO_HAMMER_SPRITE
 		
 		la t0,movement_counter
 		addi t1,zero,1
@@ -179,9 +211,29 @@ MOVE_MARIO_DIREITA:
 	MVMD_P2: # faz passo 2
 		rmv_mario(mario_andando_p1)
 		
-		set_mario_move(2,0,mario_andando_p2) # se move 1px pra direita
-		call PRINT_OBJ # printa mario passo 2 na tela
+		la t0,mario_state
+		lb t1,0(t0)
+		andi t1,t1,0x10 # verifica se esta com martelo
+		beqz t1,MVMD_P2_NORM
+		# se estiver com martelo, faz animacao
+		la t0,mario_hammer_type
+		lb t1,0(t0) # carrega tipo do martelo
+		beqz t1,MVMD_P2_HAMMER_T0
+			sb zero,0(t0) # salva tipo 0 p/ prox
+			set_mario_move(2,0,mario_andando_p2_martelo_baixo) # se == 1, faz tipo 1
+			j CONT_MVMD_P2
+		MVMD_P2_HAMMER_T0: 
+			li t1,1
+			sb t1,0(t0) # salva tipo 1 p/ prox
+			set_mario_move(2,0,mario_andando_p2_martelo_cima) # se == 0, faz tipo 0
+			j CONT_MVMD_P2
+		MVMD_P2_NORM: 
+			set_mario_move(2,0,mario_andando_p2) # se move 1px pra direita
+		CONT_MVMD_P2: call PRINT_OBJ # printa mario passo 2 na tela
 	
+		li a0,1
+		call MARIO_HAMMER_SPRITE
+		
 		la t0,movement_counter
 		addi t1,zero,2
 		sw t1,0(t0) # salva q fez passo 2
@@ -219,8 +271,27 @@ MOVE_MARIO_DIREITA:
 		
 		rmv_mario(mario_andando_p1)
 		
-		set_mario_move(0,0,mario_parado) # se move 1px pra direita
-		call PRINT_OBJ # printa mario passo final na tela
+		la t0,mario_state
+		lb t1,0(t0)
+		andi t1,t1,0x10 # verifica se esta com martelo
+		beqz t1,MVMD_P0_NORM
+		# se estiver com martelo, faz animacao
+		la t0,mario_hammer_type
+		lb t1,0(t0) # carrega tipo do martelo
+		beqz t1,MVMD_P0_HAMMER_T0
+			sb zero,0(t0) # salva tipo 0 p/ prox
+			set_mario_move(0,0,mario_parado_martelo_baixo) # se == 1, faz tipo 1
+			j CONT_MVMD_P0
+		MVMD_P0_HAMMER_T0: 
+			li t1,1
+			sb t1,0(t0) # salva tipo 1 p/ prox
+			set_mario_move(0,0,mario_parado_martelo_cima) # se == 0, faz tipo 0
+			j CONT_MVMD_P0
+		MVMD_P0_NORM: set_mario_move(0,0,mario_parado) # printa o mario parado
+		CONT_MVMD_P0: call PRINT_OBJ # printa mario passo final na tela
+		
+		li a0,1
+		call MARIO_HAMMER_SPRITE
 		
 		la t0,movement_counter
 		add t1,zero,zero
@@ -271,8 +342,28 @@ MOVE_MARIO_ESQUERDA:
 	MVME_P1: # faz passo 1
 		rmv_mario(mario_parado)
 		
-		set_mario_move(-2,0,mario_andando_p1) # se move 1px pra esquerda
-		call PRINT_OBJ_MIRROR # printa mario passo 1 na tela
+		la t0,mario_state
+		lb t1,0(t0)
+		andi t1,t1,0x10 # verifica se esta com martelo
+		beqz t1,MVME_P1_NORM
+		# se estiver com martelo, faz animacao
+		la t0,mario_hammer_type
+		lb t1,0(t0) # carrega tipo do martelo
+		beqz t1,MVME_P1_HAMMER_T0
+			sb zero,0(t0) # salva tipo 0 p/ prox
+			set_mario_move(-2,0,mario_andando_p1_martelo_baixo) # se == 1, faz tipo 1
+			j CONT_MVME_P1
+		MVME_P1_HAMMER_T0:
+			li t1,1
+			sb t1,0(t0) # salva tipo 1 p/ prox
+			set_mario_move(-2,0,mario_andando_p1_martelo_cima) # se == 0, faz tipo 0
+			j CONT_MVME_P1
+		MVME_P1_NORM:
+			set_mario_move(-2,0,mario_andando_p1) # se move 1px pra esquerda
+		CONT_MVME_P1: call PRINT_OBJ_MIRROR # printa mario passo 1 na tela
+		
+		li a0,2
+		call MARIO_HAMMER_SPRITE
 		
 		la t0,movement_counter
 		addi t1,zero,1
@@ -286,8 +377,28 @@ MOVE_MARIO_ESQUERDA:
 	MVME_P2: # faz passo 2
 		rmv_mario(mario_andando_p1)
 		
-		set_mario_move(-2,0,mario_andando_p2) # se move 1px pra esquerda
-		call PRINT_OBJ_MIRROR # printa mario passo 2 na tela
+		la t0,mario_state
+		lb t1,0(t0)
+		andi t1,t1,0x10 # verifica se esta com martelo
+		beqz t1,MVME_P2_NORM
+		# se estiver com martelo, faz animacao
+		la t0,mario_hammer_type
+		lb t1,0(t0) # carrega tipo do martelo
+		beqz t1,MVME_P2_HAMMER_T0
+			sb zero,0(t0) # salva tipo 0 p/ prox
+			set_mario_move(-2,0,mario_andando_p2_martelo_baixo) # se == 1, faz tipo 1
+			j CONT_MVME_P2
+		MVME_P2_HAMMER_T0:
+			li t1,1
+			sb t1,0(t0) # salva tipo 1 p/ prox
+			set_mario_move(-2,0,mario_andando_p2_martelo_cima) # se == 0, faz tipo 0
+			j CONT_MVME_P2
+		MVME_P2_NORM:
+			set_mario_move(-2,0,mario_andando_p2) # se move 1px pra esquerda
+		CONT_MVME_P2: call PRINT_OBJ_MIRROR # printa mario passo 2 na tela
+		
+		li a0,2
+		call MARIO_HAMMER_SPRITE
 		
 		la t0,movement_counter
 		addi t1,zero,2
@@ -326,8 +437,27 @@ MOVE_MARIO_ESQUERDA:
 		
 		rmv_mario(mario_andando_p1)
 		
-		set_mario_move(0,0,mario_parado) # se move 1px pra esquerda
-		call PRINT_OBJ_MIRROR # printa mario passo final na tela
+		la t0,mario_state
+		lb t1,0(t0)
+		andi t1,t1,0x10 # verifica se esta com martelo
+		beqz t1,MVME_P0_NORM
+		# se estiver com martelo, faz animacao
+		la t0,mario_hammer_type
+		lb t1,0(t0) # carrega tipo do martelo
+		beqz t1,MVME_P0_HAMMER_T0
+			sb zero,0(t0) # salva tipo 0 p/ prox
+			set_mario_move(0,0,mario_parado_martelo_baixo) # se == 1, faz tipo 1
+			j CONT_MVME_P0
+		MVME_P0_HAMMER_T0:
+			li t1,1
+			sb t1,0(t0) # salva tipo 1 p/ prox
+			set_mario_move(0,0,mario_parado_martelo_cima) # se == 0, faz tipo 0
+			j CONT_MVME_P0
+		MVME_P0_NORM: set_mario_move(0,0,mario_parado) # printa o mario parado
+		CONT_MVME_P0: call PRINT_OBJ_MIRROR # printa mario passo final na tela
+		
+		li a0,2
+		call MARIO_HAMMER_SPRITE
 		
 		la t0,movement_counter
 		add t1,zero,zero
@@ -521,10 +651,8 @@ MARIO_PULO_UP:
 	save_stack(s0)
 	la t0,mario_state
 	lb t1,0(t0)
-	andi t1,t1,0x1A # verifica se pode pular
+	andi t1,t1,0x0A # verifica se pode pular
 	bne t1,zero,FIM_PULO_UP # se nao puder pular, sai
-	
-	rmv_mario(mario_pulando) # remove mario na posicao atual
 	
 	la t0,pulo_px
 	lb t1,0(t0) # carrega estado de descida do pulo do mario
@@ -536,6 +664,12 @@ MARIO_PULO_UP:
 	bgt t2,zero,MARIO_PULO_UP_SOBE # se subida tiver > 0 e < 12, sobe 1px
 	
 	MARIO_PULO_UP_INIT_SUBIDA:
+		la t0,mario_state
+		lb t1,0(t0)
+		andi t2,t1,0x10 # verificar se o mario esta com martelo
+		bnez t2,FIM_PULO_UP # se estiver de martelo, nao inicia subida
+		# do contrario, continua
+		rmv_mario(mario_pulando) # remove mario na posicao atual
 		la t0,mario_state
 		lb t1,0(t0)
 		andi t1,t1,0x04 # verifica se esta pulando pra esquerda ou direita
@@ -554,6 +688,7 @@ MARIO_PULO_UP:
 		j PULO_UP_PESQ
 		
 	MARIO_PULO_UP_SOBE:
+		rmv_mario(mario_pulando) # remove mario na posicao atual
 		la t0,pulo_px
 		lb t1,1(t0)
 		addi t1,t1,1 # sobe 1px no pulopx
@@ -569,6 +704,7 @@ MARIO_PULO_UP:
 		j PULO_UP_PESQ
 		
 	MARIO_PULO_UP_INIT_DESCIDA:
+		rmv_mario(mario_pulando) # remove mario na posicao atual
 		la t0,pulo_px
 		lb t1,1(t0)
 		addi t1,t1,1
@@ -587,6 +723,7 @@ MARIO_PULO_UP:
 		j PULO_UP_PESQ
 	
 	MARIO_PULO_UP_DESCE:
+		rmv_mario(mario_pulando) # remove mario na posicao atual
 		la t0,pulo_px
 		lb t1,0(t0)
 		addi t1,t1,1 # desce 1px no pulopx
@@ -601,15 +738,16 @@ MARIO_PULO_UP:
 		beqz s0,PULO_UP_PDIR
 		j PULO_UP_PESQ
 	
-	MARIO_PULO_UP_RESET:
+	MARIO_PULO_UP_RESET:	
+		rmv_mario(mario_pulando) # remove mario na posicao atual
 		la t0,pulo_px
 		sb zero,0(t0)
 		sb zero,1(t0) # reseta pulopx
 		
 		la t0,mario_state
 		lb s0,0(t0)
-		andi s0,s0,0x04
-		sb s0,0(t0) # salva estado do mario no chao, virado pro lado onde ja estava
+		andi s0,s0,0x14
+		sb s0,0(t0) # salva estado do mario no chao, virado pro lado onde ja estava com ou sem martelo
 		
 		set_mario_move(0,8,mario_parado) # se move 8px pra baixo
 		
@@ -940,6 +1078,10 @@ MARIO_COLLISIONS:
 		j MARIO_CL_ALLOW # se der zero, passa
 		
 	VERIF_MV_CIMA:
+		la t0,mario_state
+		lb t1,0(t0)
+		andi t1,t1,0x10
+		bnez t1,MARIO_CL_DENY # se estiver com martelo, nao permite subir escada
 		addi s0,s0,-80 # linha acima
 		lb a0,0(s0)
 		li t0,0x04
@@ -959,6 +1101,8 @@ MARIO_COLLISIONS:
 		# verificar mario state pra ver se ainda ta na escada, se tiver, permitir
 		la t0,mario_state
 		lb t1,0(t0)
+		andi t2,t1,0x10
+		bnez t2,MARIO_CL_DENY # se estiver com martelo, nao permite descer escada
 		andi t1,t1,0x08
 		beqz t1,MARIO_CL_DENY # se nao tiver bit de escada ligado, nao permite
 		# se tiver bit de escada, verifica se esta quase no chao
@@ -1037,13 +1181,359 @@ MARIO_GRAVITY:
 	PRINT_FALL_MARIO_GRAVITY:
 		set_mario_move(0,4,mario_andando_p2)
 		call PRINT_OBJ # printa mario posicao abaixo
-		sleep(20) # questionavel, avaliar desempenho
+		#sleep(20) # questionavel, avaliar desempenho
 	
 	FIM_MARIO_GRAVITY:
 		free_stack(s0)
 		free_stack(ra)
 		ret
 
+# Da o martelo para o mario
+MARIO_SET_HAMMER:
+	la t0,mario_state
+	lb t1,0(t0)
+	ori t1,t1,0x10 # adiciona bit do martelo
+	sb t1,0(t0)
+	gettime()
+	la t0,mario_hammer_timer
+	sw a0,0(t0) # salva tempo de aquisicao do martelo
+	FIM_MARIO_SET_HAMMER:
+		ret
+		
+# Verifica se o martelo deve ser removido ou nao
+MARIO_CHECK_HAMMER:
+	save_stack(ra)
+	la t0,mario_state
+	lb t1,0(t0)
+	andi t1,t1,0x10 # bit de martelo
+	beqz t1,FIM_MARIO_CHECK_HAMMER # se nao esta com martelo, nao faz nada disso
+	la t0,mario_hammer_timer
+	lw t1,0(t0) # carrega tempo de aquisicao do martelo
+	gettime()
+	sub t1,a0,t1 # tempo atual - tempo de aquisicao
+	li t2,HAMMER_TIME
+	blt t1,t2,MARIO_CHECK_HAMMER_TOGGLE # se nao atingido o tempo, verifica se esta parado p/ mover o martelo
+	# se atingido o tempo, reseta mario state e tempo
+	la t0,mario_state
+	lb t1,0(t0)
+	andi t1,t1,0x0f # 01111, mantendo todos os bits exceto o martelo
+	sb t1,0(t0)
+	la t0,mario_hammer_timer
+	sw zero,0(t0) # reseta timer
+	la t0,mario_hammer_type
+	sb zero,0(t0) # reseta tipo
+	
+	# muda sprite do mario de martelo p/ parado normal, se estiver parado
+	la t0,mario_state
+	lb t1,0(t0)
+	andi t1,t1,0x02
+	bnez t1,FIM_MARIO_CHECK_HAMMER # se estiver andando, nao muda o sprite
+	# se estiver parado, muda o sprite p/ parado
+	rmv_mario(mario_parado)
+	set_mario_move(0,0,mario_parado)
+	la t0,mario_state
+	lb t1,0(t0)
+	andi t1,t1,0x04 # pega direcao
+	beqz t1,MCHT_PRINT_NORMAL0
+	call PRINT_OBJ_MIRROR
+	j CONT_MCHT_PRINT_NORMAL0
+	MCHT_PRINT_NORMAL0: call PRINT_OBJ
+	CONT_MCHT_PRINT_NORMAL0:
+	li a0,0
+	call MARIO_HAMMER_SPRITE
+	j FIM_MARIO_CHECK_HAMMER
+	
+	MARIO_CHECK_HAMMER_TOGGLE:
+		la t0,mario_state
+		lb t1,0(t0)
+		andi t2,t1,0x02 # verifica se esta andando ou parado
+		bnez t2,FIM_MARIO_CHECK_HAMMER # se estiver andando, nao faz nada
+		andi t2,t1,0x01 # verifica se esta pulando
+		bnez t2,FIM_MARIO_CHECK_HAMMER # se estiver pulando, nao faz nada
+		# se estiver parado, muda o sprite do mario de acordo com o mario hammer type
+		la t0,mario_hammer_type
+		lb t1,0(t0)
+		beqz t1,MCHT_TYPE0 # se for tipo 0, muda pro tipo 1
+			sb zero,0(t0)
+			rmv_mario(mario_parado)
+			set_mario_move(0,0,mario_parado_martelo_baixo)
+			la t0,mario_state
+			lb t1,0(t0)
+			andi t1,t1,0x04 # verifica bit de direcao
+			beqz t1,MCHT_PRINT_NORMAL
+			j MCHT_PRINT_MIRROR
+		MCHT_TYPE0:
+		 	li t1,1
+		 	sb t1,0(t0) # salva prox tipo como 1
+		 	rmv_mario(mario_parado)
+		 	set_mario_move(0,0,mario_parado_martelo_cima)
+		 	la t0,mario_state
+			lb t1,0(t0)
+			andi t1,t1,0x04 # verifica bit de direcao
+			beqz t1,MCHT_PRINT_NORMAL
+			j MCHT_PRINT_MIRROR
+		 MCHT_PRINT_NORMAL:
+		 	call PRINT_OBJ
+		 	li a0,1
+			call MARIO_HAMMER_SPRITE
+			j FIM_MARIO_CHECK_HAMMER
+		 MCHT_PRINT_MIRROR:
+		 	call PRINT_OBJ_MIRROR
+		 	li a0,2
+			call MARIO_HAMMER_SPRITE
+	FIM_MARIO_CHECK_HAMMER:
+		free_stack(ra)
+		ret
+		
+# Gerencia o sprite do martelo do mario
+# a0 = qual direcao utilizar (0 = remover, 1 = direita, 2 = esquerda)
+# tipo (cima ou baixo) pegado da variavel
+MARIO_HAMMER_SPRITE:
+	save_stack(ra)
+	la t0,mario_state
+	lb t1,0(t0)
+	andi t1,t1,0x10
+	beqz t1,FIM_MARIO_HAMMER_SPRITE # se nao tiver martelo, nao faz nada
+	
+	beqz a0,RMV_MARIO_HAMMER_SPRITE
+	la t0,mario_hammer_type
+	lb t1,0(t0) # carrega o tipo do martelo (cima ou baixo) p/ as duas funcoes
+	li t0,1
+	beq a0,t0,MARIO_HAMMER_SPRITE_DIR
+	li t0,2
+	beq a0,t0,MARIO_HAMMER_SPRITE_ESQ
+	j FIM_MARIO_HAMMER_SPRITE
+	
+	RMV_MARIO_HAMMER_SPRITE:
+		jal GET_MAP_BACKUP
+		la t0,map_backup_info
+		sh zero,0(t0)
+		sh zero,2(t0)
+		sh zero,4(t0)
+		sh zero,6(t0)
+		j FIM_MARIO_HAMMER_SPRITE
+	MARIO_HAMMER_SPRITE_DIR: # faz o martelo caso o mario esteja virado p/ direita
+		beqz t1,MARIO_HAMMER_SPRITE_DIR_BAIXO # se for 0, faz martelo p/ direita baixo
+		# do contrario, faz martelo p/ direita cima
+		# remove martelo pra baixo
+		#la t0,pos_mario
+		#lh t1,0(t0) # x do mario
+		#lh t2,2(t0) # y do mario
+		#addi a0,t1,16 # x + 16 p/ posicao correta do martelo
+		#addi a1,t2,5 # y + 5
+		#la a2,display
+		#lw a2,0(a2) # display atual
+		#la a3,fase_current
+		#la a4,martelo_x
+		#call CLEAR_OBJPOS
+		# printa martelo pra cima
+		#la t0,pos_mario
+		#lh t1,0(t0) # x do mario
+		#lh t2,2(t0) # y do mario
+		#addi a0,t1,4 # x + 4 p/ posicao correta do martelo
+		#addi a1,t2,-14 # y -14
+		#la a2,display
+		#lw a2,0(a2) # display atual
+		#la a3,martelo_y
+		#call PRINT_OBJ
+		jal GET_MAP_BACKUP
+		la t0,pos_mario
+		lh t1,0(t0) # x do mario
+		lh t2,2(t0) # y do mario
+		addi a0,t1,4 # x + 4 p/ posicao correta do martelo
+		addi a1,t2,-14 # y -14
+		li a2,10
+		li a3,15
+		jal SET_MAP_BACKUP
+		la t0,pos_mario
+		lh t1,0(t0) # x do mario
+		lh t2,2(t0) # y do mario
+		addi a0,t1,4 # x + 4 p/ posicao correta do martelo
+		addi a1,t2,-14 # y -14
+		la a2,display
+		lw a2,0(a2) # display atual
+		la a3,martelo_y
+		call PRINT_OBJ
+		j FIM_MARIO_HAMMER_SPRITE
+		MARIO_HAMMER_SPRITE_DIR_BAIXO:
+			# remove martelo pra cima
+			#la t0,pos_mario
+			#lh t1,0(t0) # x do mario
+			#lh t2,2(t0) # y do mario
+			#addi a0,t1,4
+			#addi a1,t2,-14
+			#la a2,display
+			#lw a2,0(a2)
+			#la a3,fase_current
+			#la a4,martelo_y
+			#call CLEAR_OBJPOS
+			# printa martelo pra baixo
+			#la t0,pos_mario
+			#lh t1,0(t0) # x do mario
+			#lh t2,2(t0) # y do mario
+			#addi a0,t1,16 # x + 16 p/ posicao correta do martelo
+			#addi a1,t2,5 # y + 5
+			#la a2,display
+			#lw a2,0(a2) # display atual
+			#la a3,martelo_x
+			#call PRINT_OBJ
+			jal GET_MAP_BACKUP
+			la t0,pos_mario
+			lh t1,0(t0) # x do mario
+			lh t2,2(t0) # y do mario
+			addi a0,t1,16 # x + 16 p/ posicao correta do martelo
+			addi a1,t2,5 # y + 5
+			li a2,15
+			li a3,10
+			jal SET_MAP_BACKUP
+			la t0,pos_mario
+			lh t1,0(t0) # x do mario
+			lh t2,2(t0) # y do mario
+			addi a0,t1,16 # x + 16 p/ posicao correta do martelo
+			addi a1,t2,5 # y + 5
+			la a2,display
+			lw a2,0(a2) # display atual
+			la a3,martelo_x
+			call PRINT_OBJ
+			j FIM_MARIO_HAMMER_SPRITE
+		
+	MARIO_HAMMER_SPRITE_ESQ:
+		beqz t1,MARIO_HAMMER_SPRITE_ESQ_BAIXO # se for 0, faz martelo p/ esquerda baixo
+		# do contrario, faz martelo p/ esquerda cima
+		# remove martelo pra baixo
+		la t0,pos_mario
+		lh t1,0(t0) # x do mario
+		lh t2,2(t0) # y do mario
+		addi a0,t1,-13 # x -13 p/ posicao correta do martelo
+		addi a1,t2,5 # y + 5
+		la a2,display
+		lw a2,0(a2) # display atual
+		la a3,fase_current
+		la a4,martelo_x
+		call CLEAR_OBJPOS
+		# printa martelo pra cima
+		la t0,pos_mario
+		lh t1,0(t0) # x do mario
+		lh t2,2(t0) # y do mario
+		addi a0,t1,5 # x + 5 p/ posicao correta do martelo
+		addi a1,t2,-14 # y -14
+		la a2,display
+		lw a2,0(a2) # display atual
+		la a3,martelo_y
+		call PRINT_OBJ_MIRROR
+		j FIM_MARIO_HAMMER_SPRITE
+		MARIO_HAMMER_SPRITE_ESQ_BAIXO:
+			# remove martelo pra cima
+			la t0,pos_mario
+			lh t1,0(t0) # x do mario
+			lh t2,2(t0) # y do mario
+			addi a0,t1,5
+			addi a1,t2,-14
+			la a2,display
+			lw a2,0(a2)
+			la a3,fase_current
+			la a4,martelo_y
+			call CLEAR_OBJPOS
+			# printa martelo pra baixo
+			la t0,pos_mario
+			lh t1,0(t0) # x do mario
+			lh t2,2(t0) # y do mario
+			addi a0,t1,-13 # x - 13 p/ posicao correta do martelo
+			addi a1,t2,5 # y + 5
+			la a2,display
+			lw a2,0(a2) # display atual
+			la a3,martelo_x
+			call PRINT_OBJ_MIRROR
+		
+	FIM_MARIO_HAMMER_SPRITE:
+		free_stack(ra)
+		ret
+
+# Salva o backup do mapa 
+# a0 = x
+# a1 = y
+# a2 = largura
+# a3 = altura
+SET_MAP_BACKUP:
+	save_stack(ra) # salva ra e salvos na pilha
+	
+	la t0,map_backup_info
+	sh a0,0(t0) # salva x
+	sh a1,2(t0) # salva y
+	sh a2,4(t0) # salva largura
+	sh a3,6(t0) # salva altura
+	save_stack(a2)
+	# a0 definido na chamada
+	# a1 definido na chamada
+	li a2,DISPLAY0
+	call GET_POSITION # retorna endereco para pegar do display
+	free_stack(a2)
+	# a0 = endereco desejado do display
+	# a2 = largura
+	# a3 = altura
+	la a1,map_backup_data # endereco a escrever dados
+	MAPBACKUP_LOOP0: # imprime nas colunas
+		beq a2,zero,MAPBACKUP_LOOP1 # se chegar no (N)esimo pixel, pula para linha de baixo
+		lb t0,0(a0) # carrega em t0 byte correspondente do mapa
+		sb t0,0(a1) # imprime imagem no bitmap display
+		addi a2,a2,-1 # decrementa j
+		addi a0,a0,1 # passa para prox endereco
+		addi a1,a1,1 # passa para prox endereco
+		j MAPBACKUP_LOOP0
+		
+		MAPBACKUP_LOOP1: 
+			beq a3,zero,FIM_MAPBACKUP # se chegar no fim das linhas, termina execucao do procedimento
+			addi a3,a3,-1 # decrementa i
+			la t0,map_backup_info
+			lh t0,4(t0) # carrega largura
+			li t1,320
+			sub t1,t1,t0 # 320 - largura
+			add a0,a0,t1 # pula (320 - n) pixel no display
+			mv a2,t0 # reseta j
+			j MAPBACKUP_LOOP0
+			
+	FIM_MAPBACKUP:
+		free_stack(ra)
+		ret
+		
+# Retorna o backup do mapa 
+GET_MAP_BACKUP:
+	save_stack(ra) # salva ra e salvos na pilha
+	
+	la t0,map_backup_info
+	lh a0,0(t0) # carrega x
+	lh a1,2(t0) # carrega y
+	li a2,DISPLAY0
+	call GET_POSITION # retorna endereco para pegar do display
+	# a0 = endereco desejado do display
+	la t0,map_backup_info
+	lh a2,4(t0) # a2 = largura
+	lh a3,6(t0) # a3 = altura
+	la a1,map_backup_data # endereco a escrever dados
+	GET_MAPBACKUP_LOOP0: # imprime nas colunas
+		beq a2,zero,GET_MAPBACKUP_LOOP1 # se chegar no (N)esimo pixel, pula para linha de baixo
+		lb t0,0(a1) # carrega em t0 byte correspondente do mapa
+		sb t0,0(a0) # imprime imagem no bitmap display
+		addi a2,a2,-1 # decrementa j
+		addi a0,a0,1 # passa para prox endereco
+		addi a1,a1,1 # passa para prox endereco
+		j GET_MAPBACKUP_LOOP0
+		
+		GET_MAPBACKUP_LOOP1: 
+			beq a3,zero,FIM_GET_MAPBACKUP # se chegar no fim das linhas, termina execucao do procedimento
+			addi a3,a3,-1 # decrementa i
+			la t0,map_backup_info
+			lh t0,4(t0) # carrega largura
+			li t1,320
+			sub t1,t1,t0 # 320 - largura
+			add a0,a0,t1 # pula (320 - n) pixel no display
+			mv a2,t0 # reseta j
+			j GET_MAPBACKUP_LOOP0
+			
+	FIM_GET_MAPBACKUP:
+		free_stack(ra)
+		ret
+		
 # faz a morte do mario
 MARIO_DEATH:
 	# animacao e som de morte do mario

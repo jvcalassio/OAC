@@ -120,7 +120,7 @@ SET_FASE1:
 	# do contrario, carregar do endereco no RARS
 	la s1,fase_current # endereco do mapa geral
 	li t0,76800
-	la t1,fase1
+#la t1,fase1
 	addi t1,t1,8 # pula as words que indicam o tamanho da imagem
 	FOR_LOADFASE1:
 		beqz t0,FIM_LOADFASE1
@@ -255,17 +255,14 @@ PRINT_FASE:
 # tecla 32 = espaco
 # fim anotacao temporaria 
 MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
-	# mudar display
+	#####################################################
+	# Mudar display
 	#la t0,display
 	#lw t1,0(t0) # display atual
 	#lw t2,4(t0) # display anterior
 	#sw t2,0(t0)
 	#sw t1,4(t0) # troca displays na variavel
-	#li t0,CDISPLAY
-	#lw t1,0(t0) # carrega qual o display mostrado atual
-	#xori t1,t1,0x01
-	#sw t1,0(t0) # seta display
-	# fim mudar display
+	########## fim mudar display (contina no fim do loop)
 	
 	# verifica e toca o som ambiente
 	call AMBIENT_SOUND
@@ -281,6 +278,9 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	
 	# Verifica se precisa remover algum texto
 	call CHECK_POINTS_TIMER
+	
+	# Verifica se precisa remover o martelo
+	call MARIO_CHECK_HAMMER
 	
 	# Verifica se esta na posicao de vitoria
 	jal CHECK_VICTORY
@@ -357,6 +357,13 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		li a7,32
 		ecall
 		MAINLOOP_RET_SLEEP0: # sem sleep
+		###########################################
+		# Continuacao mudar display
+		#li t0,CDISPLAY
+		#lw t1,0(t0) # carrega qual o display mostrado atual
+		#xori t1,t1,0x01
+		#sw t1,0(t0) # seta display
+		###########################################
 		j MAINLOOP
 	MPUP: tail MARIO_PULO_UP
 	MPDIR: tail MARIO_PULO_DIR

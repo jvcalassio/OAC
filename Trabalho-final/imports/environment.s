@@ -5,6 +5,7 @@
 .include "../sprites/bin/lady_p2.s"
 .include "../sprites/bin/bolsa.s"
 .include "../sprites/bin/guardachuva.s"
+.include "../sprites/bin/martelo_x.s"
 .include "../sprites/bin/martelo_y.s"
 var_dk: .word 0
 var_lady: .word 0
@@ -14,7 +15,6 @@ victory_text: .string "PARABENS VC VENCEU"
 gameover_text: .string "GAME OVER"
 loading_text: .string "CARREGANDO"
 level_text: .string "LV"
-blank: .string " " # lembrar de apagar
 up_text: .string "UP"
 highscore_text: .string "HIGHSCORE"
 bonus_text: .string "BONUS"
@@ -523,15 +523,26 @@ INIT_ITEMS:
 		la a2,display
 		lw a2,0(a2)
 		la a3,martelo_y
-		call PRINT_OBJ
+		call PRINT_OBJ # martelo segundo andar
 		li a0,158
 		li a1,72
 		la a2,display
 		lw a2,0(a2)
 		la a3,martelo_y
-		call PRINT_OBJ
+		call PRINT_OBJ # martelo terceiro andar
 		
 		la t0,fase3_items
+		sb zero,0(t0)
+		la t0,points_timer
+		sw zero,0(t0)
+		la t0,points_pos
+		sh zero,0(t0)
+		sh zero,2(t0)
+		sh zero,4(t0)
+		sh zero,6(t0)
+		la t0,mario_hammer_timer
+		sw zero,0(t0)
+		la t0,mario_hammer_type
 		sb zero,0(t0)
 	
 	FIM_INIT_ITEMS:
@@ -564,9 +575,42 @@ CHECK_ITEMS:
 		bge t1,t0,FIM_CHECK_ITEMS # abaixo do 2 andar nao tem coletaveis
 		li t0,124
 		bge t1,t0,CHECK_ITEMS_F3_LV2 # verifica itens do segundo andar
+		li t0,112
+		bge t1,t0,CHECK_ITEMS_F3_MARTELO1 # verifica martelo do segundo andar
+		li t0,85
+		bge t1,t0,FIM_CHECK_ITEMS # 3o andar nao tem nada
+		li t0,75
+		bge t1,t0,CHECK_ITEMS_F3_MARTELO2 # verifica martelo do terceiro andar
 		li t0,64
 		blt t1,t0,CHECK_ITEMS_F3_LV4 # verifica itens do quarto andar
 		j FIM_CHECK_ITEMS
+		CHECK_ITEMS_F3_MARTELO1:
+			la t0,pos_mario
+			lh t1,0(t0) # x do mario
+			slti t0,t1,55 # x < 55?
+			beqz t0,FIM_CHECK_ITEMS # se x >= 55, nao esta na posicao do martelo
+			li a0,3 # item 3
+			li a1,3
+			j REMOVE_ITEM # remove martelo
+		CHECK_ITEMS_F3_MARTELO2:
+			la t0,pos_mario
+			lh t1,0(t0) # x do mario
+			slti t0,t1,165 # x < 165 ?
+			slti t2,t1,153 # x < 160 ?
+			add t0,t0,t2 # t0 + t2
+			li t2,1
+			li a0,4 # item 4
+			li a1,3 # fase 3
+			beq t0,t2,REMOVE_ITEM
+			addi t1,t1,18 # verificar vindo pela esquerda
+			slti t0,t1,165
+			slti t2,t1,153
+			add t0,t0,t2
+			li a0,4 # item 4
+			li a1,3 # fase 3
+			li t2,1
+			beq t0,t2,REMOVE_ITEM
+			j FIM_CHECK_ITEMS # se nao for, so sai
 		CHECK_ITEMS_F3_LV2:
 			# verificar bolsa
 			la t0,pos_mario
@@ -647,6 +691,11 @@ REMOVE_ITEM:
 		lb t1,0(t1) # carrega byte dos itens da fase
 		and t1,t1,t0 # procura bit do item desejado
 		bnez t1,FIM_REMOVE_ITEM # se nao der 0, o item ja foi pego
+		# verifica se o item eh um martelo ou nao
+		li t0,3
+		beq a0,t0,RMV_F3_HAMMER1 # se for martelo, nao adiciona pontos
+		li t0,4
+		beq a0,t0,RMV_F3_HAMMER2 # se for martelo, nao adiciona pontos
 		
 		#la t0,score
 		#lw t1,0(t0)
@@ -657,7 +706,7 @@ REMOVE_ITEM:
 		la t0,pos_mario
 		lh a1,0(t0) # x do mario
 		lh a2,2(t0) # y do mario
-		addi a2,a2,-8 # acima do y do mario (p/ nao sobrepor)
+		addi a2,a2,18 # abaixo do y mario (p/ nao sobrepor)
 		call GIVE_POINTS
 		mv a0,s0
 		# remove o item a1
@@ -711,6 +760,34 @@ REMOVE_ITEM:
 			lb t1,0(t0)
 			ori t1,t1,0x04 # adiciona bit do item 1
 			sb t1,0(t0) # seta como coletado
+			j FIM_REMOVE_ITEM
+		RMV_F3_HAMMER1:
+			li a0,50
+			li a1,111
+			la a2,display
+			lw a2,0(a2)
+			la a3,fase_current
+			la a4,martelo_y
+			call CLEAR_OBJPOS # remove sprite
+			la t0,fase3_items
+			lb t1,0(t0)
+			ori t1,t1,0x08 # adiciona bit do martelo 2 andar
+			sb t1,0(t0)
+			call MARIO_SET_HAMMER
+			j FIM_REMOVE_ITEM
+		RMV_F3_HAMMER2:
+			li a0,158
+			li a1,72
+			la a2,display
+			lw a2,0(a2)
+			la a3,fase_current
+			la a4,martelo_y
+			call CLEAR_OBJPOS # remove sprite
+			la t0,fase3_items
+			lb t1,0(t0)
+			ori t1,t1,0x10 # adiciona bit do martelo 3 andar
+			sb t1,0(t0)
+			call MARIO_SET_HAMMER
 	
 	FIM_REMOVE_ITEM:
 		j FIM_CHECK_ITEMS
