@@ -1343,7 +1343,7 @@ MARIO_HAMMER_SPRITE:
 		addi a0,t1,4 # x + 4 p/ posicao correta do martelo
 		addi a1,t2,-14 # y -14
 		li a2,10
-		li a3,15
+		li a3,13
 		jal SET_MAP_BACKUP
 		la t0,pos_mario
 		lh t1,0(t0) # x do mario
@@ -1401,16 +1401,25 @@ MARIO_HAMMER_SPRITE:
 		beqz t1,MARIO_HAMMER_SPRITE_ESQ_BAIXO # se for 0, faz martelo p/ esquerda baixo
 		# do contrario, faz martelo p/ esquerda cima
 		# remove martelo pra baixo
+		#la t0,pos_mario
+		#lh t1,0(t0) # x do mario
+		#lh t2,2(t0) # y do mario
+		#addi a0,t1,-13 # x -13 p/ posicao correta do martelo
+		#addi a1,t2,5 # y + 5
+		#la a2,display
+		#lw a2,0(a2) # display atual
+		#la a3,fase_current
+		#la a4,martelo_x
+		#call CLEAR_OBJPOS
+		jal GET_MAP_BACKUP
 		la t0,pos_mario
 		lh t1,0(t0) # x do mario
 		lh t2,2(t0) # y do mario
-		addi a0,t1,-13 # x -13 p/ posicao correta do martelo
-		addi a1,t2,5 # y + 5
-		la a2,display
-		lw a2,0(a2) # display atual
-		la a3,fase_current
-		la a4,martelo_x
-		call CLEAR_OBJPOS
+		addi a0,t1,5 # x + 5 p/ posicao correta do martelo
+		addi a1,t2,-14 # y - 14
+		li a2,10
+		li a3,13
+		jal SET_MAP_BACKUP
 		# printa martelo pra cima
 		la t0,pos_mario
 		lh t1,0(t0) # x do mario
@@ -1424,16 +1433,25 @@ MARIO_HAMMER_SPRITE:
 		j FIM_MARIO_HAMMER_SPRITE
 		MARIO_HAMMER_SPRITE_ESQ_BAIXO:
 			# remove martelo pra cima
+			#la t0,pos_mario
+			#lh t1,0(t0) # x do mario
+			#lh t2,2(t0) # y do mario
+			#addi a0,t1,5
+			#addi a1,t2,-14
+			#la a2,display
+			#lw a2,0(a2)
+			#la a3,fase_current
+			#la a4,martelo_y
+			#call CLEAR_OBJPOS
+			jal GET_MAP_BACKUP
 			la t0,pos_mario
 			lh t1,0(t0) # x do mario
 			lh t2,2(t0) # y do mario
-			addi a0,t1,5
-			addi a1,t2,-14
-			la a2,display
-			lw a2,0(a2)
-			la a3,fase_current
-			la a4,martelo_y
-			call CLEAR_OBJPOS
+			addi a0,t1,-13 # x - 13 p/ posicao correta do martelo
+			addi a1,t2,5 # y + 5
+			li a2,15
+			li a3,10
+			jal SET_MAP_BACKUP
 			# printa martelo pra baixo
 			la t0,pos_mario
 			lh t1,0(t0) # x do mario
