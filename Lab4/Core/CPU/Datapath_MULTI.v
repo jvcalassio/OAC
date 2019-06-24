@@ -185,7 +185,6 @@ assign DwAddress        = wMemAddress;
 assign DwWriteData      = wMemDataWrite;
 wire 	 [31:0] wReadData = DwReadData;
 
-
 // Unidade de controle de leitura 
 wire [31:0] wMemLoad;
 wire [ 1:0] wLoadException;
@@ -330,66 +329,71 @@ wire [31:0] wSUCAUSEData;
 
 // selecao dos dados CSR
 always @(*) begin
-	/*if(PC[1:0] != 2'b00) begin // endereco de instrucao desalinhado
-		wSUCAUSEWrite	<= ON; // escreve ucause
-		wSUCAUSEData 	<= 32'h00000000;
-		wSUEPCWrite 	<= ON; // escreve UEPC
-		wSCOrigPC 		<= 2'b11; // PC vem do CSR
-		wSCSRegWrite 	<= ON; // escreve em csr
-		wSCSRWSource	<= 3'b111; 
-		wSCSType			<= 2'b01; // excessao com ucause
-		wSCEscrevePC	<= 1'b1;
-	end else if (PC < BEGINNING_TEXT || PC > END_TEXT) begin // endereco fora do segmento .text
-		wSUCAUSEWrite	<= ON; // escreve ucause
-		wSUCAUSEData 	<= 32'h00000001;
-		wSUEPCWrite 	<= ON; // escreve UEPC
-		wSCOrigPC 		<= 2'b11; // PC vem do CSR
-		wSCSRegWrite 	<= ON; // escreve em csr
-		wSCSRWSource	<= 3'b111; 
-		wSCSType			<= 2'b01; // excessao com ucause
-		wSCEscrevePC	<= 1'b1;
+	if(wCEscrevePCBack && wCEscreveIR && wCEscrevePC) begin // excessao do pc
+		if(PC[1:0] != 2'b00) begin // endereco de instrucao desalinhado
+			wSCSRWSource	<= 3'b111;
+			wSCSType			<= 2'b01;
+			wSCSRegWrite	<= 1'b1;
+			wSUCAUSEWrite	<= 1'b1;
+			wSUCAUSEData	<= 32'h00000000; // causa = 0;
+			wSUEPCWrite		<= 1'b1;
+			wSCOrigPC		<= 2'b11;
+			wSCEscrevePC	<= 1'b1;
+		end else if (PC < BEGINNING_TEXT || PC > END_TEXT) begin // endereco fora do segmento .text
+			wSCSRWSource	<= 3'b111;
+			wSCSType			<= 2'b01;
+			wSCSRegWrite	<= 1'b1;
+			wSUCAUSEWrite	<= 1'b1;
+			wSUCAUSEData	<= 32'h00000001; // causa = 1;
+			wSUEPCWrite		<= 1'b1;
+			wSCOrigPC		<= 2'b11;
+			wSCEscrevePC	<= 1'b1;
+		end
 	end
-	else if(wLoadException == 2'b01) begin // endereco de load desalinhado
-		wSCSType 		<= 2'b01;
-		wSCSRWSource  	<= 3'b111;
-		wSUCAUSEData  	<= 32'h00000004; // causa = 4;
-		wSUCAUSEWrite 	<= ON;
-		wSUEPCWrite 	<= ON;
-		wSCOrigPC		<= 2'b11;
-		wSCSRegWrite   <= ON;
-		wSCEscrevePC	<= 1'b1;
+	else if(wCMemRead && wCIouD) begin // excessao de leitura
+		if(wLoadException == 2'b01) begin // endereco de load desalinhado
+			wSCSRWSource	<= 3'b111;
+			wSCSType			<= 2'b01;
+			wSCSRegWrite	<= 1'b1;
+			wSUCAUSEWrite	<= 1'b1;
+			wSUCAUSEData	<= 32'h00000004; // causa = 4;
+			wSUEPCWrite		<= 1'b1;
+			wSCOrigPC		<= 2'b11;
+			wSCEscrevePC	<= 1'b1;
+		end
+		else if(wLoadException == 2'b10) begin // endereco de load fora dos segmentos
+			wSCSRWSource	<= 3'b111;
+			wSCSType			<= 2'b01;
+			wSCSRegWrite	<= 1'b1;
+			wSUCAUSEWrite	<= 1'b1;
+			wSUCAUSEData	<= 32'h00000005; // causa = 5;
+			wSUEPCWrite		<= 1'b1;
+			wSCOrigPC		<= 2'b11;
+			wSCEscrevePC	<= 1'b1;
+		end
+	end else if(wCMemWrite && wCIouD) begin // excessao de escrita
+		if(wStoreException == 2'b01) begin // endereco de store desalinhado
+			wSCSRWSource	<= 3'b111;
+			wSCSType			<= 2'b01;
+			wSCSRegWrite	<= 1'b1;
+			wSUCAUSEWrite	<= 1'b1;
+			wSUCAUSEData	<= 32'h00000006; // causa = 6;
+			wSUEPCWrite		<= 1'b1;
+			wSCOrigPC		<= 2'b11;
+			wSCEscrevePC	<= 1'b1;
+		end
+		else if(wStoreException == 2'b10) begin // endereco de store fora dos segmentos
+			wSCSRWSource	<= 3'b111;
+			wSCSType			<= 2'b01;
+			wSCSRegWrite	<= 1'b1;
+			wSUCAUSEWrite	<= 1'b1;
+			wSUCAUSEData	<= 32'h00000007; // causa = 7;
+			wSUEPCWrite		<= 1'b1;
+			wSCOrigPC		<= 2'b11;
+			wSCEscrevePC	<= 1'b1;
+		end
 	end
-	else if(wLoadException == 2'b10) begin // endereco de load fora dos segmentos
-		wSCSType 		<= 2'b01;
-		wSCSRWSource  	<= 3'b111;
-		wSUCAUSEData  	<= 32'h00000005; // causa = 5;
-		wSUCAUSEWrite 	<= ON;
-		wSUEPCWrite 	<= ON;
-		wSCOrigPC		<= 2'b11;
-		wSCSRegWrite  	<= ON;
-		wSCEscrevePC	<= 1'b1;
-	end
-	else if(wStoreException == 2'b01) begin // endereco de store desalinhado
-		wSCSType 		<= 2'b01;
-		wSCSRWSource  	<= 3'b111;
-		wSUCAUSEData  	<= 32'h00000006; // causa = 6;
-		wSUCAUSEWrite 	<= ON;
-		wSUEPCWrite 	<= ON;
-		wSCOrigPC		<= 2'b11;
-		wSCSRegWrite   <= ON;
-		wSCEscrevePC	<= 1'b1;
-	end
-	else if(wStoreException == 2'b10) begin // endereco de store fora dos segmentos
-		wSCSType 		<= 2'b01;
-		wSCSRWSource  	<= 3'b111;
-		wSUCAUSEData  	<= 32'h00000007; // causa = 7;
-		wSUCAUSEWrite 	<= ON;
-		wSUEPCWrite 	<= ON;
-		wSCOrigPC		<= 2'b11;
-		wSCSRegWrite  	<= ON;
-		wSCEscrevePC	<= 1'b1;
-	end
-	else*/ begin // sem exception
+	else begin // sem exception
 		wSCSRWSource 	<= wCSRWSource;
 		wSCSType			<= wCSType;
 		wSCSRegWrite 	<= wCSRegWrite;
