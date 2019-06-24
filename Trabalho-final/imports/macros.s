@@ -36,6 +36,12 @@
 	ecall
 .end_macro
 
+.macro sleep(%tempo)
+	li a0,%tempo
+	li a7,32
+	ecall
+.end_macro
+
 # Enderecos
 .eqv DISPLAY0 0xff000000
 .eqv DISPLAY1 0xff100000
@@ -47,12 +53,16 @@
 # Constantes de jogo
 #.eqv START_MARIO_X_FASE1 84
 #.eqv START_MARIO_Y_FASE1 199
-.eqv START_MARIO_X_FASE1 222
-.eqv START_MARIO_Y_FASE1 46
+.eqv START_MARIO_X_FASE1 222 # retirar
+.eqv START_MARIO_Y_FASE1 46 # retirar
 .eqv START_MARIO_X_FASE2 52
 .eqv START_MARIO_Y_FASE2 183
+.eqv START_MARIO_X_FASE3 92
+.eqv START_MARIO_Y_FASE3 199
 
-.eqv STARTING_BONUS 5000
+.eqv STARTING_BONUS 5100 # 100 adicionais por causa do tempo dos sons do comeco
+.eqv POINTS_TEXT_TIME 200 # tempo de exibicao do texto de pontos adquiridos
+.eqv HAMMER_TIME 16000 # tempo que o mario fica com o martelo (16s)
 
 # Controlador USB
 .eqv USB_CTRL_ADDR 0xff200122

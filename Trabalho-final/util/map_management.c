@@ -48,6 +48,8 @@ int main()
 				fd = fopen("../sprites/bin/fase1.s", "r");
 			else if (buf[0] == 2)
 				fd = fopen("../sprites/bin/fase2.s", "r");
+			else if (buf[0] == 3)
+				fd = fopen("../sprites/bin/fase3.s", "r");
 			else
 				continue;
 			
@@ -63,7 +65,7 @@ int main()
 			while (fscanf(fd, "%d,", &enviar) == 1)
 			{
 				RS232_SendByte(cport_nr, enviar);
-				Sleep(0.15);
+				//Sleep(0.15);
 			}
 
 			printf("Mapa enviado.\n");

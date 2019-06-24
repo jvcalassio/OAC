@@ -16,6 +16,7 @@ Esquemas do mapa:
 //0010 = degrau p esquerda		= A 
 //0011 = degrau p direita		= D
 0010 = gravidade			= G
+0011 = morte certa			= M
 0100 = escada 				= E
 0101 = fim escada 			= T
 1000 = parede				= P
@@ -27,8 +28,8 @@ Esquemas do mapa:
 
 0000 = nada
 0001 = chao quebradico (fase 3)	= F
-0010 = item bonus (500 pts)		= B
-0100 = martelo					= M
+0010 = item bonus (800 pts)		= B
+0100 = martelo					= H
 1000 = vitoria					= V (ar), W (chao)
 
 
@@ -58,6 +59,10 @@ int main(){
 				t = 1;
 				printf("0x02");
 			}
+			if(mapa[i] == 'M'){
+				t = 1;
+				printf("0x03");
+			}
 			if(mapa[i] == 'E'){
 				t = 1;
 				printf("0x04");
@@ -77,6 +82,10 @@ int main(){
 			if(mapa[i] == 'W'){
 				t = 1;
 				printf("0x81");
+			}
+			if(mapa[i] == 'B'){
+				t = 1;
+				printf("0x21");
 			}
 			if(j == 59 && t == 1){
 				if(i != 79){
