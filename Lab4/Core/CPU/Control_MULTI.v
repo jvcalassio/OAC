@@ -110,7 +110,13 @@ always @(*)
 				oFWriteData    <= 1'b0;
 				oWrite2Mem     <= 1'b0;
 `endif	
-				
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
 				nx_state 		<= ST_FETCH1;
 			end
 
@@ -137,6 +143,13 @@ always @(*)
 				oFWriteData    <= 1'b0;
 				oWrite2Mem     <= 1'b0;
 `endif	
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
 				
 				nx_state 		<= ST_DECODE;
 			end
@@ -164,7 +177,13 @@ always @(*)
 				oFWriteData    <= 1'b0;
 				oWrite2Mem     <= 1'b0;
 `endif	
-				
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
 				case (Opcode)
 					OPC_LOAD,
 					OPC_STORE:	nx_state 		<= ST_LWSW;
@@ -182,8 +201,18 @@ always @(*)
 					OPC_FLOAD:  nx_state       <= ST_LWSW;
 					OPC_FSTORE: nx_state       <= ST_LWSW;
 `endif
-					default:
+					default: begin
+									oOrigAULA 	 <= 2'b11;
+									oOrigBULA 	 <= 2'b11;	
+									oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+									oUCAUSEWrite <= 1'b1; // escreve ucause
+									oUEPCWrite 	 <= 1'b1; // escreve uepc
+									oCSType 		 <= 2'b01; // tipo exception
+									oUCAUSEData  <= 32'h00000002; // causa = 2
+									oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+									oBreak 		 <= 1'b0; // nao da break
 									nx_state 		<= ST_ERRO;
+								end
 				endcase		
 			end	
 
@@ -211,7 +240,13 @@ always @(*)
 				oWrite2Mem     <= 1'b0;
 `endif	
 			
-				
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
 				case (Opcode)
 					OPC_LOAD:	nx_state 		<= ST_LW;
 					OPC_STORE:	nx_state 		<= ST_SW;
@@ -219,8 +254,18 @@ always @(*)
 					OPC_FLOAD:  nx_state       <= ST_FLW;
 					OPC_FSTORE: nx_state       <= ST_FSW;
 `endif
-					default:
+					default: begin
+									oOrigAULA 	 <= 2'b11;
+									oOrigBULA 	 <= 2'b11;	
+									oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+									oUCAUSEWrite <= 1'b1; // escreve ucause
+									oUEPCWrite 	 <= 1'b1; // escreve uepc
+									oCSType 		 <= 2'b01; // tipo exception
+									oUCAUSEData  <= 32'h00000002; // causa = 2
+									oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+									oBreak 		 <= 1'b0; // nao da break
 									nx_state 		<= ST_ERRO;
+								end
 				endcase		
 			end	
 	
@@ -249,7 +294,14 @@ always @(*)
 				oWrite2Mem     <= 1'b0;
 `endif	
 			
-
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
+				
 				nx_state 		<= ST_LW1;
 			end
 
@@ -276,7 +328,13 @@ always @(*)
 				oFWriteData    <= 1'b0;
 				oWrite2Mem     <= 1'b0;
 `endif	
-			
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
 
 				nx_state 		<= ST_LW2;
 			end			
@@ -304,7 +362,13 @@ always @(*)
 				oFWriteData    <= 1'b0;
 				oWrite2Mem     <= 1'b0;
 `endif	
-		
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
 
 				nx_state 		<= ST_FETCH;
 			end
@@ -332,7 +396,13 @@ always @(*)
 				oFWriteData    <= 1'b0;
 				oWrite2Mem     <= 1'b0;
 `endif	
-			
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
 
 				nx_state 		<= ST_SW1;
 			end
@@ -360,7 +430,13 @@ always @(*)
 				oFWriteData    <= 1'b0;
 				oWrite2Mem     <= 1'b0;
 `endif	
-			
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
 
 				nx_state 		<= ST_FETCH;
 			end			
@@ -387,7 +463,13 @@ always @(*)
 				oFWriteData    <= 1'b0;
 				oWrite2Mem     <= 1'b0;
 `endif	
-
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
 						
 				nx_state 		<= ST_ULAREGWRITE;
 				
@@ -428,7 +510,17 @@ always @(*)
 						FUNCT3_REMU:	begin	 oALUControl <= OPREMU;	nx_state <= ST_DIVREM; end
 						default: // instrucao invalida
 							begin 
-								oALUControl 	<= OPNULL;		
+								oOrigAULA 	 <= 2'b11;
+								oOrigBULA 	 <= 2'b11;	
+								oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+								oUCAUSEWrite <= 1'b1; // escreve ucause
+								oUEPCWrite 	 <= 1'b1; // escreve uepc
+								oCSType 		 <= 2'b01; // tipo exception
+								oUCAUSEData  <= 32'h00000002; // causa = 2
+								oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+								oBreak 		 <= 1'b0; // nao da break
+								//oALUControl 	<= OPNULL;		
+								oALUControl  <= OPADD;	
 								nx_state			<= ST_ERRO;
 							end	
 					endcase				
@@ -464,7 +556,14 @@ always @(*)
 				oFWriteData    <= 1'b0;
 				oWrite2Mem     <= 1'b0;
 `endif	
-			
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
+				
 				case (Funct3)
 						FUNCT3_DIV:		oALUControl <= OPDIV;
 						FUNCT3_DIVU:	oALUControl <= OPDIVU;
@@ -472,7 +571,17 @@ always @(*)
 						FUNCT3_REMU:	oALUControl <= OPREMU;
 						default: // instrucao invalida
 							begin 
-								oALUControl 	<= OPNULL;		
+								oOrigAULA 	 <= 2'b11;
+								oOrigBULA 	 <= 2'b11;	
+								oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+								oUCAUSEWrite <= 1'b1; // escreve ucause
+								oUEPCWrite 	 <= 1'b1; // escreve uepc
+								oCSType 		 <= 2'b01; // tipo exception
+								oUCAUSEData  <= 32'h00000002; // causa = 2
+								oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+								oBreak 		 <= 1'b0; // nao da break
+								//oALUControl 	<= OPNULL;		
+								oALUControl  <= OPADD;
 								nx_state			<= ST_ERRO;
 							end	
 				endcase			
@@ -505,7 +614,13 @@ always @(*)
 				oFWriteData    <= 1'b0;
 				oWrite2Mem     <= 1'b0;
 `endif	
-
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
 						
 				nx_state 		<= ST_ULAREGWRITE;
 				
@@ -523,7 +638,17 @@ always @(*)
 					FUNCT3_AND:			oALUControl <= OPAND;	
 					default: // instrucao invalida
 						begin 
-							oALUControl 	<= OPNULL;		
+							oOrigAULA 	 <= 2'b11;
+							oOrigBULA 	 <= 2'b11;	
+							oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+							oUCAUSEWrite <= 1'b1; // escreve ucause
+							oUEPCWrite 	 <= 1'b1; // escreve uepc
+							oCSType 		 <= 2'b01; // tipo exception
+							oUCAUSEData  <= 32'h00000002; // causa = 2
+							oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+							oBreak 		 <= 1'b0; // nao da break
+							//oALUControl 	<= OPNULL;		
+							oALUControl  <= OPADD;
 							nx_state			<= ST_ERRO;
 						end				
 				endcase
@@ -554,7 +679,13 @@ always @(*)
 				oFWriteData    <= 1'b0;
 				oWrite2Mem     <= 1'b0;
 `endif	
-
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
 
 				nx_state 		<= ST_FETCH;
 			end		
@@ -582,7 +713,13 @@ always @(*)
 				oFWriteData    <= 1'b0;
 				oWrite2Mem     <= 1'b0;
 `endif	
-
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
 						
 				nx_state 		<= ST_ULAREGWRITE;
 			end			
@@ -610,7 +747,13 @@ always @(*)
 				oFWriteData    <= 1'b0;
 				oWrite2Mem     <= 1'b0;
 `endif	
-
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
 
 				nx_state 		<= ST_ULAREGWRITE;
 			end
@@ -638,7 +781,13 @@ always @(*)
 				oFWriteData    <= 1'b0;
 				oWrite2Mem     <= 1'b0;
 `endif	
-			
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
 
 				nx_state 		<= ST_FETCH;
 			end
@@ -666,7 +815,13 @@ always @(*)
 				oFWriteData    <= 1'b0;
 				oWrite2Mem     <= 1'b0;
 `endif	
-			
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
 
 				nx_state 		<= ST_FETCH;
 			end
@@ -695,7 +850,13 @@ always @(*)
 				oFWriteData    <= 1'b0;
 				oWrite2Mem     <= 1'b0;
 `endif	
-			
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
 
 				nx_state 		<= ST_FETCH;
 			end			
@@ -704,13 +865,14 @@ always @(*)
 				case(Funct3)
 					FUNCT3_ECALL:
 						begin
-							oEscrevePC 		<= 1'b1; // escreve em pc
+							oEscreveIR		<= 1'b0;
+							oEscrevePC 		<= 1'b0; // escreve em pc
 							oEscrevePCCond <= 1'b0; // nao eh branch
 							oEscrevePCBack <= 1'b0; // nao eh fetch
-							oOrigAULA		<= 1'b0; // nao usa ula
-							oOrigBULA		<= 1'b0;
-							oMem2Reg			<= 2'b00; // nao escreve em reg
-							oOrigPC			<= 2'b11; // pc vem de utvec
+							oOrigAULA		<= 2'b00; // nao usa ula
+							oOrigBULA		<= 2'b00;
+							oMem2Reg			<= 3'b000; // nao escreve em reg
+							oOrigPC			<= 2'b11; // pc vem do CSR lido
 							oIouD				<= 1'b0; // le a memoria de instrucoes
 							oRegWrite		<= 1'b0; // nao escreve reg inteiro
 							oMemWrite		<= 1'b0; // nao escreve na memoria
@@ -724,56 +886,583 @@ always @(*)
 							oFWriteData    <= 1'b0;
 							oWrite2Mem     <= 1'b0;
 `endif
-							nx_state 		<= ST_FETCH; // prox estado eh pegar a prox instrucao
+							//nx_state 		<= ST_FETCH; // prox estado eh pegar a prox instrucao
 							case(Rs2)
-								begin
 									RS2_ECALL:
 										begin
-											oCSRegWrite	 <= 1'b0;
-											oUCAUSEWrite <= 1'b0;
-											oUEPCWrite 	 <= 1'b0;
-											oCSType 		 <= 2'b00;
-											oUCAUSEData  <= 32'h00000000;
-											oCSRWSource  <= 2'b00;
-											oBreak 		 <= 1'b0;
+											oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+											oUCAUSEWrite <= 1'b1; // escreve ucause
+											oUEPCWrite 	 <= 1'b1; // escreve uepc
+											oCSType 		 <= 2'b01; // tipo exception
+											oUCAUSEData  <= 32'h00000008; // causa = 8
+											oCSRWSource  <= 3'b000; // *********** MEXER AQUI **************
+											oBreak 		 <= 1'b0; // nao da break
+											nx_state		 <= ST_ECALL1;
 										end
 									RS2_URET:
 										begin
-											oCSRegWrite	 <= 1'b0;
-											oUCAUSEWrite <= 1'b0;
-											oUEPCWrite 	 <= 1'b0;
-											oCSType 		 <= 2'b00;
-											oUCAUSEData  <= 32'h00000000;
-											oCSRWSource  <= 2'b00;
-											oBreak 		 <= 1'b0;
+											oCSRegWrite	 <= 1'b0; // nao escreve csr
+											oUCAUSEWrite <= 1'b0; // nao escreve ucause
+											oUEPCWrite 	 <= 1'b0; // nao escreve uepc 
+											oCSType 		 <= 2'b10; // tipo uret
+											oUCAUSEData  <= ZERO; // nao escreve ucause
+											oCSRWSource  <= 3'b000; // nao escreve csr ********** MEXER AQUI ********8
+											oBreak 		 <= 1'b0; // nao da break
+											nx_state		 <= ST_URET1;
 										end
 									RS2_EBREAK:
 										begin
+											oEscrevePC 	 <= 1'b0; // nao escreve em pc
 											oCSRegWrite	 <= 1'b0;
 											oUCAUSEWrite <= 1'b0;
 											oUEPCWrite 	 <= 1'b0;
 											oCSType 		 <= 2'b00;
-											oUCAUSEData  <= 32'h00000000;
-											oCSRWSource  <= 2'b00;
-											oBreak 		 <= 1'b1;
+											oUCAUSEData  <= ZERO;
+											oCSRWSource  <= 3'b000;
+											oOrigPC		 <= 2'b00; // pc vem de PC+4
+											oBreak 		 <= 1'b1; // nao faz nada alem de dar break
+											nx_state		 <= ST_FETCH;
 										end
-								end
+									default: // Instrucao invalida
+										begin
+											oEscreveIR 		<= 1'b0;
+											oEscrevePC 		<= 1'b0;
+											oEscrevePCCond <= 1'b0;
+											oEscrevePCBack <= 1'b0;
+											oOrigAULA 		<= 2'b11;
+											oOrigBULA 		<= 2'b11;	 
+											oMem2Reg 		<= 3'b000;
+											oOrigPC 			<= 2'b00;
+											oIouD 			<= 1'b0;
+											oRegWrite 		<= 1'b0;
+											oMemWrite 		<= 1'b0;
+											oMemRead 		<= 1'b0;
+											oALUControl 	<= OPADD;
+
+											oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+											oUCAUSEWrite <= 1'b1; // escreve ucause
+											oUEPCWrite 	 <= 1'b1; // escreve uepc
+											oCSType 		 <= 2'b01; // tipo exception
+											oUCAUSEData  <= 32'h00000002; // causa = 2
+											oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+											oBreak 		 <= 1'b0; // nao da break
+											
+											nx_state 		<= ST_ERRO;
+										end
 							endcase
 						end
+						FUNCT3_CSRRW:
+							begin
+								oEscrevePC 		<= 1'b0; // nao escreve em pc
+								oEscrevePCCond <= 1'b0; // nao eh branch
+								oEscrevePCBack <= 1'b0; // nao eh fetch
+								oOrigAULA		<= 2'b00; // nao usa ula
+								oOrigBULA		<= 2'b00;
+								oMem2Reg			<= 3'b100; // escreve dado lido do csr no registrador int
+								oOrigPC			<= 2'b00; // pc vem de PC+4
+								oIouD				<= 1'b0; // le a memoria de instrucoes
+								oRegWrite		<= 1'b1; // escreve reg inteiro
+								oMemWrite		<= 1'b0; // nao escreve na memoria
+								oMemRead			<= 1'b0; // nao le da memoria
+								oALUControl		<= OPNULL; // nao usa ula
+`ifdef RV32IMF                                                 //RV32IMF
+								oFRegWrite     <= 1'b0;
+								oFPALUControl  <= OPNULL;
+								oOrigAFPALU    <= 1'b0;
+								oFPALUStart    <= 1'b0;
+								oFWriteData    <= 1'b0;
+								oWrite2Mem     <= 1'b0;
+`endif
+								oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+								oUCAUSEWrite <= 1'b0; // nao escreve ucause
+								oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+								oCSType 		 <= 2'b11; // tipo instrucao csr
+								oUCAUSEData  <= ZERO; // sem ucause
+								oCSRWSource  <= 3'b000; // *********** MEXER AQUI **************
+								oBreak 		 <= 1'b0; // nao da break
+											
+								nx_state 		<= ST_CSRRW1; // prox estado eh continuar csrrw
+							end
+						FUNCT3_CSRRS:
+							begin
+								oEscrevePC 		<= 1'b0; // nao escreve em pc
+								oEscrevePCCond <= 1'b0; // nao eh branch
+								oEscrevePCBack <= 1'b0; // nao eh fetch
+								oOrigAULA		<= 2'b00; // nao usa ula
+								oOrigBULA		<= 2'b00;
+								oMem2Reg			<= 3'b100; // escreve dado lido do csr no registrador int
+								oOrigPC			<= 2'b00; // pc vem de PC+4
+								oIouD				<= 1'b0; // le a memoria de instrucoes
+								oRegWrite		<= 1'b1; // escreve reg inteiro
+								oMemWrite		<= 1'b0; // nao escreve na memoria
+								oMemRead			<= 1'b0; // nao le da memoria
+								oALUControl		<= OPNULL; // nao usa ula
+`ifdef RV32IMF                                                 //RV32IMF
+								oFRegWrite     <= 1'b0;
+								oFPALUControl  <= OPNULL;
+								oOrigAFPALU    <= 1'b0;
+								oFPALUStart    <= 1'b0;
+								oFWriteData    <= 1'b0;
+								oWrite2Mem     <= 1'b0;
+`endif
+								oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+								oUCAUSEWrite <= 1'b0; // nao escreve ucause
+								oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+								oCSType 		 <= 2'b11; // tipo instrucao csr
+								oUCAUSEData  <= ZERO; // sem ucause
+								oCSRWSource  <= 3'b001; // *********** MEXER AQUI **************
+								oBreak 		 <= 1'b0; // nao da break
+											
+								nx_state 		<= ST_CSRRS1; // prox estado eh continuar csrrw
+							end
+						FUNCT3_CSRRC:
+							begin
+								oEscrevePC 		<= 1'b0; // nao escreve em pc
+								oEscrevePCCond <= 1'b0; // nao eh branch
+								oEscrevePCBack <= 1'b0; // nao eh fetch
+								oOrigAULA		<= 2'b00; // nao usa ula
+								oOrigBULA		<= 2'b00;
+								oMem2Reg			<= 3'b100; // escreve dado lido do csr no registrador int
+								oOrigPC			<= 2'b00; // pc vem de PC+4
+								oIouD				<= 1'b0; // le a memoria de instrucoes
+								oRegWrite		<= 1'b1; // escreve reg inteiro
+								oMemWrite		<= 1'b0; // nao escreve na memoria
+								oMemRead			<= 1'b0; // nao le da memoria
+								oALUControl		<= OPNULL; // nao usa ula
+`ifdef RV32IMF                                                 //RV32IMF
+								oFRegWrite     <= 1'b0;
+								oFPALUControl  <= OPNULL;
+								oOrigAFPALU    <= 1'b0;
+								oFPALUStart    <= 1'b0;
+								oFWriteData    <= 1'b0;
+								oWrite2Mem     <= 1'b0;
+`endif
+								oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+								oUCAUSEWrite <= 1'b0; // nao escreve ucause
+								oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+								oCSType 		 <= 2'b11; // tipo instrucao csr
+								oUCAUSEData  <= ZERO; // sem ucause
+								oCSRWSource  <= 3'b010; // *********** MEXER AQUI **************
+								oBreak 		 <= 1'b0; // nao da break
+											
+								nx_state 		<= ST_CSRRC1; // prox estado eh continuar csrrw
+							end
+						FUNCT3_CSRRWI:
+							begin
+								oEscrevePC 		<= 1'b0; // nao escreve em pc
+								oEscrevePCCond <= 1'b0; // nao eh branch
+								oEscrevePCBack <= 1'b0; // nao eh fetch
+								oOrigAULA		<= 2'b00; // nao usa ula
+								oOrigBULA		<= 2'b00;
+								oMem2Reg			<= 3'b100; // escreve dado lido do csr no registrador int
+								oOrigPC			<= 2'b00; // pc vem de PC+4
+								oIouD				<= 1'b0; // le a memoria de instrucoes
+								oRegWrite		<= 1'b1; // escreve reg inteiro
+								oMemWrite		<= 1'b0; // nao escreve na memoria
+								oMemRead			<= 1'b0; // nao le da memoria
+								oALUControl		<= OPNULL; // nao usa ula
+`ifdef RV32IMF                                                 //RV32IMF
+								oFRegWrite     <= 1'b0;
+								oFPALUControl  <= OPNULL;
+								oOrigAFPALU    <= 1'b0;
+								oFPALUStart    <= 1'b0;
+								oFWriteData    <= 1'b0;
+								oWrite2Mem     <= 1'b0;
+`endif
+								oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+								oUCAUSEWrite <= 1'b0; // nao escreve ucause
+								oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+								oCSType 		 <= 2'b11; // tipo instrucao csr
+								oUCAUSEData  <= ZERO; // sem ucause
+								oCSRWSource  <= 3'b011; // *********** MEXER AQUI **************
+								oBreak 		 <= 1'b0; // nao da break
+											
+								nx_state 		<= ST_CSRRWI1; // prox estado eh continuar csrrw
+							end
+						FUNCT3_CSRRSI:
+							begin
+								oEscrevePC 		<= 1'b0; // nao escreve em pc
+								oEscrevePCCond <= 1'b0; // nao eh branch
+								oEscrevePCBack <= 1'b0; // nao eh fetch
+								oOrigAULA		<= 2'b00; // nao usa ula
+								oOrigBULA		<= 2'b00;
+								oMem2Reg			<= 3'b100; // escreve dado lido do csr no registrador int
+								oOrigPC			<= 2'b00; // pc vem de PC+4
+								oIouD				<= 1'b0; // le a memoria de instrucoes
+								oRegWrite		<= 1'b1; // escreve reg inteiro
+								oMemWrite		<= 1'b0; // nao escreve na memoria
+								oMemRead			<= 1'b0; // nao le da memoria
+								oALUControl		<= OPNULL; // nao usa ula
+`ifdef RV32IMF                                                 //RV32IMF
+								oFRegWrite     <= 1'b0;
+								oFPALUControl  <= OPNULL;
+								oOrigAFPALU    <= 1'b0;
+								oFPALUStart    <= 1'b0;
+								oFWriteData    <= 1'b0;
+								oWrite2Mem     <= 1'b0;
+`endif
+								oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+								oUCAUSEWrite <= 1'b0; // nao escreve ucause
+								oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+								oCSType 		 <= 2'b11; // tipo instrucao csr
+								oUCAUSEData  <= ZERO; // sem ucause
+								oCSRWSource  <= 3'b100; // *********** MEXER AQUI **************
+								oBreak 		 <= 1'b0; // nao da break
+											
+								nx_state 		<= ST_CSRRSI1; // prox estado eh continuar csrrw
+							end
+						FUNCT3_CSRRCI:
+							begin
+								oEscrevePC 		<= 1'b0; // nao escreve em pc
+								oEscrevePCCond <= 1'b0; // nao eh branch
+								oEscrevePCBack <= 1'b0; // nao eh fetch
+								oOrigAULA		<= 2'b00; // nao usa ula
+								oOrigBULA		<= 2'b00;
+								oMem2Reg			<= 3'b100; // escreve dado lido do csr no registrador int
+								oOrigPC			<= 2'b00; // pc vem de PC+4
+								oIouD				<= 1'b0; // le a memoria de instrucoes
+								oRegWrite		<= 1'b1; // escreve reg inteiro
+								oMemWrite		<= 1'b0; // nao escreve na memoria
+								oMemRead			<= 1'b0; // nao le da memoria
+								oALUControl		<= OPNULL; // nao usa ula
+`ifdef RV32IMF                                                 //RV32IMF
+								oFRegWrite     <= 1'b0;
+								oFPALUControl  <= OPNULL;
+								oOrigAFPALU    <= 1'b0;
+								oFPALUStart    <= 1'b0;
+								oFWriteData    <= 1'b0;
+								oWrite2Mem     <= 1'b0;
+`endif
+								oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+								oUCAUSEWrite <= 1'b0; // nao escreve ucause
+								oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+								oCSType 		 <= 2'b11; // tipo instrucao csr
+								oUCAUSEData  <= ZERO; // sem ucause
+								oCSRWSource  <= 3'b101; // *********** MEXER AQUI **************
+								oBreak 		 <= 1'b0; // nao da break
+											
+								nx_state 		<= ST_CSRRCI1; // prox estado eh continuar csrrw
+							end
+								// Instrucao invalida
+						default:
+							begin
+								oEscreveIR 		<= 1'b0;
+								oEscrevePC 		<= 1'b0;
+								oEscrevePCCond <= 1'b0;
+								oEscrevePCBack <= 1'b0;
+								oOrigAULA 		<= 2'b11;
+								oOrigBULA 		<= 2'b11;	 
+								oMem2Reg 		<= 3'b000;
+								oOrigPC 			<= 2'b00;
+								oIouD 			<= 1'b0;
+								oRegWrite 		<= 1'b0;
+								oMemWrite 		<= 1'b0;
+								oMemRead 		<= 1'b0;
+								oALUControl 	<= OPADD;
+				`ifdef RV32IMF                                                 //RV32IMF
+								oFRegWrite     <= 1'b0;
+								oFPALUControl  <= OPNULL;
+								oOrigAFPALU    <= 1'b0;
+								oFPALUStart    <= 1'b0;
+								oFWriteData    <= 1'b0;
+								oWrite2Mem     <= 1'b0;
+				`endif	
+
+								oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+								oUCAUSEWrite <= 1'b1; // escreve ucause
+								oUEPCWrite 	 <= 1'b1; // escreve uepc
+								oCSType 		 <= 2'b01; // tipo exception
+								oUCAUSEData  <= 32'h00000002; // causa = 2
+								oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+								oBreak 		 <= 1'b0; // nao da break
+								
+								nx_state 		<= ST_ERRO;
+							end
 				endcase
 			end
 			
+		ST_ECALL1:
+			begin
+				oEscreveIR		<= 1'b0; // nao escreve ir
+				oEscrevePC 		<= 1'b1; // nao escreve em pc
+				oEscrevePCCond <= 1'b0; // nao eh branch
+				oEscrevePCBack <= 1'b0; // nao eh fetch
+				oOrigAULA		<= 2'b00; // dado A da ula decidido pela instrucao csr
+				oOrigBULA		<= 2'b00; // dado B da ula decidido pela instrucao csr
+				oMem2Reg			<= 3'b000; // nao escreve registrador int
+				oOrigPC			<= 2'b11; // pc vem de PC+4
+				oIouD				<= 1'b0; // le a memoria de instrucoes
+				oRegWrite		<= 1'b0; // nao escreve reg inteiro
+				oMemWrite		<= 1'b0; // nao escreve na memoria
+				oMemRead			<= 1'b0; // nao le da memoria
+				oALUControl		<= OPNULL; // p/ csrrw faz soma (0 + csr)
+`ifdef RV32IMF                                                 //RV32IMF
+				oFRegWrite     <= 1'b0;
+				oFPALUControl  <= OPNULL;
+				oOrigAFPALU    <= 1'b0;
+				oFPALUStart    <= 1'b0;
+				oFWriteData    <= 1'b0;
+				oWrite2Mem     <= 1'b0;
+`endif
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b1; // escreve ucause
+				oUEPCWrite 	 <= 1'b1; // escreve uepc
+				oCSType 		 <= 2'b01; // tipo exception
+				oUCAUSEData  <= 32'h00000008; // causa = 8
+				oCSRWSource  <= 3'b000; // *********** MEXER AQUI **************
+				oBreak 		 <= 1'b0; // nao da break
+			
+				nx_state 		<= ST_FETCH; // prox estado eh pegar a prox instrucao
+			end
+			
+		ST_URET1:
+			begin
+				oEscreveIR		<= 1'b0; // nao escreve ir
+				oEscrevePC 		<= 1'b1; // nao escreve em pc
+				oEscrevePCCond <= 1'b0; // nao eh branch
+				oEscrevePCBack <= 1'b0; // nao eh fetch
+				oOrigAULA		<= 2'b00; // dado A da ula decidido pela instrucao csr
+				oOrigBULA		<= 2'b00; // dado B da ula decidido pela instrucao csr
+				oMem2Reg			<= 3'b000; // nao escreve registrador int
+				oOrigPC			<= 2'b11; // pc vem do csr
+				oIouD				<= 1'b0; // le a memoria de instrucoes
+				oRegWrite		<= 1'b0; // nao escreve reg inteiro
+				oMemWrite		<= 1'b0; // nao escreve na memoria
+				oMemRead			<= 1'b0; // nao le da memoria
+				oALUControl		<= OPNULL; // p/ csrrw faz soma (0 + csr)
+`ifdef RV32IMF                                                 //RV32IMF
+				oFRegWrite     <= 1'b0;
+				oFPALUControl  <= OPNULL;
+				oOrigAFPALU    <= 1'b0;
+				oFPALUStart    <= 1'b0;
+				oFWriteData    <= 1'b0;
+				oWrite2Mem     <= 1'b0;
+`endif
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // escreve ucause
+				oUEPCWrite 	 <= 1'b0; // escreve uepc
+				oCSType 		 <= 2'b10; // tipo exception
+				oUCAUSEData  <= ZERO; // causa = 8
+				oCSRWSource  <= 3'b000; // *********** MEXER AQUI **************
+				oBreak 		 <= 1'b0; // nao da break
+			
+				nx_state 		<= ST_FETCH; // prox estado eh pegar a prox instrucao
+			end
+		
+		ST_CSRRW1:
+			begin
+				oEscreveIR		<= 1'b0; // nao escreve ir
+				oEscrevePC 		<= 1'b0; // nao escreve em pc
+				oEscrevePCCond <= 1'b0; // nao eh branch
+				oEscrevePCBack <= 1'b0; // nao eh fetch
+				oOrigAULA		<= 2'b11; // dado A da ula decidido pela instrucao csr
+				oOrigBULA		<= 2'b11; // dado B da ula decidido pela instrucao csr
+				oMem2Reg			<= 3'b000; // nao escreve registrador int
+				oOrigPC			<= 2'b00; // pc vem de PC+4
+				oIouD				<= 1'b0; // le a memoria de instrucoes
+				oRegWrite		<= 1'b0; // nao escreve reg inteiro
+				oMemWrite		<= 1'b0; // nao escreve na memoria
+				oMemRead			<= 1'b0; // nao le da memoria
+				oALUControl		<= OPADD; // p/ csrrw faz soma (0 + csr)
+`ifdef RV32IMF                                                 //RV32IMF
+				oFRegWrite     <= 1'b0;
+				oFPALUControl  <= OPNULL;
+				oOrigAFPALU    <= 1'b0;
+				oFPALUStart    <= 1'b0;
+				oFWriteData    <= 1'b0;
+				oWrite2Mem     <= 1'b0;
+`endif
+				oCSRegWrite	 <= 1'b1; // escreve no csr
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b11; // tipo instrucao csr
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // *********** MEXER AQUI **************
+				oBreak 		 <= 1'b0; // nao da break
+							
+				nx_state 		<= ST_FETCH; // prox estado eh pegar a prox instrucao
+			end
+			
+		ST_CSRRS1:
+			begin
+				oEscreveIR		<= 1'b0; // nao escreve ir
+				oEscrevePC 		<= 1'b0; // nao escreve em pc
+				oEscrevePCCond <= 1'b0; // nao eh branch
+				oEscrevePCBack <= 1'b0; // nao eh fetch
+				oOrigAULA		<= 2'b11; // dado A da ula decidido pela instrucao csr
+				oOrigBULA		<= 2'b11; // dado B da ula decidido pela instrucao csr
+				oMem2Reg			<= 3'b000; // nao escreve registrador int
+				oOrigPC			<= 2'b00; // pc vem de PC+4
+				oIouD				<= 1'b0; // le a memoria de instrucoes
+				oRegWrite		<= 1'b0; // nao escreve reg inteiro
+				oMemWrite		<= 1'b0; // nao escreve na memoria
+				oMemRead			<= 1'b0; // nao le da memoria
+				oALUControl		<= OPOR; // p/ csrrs faz or (rs1 | csr)
+`ifdef RV32IMF                                                 //RV32IMF
+				oFRegWrite     <= 1'b0;
+				oFPALUControl  <= OPNULL;
+				oOrigAFPALU    <= 1'b0;
+				oFPALUStart    <= 1'b0;
+				oFWriteData    <= 1'b0;
+				oWrite2Mem     <= 1'b0;
+`endif
+				oCSRegWrite	 <= 1'b1; // escreve no csr
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b11; // tipo instrucao csr
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b001; // *********** MEXER AQUI **************
+				oBreak 		 <= 1'b0; // nao da break
+							
+				nx_state 		<= ST_FETCH; // prox estado eh pegar a prox instrucao
+			end
+		
+		ST_CSRRC1:
+			begin
+				oEscreveIR		<= 1'b0; // nao escreve ir
+				oEscrevePC 		<= 1'b0; // nao escreve em pc
+				oEscrevePCCond <= 1'b0; // nao eh branch
+				oEscrevePCBack <= 1'b0; // nao eh fetch
+				oOrigAULA		<= 2'b11; // dado A da ula decidido pela instrucao csr
+				oOrigBULA		<= 2'b11; // dado B da ula decidido pela instrucao csr
+				oMem2Reg			<= 3'b000; // nao escreve registrador int
+				oOrigPC			<= 2'b00; // pc vem de PC+4
+				oIouD				<= 1'b0; // le a memoria de instrucoes
+				oRegWrite		<= 1'b0; // nao escreve reg inteiro
+				oMemWrite		<= 1'b0; // nao escreve na memoria
+				oMemRead			<= 1'b0; // nao le da memoria
+				oALUControl		<= OPAND; // p/ csrrc faz or (!rs1 & csr)
+`ifdef RV32IMF                                                 //RV32IMF
+				oFRegWrite     <= 1'b0;
+				oFPALUControl  <= OPNULL;
+				oOrigAFPALU    <= 1'b0;
+				oFPALUStart    <= 1'b0;
+				oFWriteData    <= 1'b0;
+				oWrite2Mem     <= 1'b0;
+`endif
+				oCSRegWrite	 <= 1'b1; // escreve no csr
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b11; // tipo instrucao csr
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b010; // *********** MEXER AQUI **************
+				oBreak 		 <= 1'b0; // nao da break
+							
+				nx_state 		<= ST_FETCH; // prox estado eh pegar a prox instrucao
+			end
+			
+		ST_CSRRWI1:
+			begin
+				oEscreveIR		<= 1'b0; // nao escreve ir
+				oEscrevePC 		<= 1'b0; // nao escreve em pc
+				oEscrevePCCond <= 1'b0; // nao eh branch
+				oEscrevePCBack <= 1'b0; // nao eh fetch
+				oOrigAULA		<= 2'b11; // dado A da ula decidido pela instrucao csr
+				oOrigBULA		<= 2'b11; // dado B da ula decidido pela instrucao csr
+				oMem2Reg			<= 3'b000; // nao escreve registrador int
+				oOrigPC			<= 2'b00; // pc vem de PC+4
+				oIouD				<= 1'b0; // le a memoria de instrucoes
+				oRegWrite		<= 1'b0; // nao escreve reg inteiro
+				oMemWrite		<= 1'b0; // nao escreve na memoria
+				oMemRead			<= 1'b0; // nao le da memoria
+				oALUControl		<= OPADD; // p/ csrrwi faz soma (0 + imm)
+`ifdef RV32IMF                                                 //RV32IMF
+				oFRegWrite     <= 1'b0;
+				oFPALUControl  <= OPNULL;
+				oOrigAFPALU    <= 1'b0;
+				oFPALUStart    <= 1'b0;
+				oFWriteData    <= 1'b0;
+				oWrite2Mem     <= 1'b0;
+`endif
+				oCSRegWrite	 <= 1'b1; // escreve no csr
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b11; // tipo instrucao csr
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b011; // *********** MEXER AQUI **************
+				oBreak 		 <= 1'b0; // nao da break
+							
+				nx_state 		<= ST_FETCH; // prox estado eh pegar a prox instrucao
+			end
+			
+		ST_CSRRSI1:
+			begin
+				oEscreveIR		<= 1'b0; // nao escreve ir
+				oEscrevePC 		<= 1'b0; // nao escreve em pc
+				oEscrevePCCond <= 1'b0; // nao eh branch
+				oEscrevePCBack <= 1'b0; // nao eh fetch
+				oOrigAULA		<= 2'b11; // dado A da ula decidido pela instrucao csr
+				oOrigBULA		<= 2'b11; // dado B da ula decidido pela instrucao csr
+				oMem2Reg			<= 3'b000; // nao escreve registrador int
+				oOrigPC			<= 2'b00; // pc vem de PC+4
+				oIouD				<= 1'b0; // le a memoria de instrucoes
+				oRegWrite		<= 1'b0; // nao escreve reg inteiro
+				oMemWrite		<= 1'b0; // nao escreve na memoria
+				oMemRead			<= 1'b0; // nao le da memoria
+				oALUControl		<= OPOR; // p/ csrrsi faz or (imm | csr)
+`ifdef RV32IMF                                                 //RV32IMF
+				oFRegWrite     <= 1'b0;
+				oFPALUControl  <= OPNULL;
+				oOrigAFPALU    <= 1'b0;
+				oFPALUStart    <= 1'b0;
+				oFWriteData    <= 1'b0;
+				oWrite2Mem     <= 1'b0;
+`endif
+				oCSRegWrite	 <= 1'b1; // escreve no csr
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b11; // tipo instrucao csr
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b100; // *********** MEXER AQUI **************
+				oBreak 		 <= 1'b0; // nao da break
+							
+				nx_state 		<= ST_FETCH; // prox estado eh pegar a prox instrucao
+			end
+			
+		ST_CSRRCI1:
+			begin
+				oEscreveIR		<= 1'b0; // nao escreve ir
+				oEscrevePC 		<= 1'b0; // nao escreve em pc
+				oEscrevePCCond <= 1'b0; // nao eh branch
+				oEscrevePCBack <= 1'b0; // nao eh fetch
+				oOrigAULA		<= 2'b11; // dado A da ula decidido pela instrucao csr
+				oOrigBULA		<= 2'b11; // dado B da ula decidido pela instrucao csr
+				oMem2Reg			<= 3'b000; // nao escreve registrador int
+				oOrigPC			<= 2'b00; // pc vem de PC+4
+				oIouD				<= 1'b0; // le a memoria de instrucoes
+				oRegWrite		<= 1'b0; // nao escreve reg inteiro
+				oMemWrite		<= 1'b0; // nao escreve na memoria
+				oMemRead			<= 1'b0; // nao le da memoria
+				oALUControl		<= OPAND; // p/ csrrci faz and (!imm & csr)
+`ifdef RV32IMF                                                 //RV32IMF
+				oFRegWrite     <= 1'b0;
+				oFPALUControl  <= OPNULL;
+				oOrigAFPALU    <= 1'b0;
+				oFPALUStart    <= 1'b0;
+				oFWriteData    <= 1'b0;
+				oWrite2Mem     <= 1'b0;
+`endif
+				oCSRegWrite	 <= 1'b1; // escreve no csr
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b11; // tipo instrucao csr
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b101; // *********** MEXER AQUI **************
+				oBreak 		 <= 1'b0; // nao da break
+							
+				nx_state 		<= ST_FETCH; // prox estado eh pegar a prox instrucao
+			end
 		
 		ST_ERRO:
 			begin
 				oEscreveIR 		<= 1'b0;
-				oEscrevePC 		<= 1'b0;
+				oEscrevePC 		<= 1'b1;
 				oEscrevePCCond <= 1'b0;
 				oEscrevePCBack <= 1'b0;
 				oOrigAULA 		<= 2'b00;
 				oOrigBULA 		<= 2'b00;	 
 				oMem2Reg 		<= 3'b000;
-				oOrigPC 			<= 2'b00;
+				oOrigPC 			<= 2'b11;
 				oIouD 			<= 1'b0;
 				oRegWrite 		<= 1'b0;
 				oMemWrite 		<= 1'b0;
@@ -787,9 +1476,16 @@ always @(*)
 				oFWriteData    <= 1'b0;
 				oWrite2Mem     <= 1'b0;
 `endif	
-
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b01; // utvec
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // nao escreve nos csr
+				oBreak 		 <= 1'b0; // nao da break
 				
-				nx_state			<= ST_FETCH;	// Descarta instrucoes invalidas
+				//nx_state			<= ST_FETCH;	// Descarta instrucoes invalidas
+				nx_state 	<= ST_FETCH; // vai p/ tratamento de excessoes
 			end
 `ifdef RV32IMF
 		ST_FLW:
@@ -814,7 +1510,15 @@ always @(*)
 				oFPALUStart    <= 1'b0;     // FPALU nao realiza operacao
 				oFWriteData    <= 1'b1;     // Nessa fase ainda nao eh escrito nada no FReg
 				oWrite2Mem     <= 1'b0;     // Nao importa o que sera escrito na memoria
-			
+				
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
+				
 				nx_state 		<= ST_FLW1;
 			end
 		ST_FLW1:
@@ -840,7 +1544,14 @@ always @(*)
 				oFWriteData    <= 1'b0;     // Don't care
 				oWrite2Mem     <= 1'b0;	    // Don't care
 			
-
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
+				
 				nx_state 		<= ST_FLW2;
 			end
 			
@@ -866,7 +1577,15 @@ always @(*)
 				oFPALUStart    <= 1'b0;   // FPULA nao realiza operacao
 				oFWriteData    <= 1'b0;   // Dados vem da memoria, entao eh selecionado MDR(0)
 				oWrite2Mem     <= 1'b0;   // Don't care (nao escreve na memoria)		
-
+				
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
+				
 				nx_state 		<= ST_FETCH;
 			end
 			
@@ -892,7 +1611,15 @@ always @(*)
 				oFPALUStart    <= 1'b0;   // FPULA nao realiza operacao
 				oFWriteData    <= 1'b0;   // don't care
 				oWrite2Mem     <= 1'b1;	  // Conteudo de escrita da memoria vem do FB(1)
-
+				
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
+				
 				nx_state 		<= ST_FSW1;
 			end
 		
@@ -919,6 +1646,14 @@ always @(*)
 				oFWriteData    <= 1'b0;   // Don't care
 				oWrite2Mem     <= 1'b1;   // Don't care
 
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
+				
 				nx_state 		<= ST_FETCH;
 			end
 			
@@ -944,7 +1679,15 @@ always @(*)
 				oFPALUStart    <= 1'b0;    // Start so sera dado no proximo estado
 				oFWriteData    <= 1'b1;    // Escrita em registrador de ponto flutuante ainda nao habilitada   
 				oWrite2Mem     <= 1'b0;    // Nao vai escrever na memoria   
-
+				
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
+				
 				nx_state 		<= ST_FPSTART;
 				
 				case (Funct7)
@@ -1014,6 +1757,14 @@ always @(*)
 										oFWriteData    <= 1'b0;
 										oWrite2Mem     <= 1'b0;
 										
+										oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+										oUCAUSEWrite <= 1'b1; // escreve ucause
+										oUEPCWrite 	 <= 1'b1; // escreve uepc
+										oCSType 		 <= 2'b01; // tipo exception
+										oUCAUSEData  <= 32'h00000002; // causa = 2
+										oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+										oBreak 		 <= 1'b0; // nao da break
+				
 										nx_state 		<= ST_ERRO;
 									end
 							endcase
@@ -1032,8 +1783,8 @@ always @(*)
 										oEscrevePC 		<= 1'b0;
 										oEscrevePCCond <= 1'b0;
 										oEscrevePCBack <= 1'b0;
-										oOrigAULA 		<= 2'b00;
-										oOrigBULA 		<= 2'b00;	 
+										oOrigAULA 		<= 2'b11;
+										oOrigBULA 		<= 2'b11;	 
 										oMem2Reg 		<= 3'b000;
 										oOrigPC 			<= 2'b00;
 										oIouD 			<= 1'b0;
@@ -1048,6 +1799,14 @@ always @(*)
 										oFWriteData    <= 1'b0;
 										oWrite2Mem     <= 1'b0;
 										
+										oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+										oUCAUSEWrite <= 1'b1; // escreve ucause
+										oUEPCWrite 	 <= 1'b1; // escreve uepc
+										oCSType 		 <= 2'b01; // tipo exception
+										oUCAUSEData  <= 32'h00000002; // causa = 2
+										oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+										oBreak 		 <= 1'b0; // nao da break
+				
 										nx_state 		<= ST_ERRO;
 									end
 							endcase
@@ -1067,8 +1826,8 @@ always @(*)
 										oEscrevePC 		<= 1'b0;
 										oEscrevePCCond <= 1'b0;
 										oEscrevePCBack <= 1'b0;
-										oOrigAULA 		<= 2'b00;
-										oOrigBULA 		<= 2'b00;	 
+										oOrigAULA 		<= 2'b11;
+										oOrigBULA 		<= 2'b11;	 
 										oMem2Reg 		<= 3'b000;
 										oOrigPC 			<= 2'b00;
 										oIouD 			<= 1'b0;
@@ -1083,6 +1842,14 @@ always @(*)
 										oFWriteData    <= 1'b0;
 										oWrite2Mem     <= 1'b0;
 										
+										oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+										oUCAUSEWrite <= 1'b1; // escreve ucause
+										oUEPCWrite 	 <= 1'b1; // escreve uepc
+										oCSType 		 <= 2'b01; // tipo exception
+										oUCAUSEData  <= 32'h00000002; // causa = 2
+										oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+										oBreak 		 <= 1'b0; // nao da break
+				
 										nx_state 		<= ST_ERRO;
 									end
 							endcase
@@ -1101,8 +1868,8 @@ always @(*)
 										oEscrevePC 		<= 1'b0;
 										oEscrevePCCond <= 1'b0;
 										oEscrevePCBack <= 1'b0;
-										oOrigAULA 		<= 2'b00;
-										oOrigBULA 		<= 2'b00;	 
+										oOrigAULA 		<= 2'b11;
+										oOrigBULA 		<= 2'b11;	 
 										oMem2Reg 		<= 3'b000;
 										oOrigPC 			<= 2'b00;
 										oIouD 			<= 1'b0;
@@ -1117,6 +1884,14 @@ always @(*)
 										oFWriteData    <= 1'b0;
 										oWrite2Mem     <= 1'b0;
 										
+										oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+										oUCAUSEWrite <= 1'b1; // escreve ucause
+										oUEPCWrite 	 <= 1'b1; // escreve uepc
+										oCSType 		 <= 2'b01; // tipo exception
+										oUCAUSEData  <= 32'h00000002; // causa = 2
+										oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+										oBreak 		 <= 1'b0; // nao da break
+				
 										nx_state 		<= ST_ERRO;
 									end
 							endcase
@@ -1135,8 +1910,8 @@ always @(*)
 										oEscrevePC 		<= 1'b0;
 										oEscrevePCCond <= 1'b0;
 										oEscrevePCBack <= 1'b0;
-										oOrigAULA 		<= 2'b00;
-										oOrigBULA 		<= 2'b00;	 
+										oOrigAULA 		<= 2'b11;
+										oOrigBULA 		<= 2'b11;	 
 										oMem2Reg 		<= 3'b000;
 										oOrigPC 			<= 2'b00;
 										oIouD 			<= 1'b0;
@@ -1151,6 +1926,14 @@ always @(*)
 										oFWriteData    <= 1'b0;
 										oWrite2Mem     <= 1'b0;
 										
+										oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+										oUCAUSEWrite <= 1'b1; // escreve ucause
+										oUEPCWrite 	 <= 1'b1; // escreve uepc
+										oCSType 		 <= 2'b01; // tipo exception
+										oUCAUSEData  <= 32'h00000002; // causa = 2
+										oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+										oBreak 		 <= 1'b0; // nao da break
+				
 										nx_state 		<= ST_ERRO;
 									end
 							endcase
@@ -1162,8 +1945,8 @@ always @(*)
 							oEscrevePC 		<= 1'b0;
 							oEscrevePCCond <= 1'b0;
 							oEscrevePCBack <= 1'b0;
-							oOrigAULA 		<= 2'b00;
-							oOrigBULA 		<= 2'b00;	 
+							oOrigAULA 		<= 2'b11;
+							oOrigBULA 		<= 2'b11;	 
 							oMem2Reg 		<= 3'b000;
 							oOrigPC 			<= 2'b00;
 							oIouD 			<= 1'b0;
@@ -1178,6 +1961,14 @@ always @(*)
 							oFWriteData    <= 1'b0;
 							oWrite2Mem     <= 1'b0;
 							
+							oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+							oUCAUSEWrite <= 1'b1; // escreve ucause
+							oUEPCWrite 	 <= 1'b1; // escreve uepc
+							oCSType 		 <= 2'b01; // tipo exception
+							oUCAUSEData  <= 32'h00000002; // causa = 2
+							oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+							oBreak 		 <= 1'b0; // nao da break
+				
 							nx_state 		<= ST_ERRO;
 						end
 				endcase
@@ -1204,6 +1995,14 @@ always @(*)
 				oFPALUStart    <= 1'b1;
 				oFWriteData    <= 1'b1;
 				oWrite2Mem     <= 1'b0;
+				
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
 				
 				nx_state 		<= ST_FPWAIT;
 				
@@ -1258,8 +2057,8 @@ always @(*)
 										oEscrevePC 		<= 1'b0;
 										oEscrevePCCond <= 1'b0;
 										oEscrevePCBack <= 1'b0;
-										oOrigAULA 		<= 2'b00;
-										oOrigBULA 		<= 2'b00;	 
+										oOrigAULA 		<= 2'b11;
+										oOrigBULA 		<= 2'b11;	 
 										oMem2Reg 		<= 3'b000;
 										oOrigPC 			<= 2'b00;
 										oIouD 			<= 1'b0;
@@ -1274,6 +2073,14 @@ always @(*)
 										oFWriteData    <= 1'b0;
 										oWrite2Mem     <= 1'b0;
 										
+										oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+										oUCAUSEWrite <= 1'b1; // escreve ucause
+										oUEPCWrite 	 <= 1'b1; // escreve uepc
+										oCSType 		 <= 2'b01; // tipo exception
+										oUCAUSEData  <= 32'h00000002; // causa = 2
+										oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+										oBreak 		 <= 1'b0; // nao da break
+				
 										nx_state 		<= ST_ERRO;
 									end
 							endcase
@@ -1292,8 +2099,8 @@ always @(*)
 										oEscrevePC 		<= 1'b0;
 										oEscrevePCCond <= 1'b0;
 										oEscrevePCBack <= 1'b0;
-										oOrigAULA 		<= 2'b00;
-										oOrigBULA 		<= 2'b00;	 
+										oOrigAULA 		<= 2'b11;
+										oOrigBULA 		<= 2'b11;	 
 										oMem2Reg 		<= 3'b000;
 										oOrigPC 			<= 2'b00;
 										oIouD 			<= 1'b0;
@@ -1308,6 +2115,14 @@ always @(*)
 										oFWriteData    <= 1'b0;
 										oWrite2Mem     <= 1'b0;
 										
+										oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+										oUCAUSEWrite <= 1'b1; // escreve ucause
+										oUEPCWrite 	 <= 1'b1; // escreve uepc
+										oCSType 		 <= 2'b01; // tipo exception
+										oUCAUSEData  <= 32'h00000002; // causa = 2
+										oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+										oBreak 		 <= 1'b0; // nao da break
+				
 										nx_state 		<= ST_ERRO;
 									end
 							endcase
@@ -1327,8 +2142,8 @@ always @(*)
 										oEscrevePC 		<= 1'b0;
 										oEscrevePCCond <= 1'b0;
 										oEscrevePCBack <= 1'b0;
-										oOrigAULA 		<= 2'b00;
-										oOrigBULA 		<= 2'b00;	 
+										oOrigAULA 		<= 2'b11;
+										oOrigBULA 		<= 2'b11;	 
 										oMem2Reg 		<= 3'b000;
 										oOrigPC 			<= 2'b00;
 										oIouD 			<= 1'b0;
@@ -1343,6 +2158,14 @@ always @(*)
 										oFWriteData    <= 1'b0;
 										oWrite2Mem     <= 1'b0;
 										
+										oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+										oUCAUSEWrite <= 1'b1; // escreve ucause
+										oUEPCWrite 	 <= 1'b1; // escreve uepc
+										oCSType 		 <= 2'b01; // tipo exception
+										oUCAUSEData  <= 32'h00000002; // causa = 2
+										oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+										oBreak 		 <= 1'b0; // nao da break
+				
 										nx_state 		<= ST_ERRO;
 									end
 							endcase
@@ -1361,8 +2184,8 @@ always @(*)
 										oEscrevePC 		<= 1'b0;
 										oEscrevePCCond <= 1'b0;
 										oEscrevePCBack <= 1'b0;
-										oOrigAULA 		<= 2'b00;
-										oOrigBULA 		<= 2'b00;	 
+										oOrigAULA 		<= 2'b11;
+										oOrigBULA 		<= 2'b11;	 
 										oMem2Reg 		<= 3'b000;
 										oOrigPC 			<= 2'b00;
 										oIouD 			<= 1'b0;
@@ -1377,6 +2200,14 @@ always @(*)
 										oFWriteData    <= 1'b0;
 										oWrite2Mem     <= 1'b0;
 										
+										oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+										oUCAUSEWrite <= 1'b1; // escreve ucause
+										oUEPCWrite 	 <= 1'b1; // escreve uepc
+										oCSType 		 <= 2'b01; // tipo exception
+										oUCAUSEData  <= 32'h00000002; // causa = 2
+										oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+										oBreak 		 <= 1'b0; // nao da break
+				
 										nx_state 		<= ST_ERRO;
 									end
 							endcase
@@ -1395,8 +2226,8 @@ always @(*)
 										oEscrevePC 		<= 1'b0;
 										oEscrevePCCond <= 1'b0;
 										oEscrevePCBack <= 1'b0;
-										oOrigAULA 		<= 2'b00;
-										oOrigBULA 		<= 2'b00;	 
+										oOrigAULA 		<= 2'b11;
+										oOrigBULA 		<= 2'b11;	 
 										oMem2Reg 		<= 3'b000;
 										oOrigPC 			<= 2'b00;
 										oIouD 			<= 1'b0;
@@ -1411,6 +2242,14 @@ always @(*)
 										oFWriteData    <= 1'b0;
 										oWrite2Mem     <= 1'b0;
 										
+										oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+										oUCAUSEWrite <= 1'b1; // escreve ucause
+										oUEPCWrite 	 <= 1'b1; // escreve uepc
+										oCSType 		 <= 2'b01; // tipo exception
+										oUCAUSEData  <= 32'h00000002; // causa = 2
+										oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+										oBreak 		 <= 1'b0; // nao da break
+				
 										nx_state 		<= ST_ERRO;
 									end
 							endcase
@@ -1422,8 +2261,8 @@ always @(*)
 							oEscrevePC 		<= 1'b0;
 							oEscrevePCCond <= 1'b0;
 							oEscrevePCBack <= 1'b0;
-							oOrigAULA 		<= 2'b00;
-							oOrigBULA 		<= 2'b00;	 
+							oOrigAULA 		<= 2'b11;
+							oOrigBULA 		<= 2'b11;	 
 							oMem2Reg 		<= 3'b000;
 							oOrigPC 			<= 2'b00;
 							oIouD 			<= 1'b0;
@@ -1438,6 +2277,14 @@ always @(*)
 							oFWriteData    <= 1'b0;
 							oWrite2Mem     <= 1'b0;
 							
+							oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+							oUCAUSEWrite <= 1'b1; // escreve ucause
+							oUEPCWrite 	 <= 1'b1; // escreve uepc
+							oCSType 		 <= 2'b01; // tipo exception
+							oUCAUSEData  <= 32'h00000002; // causa = 2
+							oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+							oBreak 		 <= 1'b0; // nao da break
+				
 							nx_state 		<= ST_ERRO;
 						end
 				endcase
@@ -1464,6 +2311,14 @@ always @(*)
 				oFPALUStart    <= 1'b1;	// fica start durante o tempo todo (como no uniciclo)
 				oFWriteData    <= 1'b1;
 				oWrite2Mem     <= 1'b0;
+				
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
 				
 				if (iFPALUReady)
 					nx_state <= ST_FPALUREGWRITE;
@@ -1521,8 +2376,8 @@ always @(*)
 										oEscrevePC 		<= 1'b0;
 										oEscrevePCCond <= 1'b0;
 										oEscrevePCBack <= 1'b0;
-										oOrigAULA 		<= 2'b00;
-										oOrigBULA 		<= 2'b00;	 
+										oOrigAULA 		<= 2'b11;
+										oOrigBULA 		<= 2'b11;	 
 										oMem2Reg 		<= 3'b000;
 										oOrigPC 			<= 2'b00;
 										oIouD 			<= 1'b0;
@@ -1537,6 +2392,14 @@ always @(*)
 										oFWriteData    <= 1'b0;
 										oWrite2Mem     <= 1'b0;
 										
+										oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+										oUCAUSEWrite <= 1'b1; // escreve ucause
+										oUEPCWrite 	 <= 1'b1; // escreve uepc
+										oCSType 		 <= 2'b01; // tipo exception
+										oUCAUSEData  <= 32'h00000002; // causa = 2
+										oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+										oBreak 		 <= 1'b0; // nao da break
+				
 										nx_state 		<= ST_ERRO;
 									end
 							endcase
@@ -1555,8 +2418,8 @@ always @(*)
 										oEscrevePC 		<= 1'b0;
 										oEscrevePCCond <= 1'b0;
 										oEscrevePCBack <= 1'b0;
-										oOrigAULA 		<= 2'b00;
-										oOrigBULA 		<= 2'b00;	 
+										oOrigAULA 		<= 2'b11;
+										oOrigBULA 		<= 2'b11;	 
 										oMem2Reg 		<= 3'b000;
 										oOrigPC 			<= 2'b00;
 										oIouD 			<= 1'b0;
@@ -1571,6 +2434,14 @@ always @(*)
 										oFWriteData    <= 1'b0;
 										oWrite2Mem     <= 1'b0;
 										
+										oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+										oUCAUSEWrite <= 1'b1; // escreve ucause
+										oUEPCWrite 	 <= 1'b1; // escreve uepc
+										oCSType 		 <= 2'b01; // tipo exception
+										oUCAUSEData  <= 32'h00000002; // causa = 2
+										oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+										oBreak 		 <= 1'b0; // nao da break
+				
 										nx_state 		<= ST_ERRO;
 									end
 							endcase
@@ -1590,8 +2461,8 @@ always @(*)
 										oEscrevePC 		<= 1'b0;
 										oEscrevePCCond <= 1'b0;
 										oEscrevePCBack <= 1'b0;
-										oOrigAULA 		<= 2'b00;
-										oOrigBULA 		<= 2'b00;	 
+										oOrigAULA 		<= 2'b11;
+										oOrigBULA 		<= 2'b11;	 
 										oMem2Reg 		<= 3'b000;
 										oOrigPC 			<= 2'b00;
 										oIouD 			<= 1'b0;
@@ -1606,6 +2477,14 @@ always @(*)
 										oFWriteData    <= 1'b0;
 										oWrite2Mem     <= 1'b0;
 										
+										oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+										oUCAUSEWrite <= 1'b1; // escreve ucause
+										oUEPCWrite 	 <= 1'b1; // escreve uepc
+										oCSType 		 <= 2'b01; // tipo exception
+										oUCAUSEData  <= 32'h00000002; // causa = 2
+										oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+										oBreak 		 <= 1'b0; // nao da break
+				
 										nx_state 		<= ST_ERRO;
 									end
 							endcase
@@ -1624,8 +2503,8 @@ always @(*)
 										oEscrevePC 		<= 1'b0;
 										oEscrevePCCond <= 1'b0;
 										oEscrevePCBack <= 1'b0;
-										oOrigAULA 		<= 2'b00;
-										oOrigBULA 		<= 2'b00;	 
+										oOrigAULA 		<= 2'b11;
+										oOrigBULA 		<= 2'b11;	 
 										oMem2Reg 		<= 3'b000;
 										oOrigPC 			<= 2'b00;
 										oIouD 			<= 1'b0;
@@ -1639,6 +2518,14 @@ always @(*)
 										oFPALUStart    <= 1'b0;
 										oFWriteData    <= 1'b0;
 										oWrite2Mem     <= 1'b0;
+										
+										oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+										oUCAUSEWrite <= 1'b1; // escreve ucause
+										oUEPCWrite 	 <= 1'b1; // escreve uepc
+										oCSType 		 <= 2'b01; // tipo exception
+										oUCAUSEData  <= 32'h00000002; // causa = 2
+										oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+										oBreak 		 <= 1'b0; // nao da break
 										
 										nx_state 		<= ST_ERRO;
 									end
@@ -1658,8 +2545,8 @@ always @(*)
 										oEscrevePC 		<= 1'b0;
 										oEscrevePCCond <= 1'b0;
 										oEscrevePCBack <= 1'b0;
-										oOrigAULA 		<= 2'b00;
-										oOrigBULA 		<= 2'b00;	 
+										oOrigAULA 		<= 2'b11;
+										oOrigBULA 		<= 2'b11;	 
 										oMem2Reg 		<= 3'b000;
 										oOrigPC 			<= 2'b00;
 										oIouD 			<= 1'b0;
@@ -1674,6 +2561,14 @@ always @(*)
 										oFWriteData    <= 1'b0;
 										oWrite2Mem     <= 1'b0;
 										
+										oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+										oUCAUSEWrite <= 1'b1; // escreve ucause
+										oUEPCWrite 	 <= 1'b1; // escreve uepc
+										oCSType 		 <= 2'b01; // tipo exception
+										oUCAUSEData  <= 32'h00000002; // causa = 2
+										oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+										oBreak 		 <= 1'b0; // nao da break
+				
 										nx_state 		<= ST_ERRO;
 									end
 							endcase
@@ -1685,8 +2580,8 @@ always @(*)
 							oEscrevePC 		<= 1'b0;
 							oEscrevePCCond <= 1'b0;
 							oEscrevePCBack <= 1'b0;
-							oOrigAULA 		<= 2'b00;
-							oOrigBULA 		<= 2'b00;	 
+							oOrigAULA 		<= 2'b11;
+							oOrigBULA 		<= 2'b11;	 
 							oMem2Reg 		<= 3'b000;
 							oOrigPC 			<= 2'b00;
 							oIouD 			<= 1'b0;
@@ -1701,6 +2596,14 @@ always @(*)
 							oFWriteData    <= 1'b0;
 							oWrite2Mem     <= 1'b0;
 							
+							oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+							oUCAUSEWrite <= 1'b1; // escreve ucause
+							oUEPCWrite 	 <= 1'b1; // escreve uepc
+							oCSType 		 <= 2'b01; // tipo exception
+							oUCAUSEData  <= 32'h00000002; // causa = 2
+							oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+							oBreak 		 <= 1'b0; // nao da break
+				
 							nx_state 		<= ST_ERRO;
 						end
 				endcase
@@ -1726,6 +2629,14 @@ always @(*)
 				oFPALUStart    <= 1'b1;	 // fica em start ainda (pra não perder o valor?)
 				oFWriteData    <= 1'b1; // Dado de escrita vem da FPALU
 				oWrite2Mem     <= 1'b0; // Nao habilita escrita na memoria
+				
+				oCSRegWrite	 <= 1'b0; // nao escreve nos csr (alem de ucause e uepc)
+				oUCAUSEWrite <= 1'b0; // nao escreve ucause
+				oUEPCWrite 	 <= 1'b0; // nao escreve uepc
+				oCSType 		 <= 2'b00; // nao necessario
+				oUCAUSEData  <= ZERO; // sem ucause
+				oCSRWSource  <= 3'b000; // 
+				oBreak 		 <= 1'b0; // nao da break
 				
 				nx_state <=  ST_FETCH;
 			
@@ -1797,8 +2708,8 @@ always @(*)
 										oEscrevePC 		<= 1'b0;
 										oEscrevePCCond <= 1'b0;
 										oEscrevePCBack <= 1'b0;
-										oOrigAULA 		<= 2'b00;
-										oOrigBULA 		<= 2'b00;	 
+										oOrigAULA 		<= 2'b11;
+										oOrigBULA 		<= 2'b11;	 
 										oMem2Reg 		<= 3'b000;
 										oOrigPC 			<= 2'b00;
 										oIouD 			<= 1'b0;
@@ -1812,6 +2723,14 @@ always @(*)
 										oFPALUStart    <= 1'b0;
 										oFWriteData    <= 1'b0;
 										oWrite2Mem     <= 1'b0;
+										
+										oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+										oUCAUSEWrite <= 1'b1; // escreve ucause
+										oUEPCWrite 	 <= 1'b1; // escreve uepc
+										oCSType 		 <= 2'b01; // tipo exception
+										oUCAUSEData  <= 32'h00000002; // causa = 2
+										oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+										oBreak 		 <= 1'b0; // nao da break
 										
 										nx_state 		<= ST_ERRO;
 									end
@@ -1833,8 +2752,8 @@ always @(*)
 										oEscrevePC 		<= 1'b0;
 										oEscrevePCCond <= 1'b0;
 										oEscrevePCBack <= 1'b0;
-										oOrigAULA 		<= 2'b00;
-										oOrigBULA 		<= 2'b00;	 
+										oOrigAULA 		<= 2'b11;
+										oOrigBULA 		<= 2'b11;	 
 										oMem2Reg 		<= 3'b000;
 										oOrigPC 			<= 2'b00;
 										oIouD 			<= 1'b0;
@@ -1849,6 +2768,14 @@ always @(*)
 										oFWriteData    <= 1'b0;
 										oWrite2Mem     <= 1'b0;
 										
+										oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+										oUCAUSEWrite <= 1'b1; // escreve ucause
+										oUEPCWrite 	 <= 1'b1; // escreve uepc
+										oCSType 		 <= 2'b01; // tipo exception
+										oUCAUSEData  <= 32'h00000002; // causa = 2
+										oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+										oBreak 		 <= 1'b0; // nao da break
+				
 										nx_state 		<= ST_ERRO;
 									end
 							endcase
@@ -1870,8 +2797,8 @@ always @(*)
 										oEscrevePC 		<= 1'b0;
 										oEscrevePCCond <= 1'b0;
 										oEscrevePCBack <= 1'b0;
-										oOrigAULA 		<= 2'b00;
-										oOrigBULA 		<= 2'b00;	 
+										oOrigAULA 		<= 2'b11;
+										oOrigBULA 		<= 2'b11;	 
 										oMem2Reg 		<= 3'b000;
 										oOrigPC 			<= 2'b00;
 										oIouD 			<= 1'b0;
@@ -1886,6 +2813,14 @@ always @(*)
 										oFWriteData    <= 1'b0;
 										oWrite2Mem     <= 1'b0;
 										
+										oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+										oUCAUSEWrite <= 1'b1; // escreve ucause
+										oUEPCWrite 	 <= 1'b1; // escreve uepc
+										oCSType 		 <= 2'b01; // tipo exception
+										oUCAUSEData  <= 32'h00000002; // causa = 2
+										oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+										oBreak 		 <= 1'b0; // nao da break
+				
 										nx_state 		<= ST_ERRO;
 									end
 							endcase
@@ -1906,8 +2841,8 @@ always @(*)
 										oEscrevePC 		<= 1'b0;
 										oEscrevePCCond <= 1'b0;
 										oEscrevePCBack <= 1'b0;
-										oOrigAULA 		<= 2'b00;
-										oOrigBULA 		<= 2'b00;	 
+										oOrigAULA 		<= 2'b11;
+										oOrigBULA 		<= 2'b11;	 
 										oMem2Reg 		<= 3'b000;
 										oOrigPC 			<= 2'b00;
 										oIouD 			<= 1'b0;
@@ -1922,6 +2857,13 @@ always @(*)
 										oFWriteData    <= 1'b0;
 										oWrite2Mem     <= 1'b0;
 										
+										oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+										oUCAUSEWrite <= 1'b1; // escreve ucause
+										oUEPCWrite 	 <= 1'b1; // escreve uepc
+										oCSType 		 <= 2'b01; // tipo exception
+										oUCAUSEData  <= 32'h00000002; // causa = 2
+										oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+										oBreak 		 <= 1'b0; // nao da break
 										nx_state 		<= ST_ERRO;
 									end
 							endcase
@@ -1942,8 +2884,8 @@ always @(*)
 										oEscrevePC 		<= 1'b0;
 										oEscrevePCCond <= 1'b0;
 										oEscrevePCBack <= 1'b0;
-										oOrigAULA 		<= 2'b00;
-										oOrigBULA 		<= 2'b00;	 
+										oOrigAULA 		<= 2'b11;
+										oOrigBULA 		<= 2'b11;	 
 										oMem2Reg 		<= 3'b000;
 										oOrigPC 			<= 2'b00;
 										oIouD 			<= 1'b0;
@@ -1958,6 +2900,13 @@ always @(*)
 										oFWriteData    <= 1'b0;
 										oWrite2Mem     <= 1'b0;
 										
+										oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+										oUCAUSEWrite <= 1'b1; // escreve ucause
+										oUEPCWrite 	 <= 1'b1; // escreve uepc
+										oCSType 		 <= 2'b01; // tipo exception
+										oUCAUSEData  <= 32'h00000002; // causa = 2
+										oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+										oBreak 		 <= 1'b0; // nao da break
 										nx_state 		<= ST_ERRO;
 									end
 							endcase
@@ -1968,8 +2917,8 @@ always @(*)
 							oEscrevePC 		<= 1'b0;
 							oEscrevePCCond <= 1'b0;
 							oEscrevePCBack <= 1'b0;
-							oOrigAULA 		<= 2'b00;
-							oOrigBULA 		<= 2'b00;	 
+							oOrigAULA 		<= 2'b11;
+							oOrigBULA 		<= 2'b11;	 
 							oMem2Reg 		<= 3'b000;
 							oOrigPC 			<= 2'b00;
 							oIouD 			<= 1'b0;
@@ -1984,6 +2933,14 @@ always @(*)
 							oFWriteData    <= 1'b0;
 							oWrite2Mem     <= 1'b0;
 							
+							oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+							oUCAUSEWrite <= 1'b1; // escreve ucause
+							oUEPCWrite 	 <= 1'b1; // escreve uepc
+							oCSType 		 <= 2'b01; // tipo exception
+							oUCAUSEData  <= 32'h00000002; // causa = 2
+							oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+							oBreak 		 <= 1'b0; // nao da break
+				
 							nx_state 		<= ST_ERRO;
 						end
 				endcase
@@ -1997,15 +2954,15 @@ always @(*)
 				oEscrevePC 		<= 1'b0;
 				oEscrevePCCond <= 1'b0;
 				oEscrevePCBack <= 1'b0;
-				oOrigAULA 		<= 2'b00;
-				oOrigBULA 		<= 2'b00;	 
+				oOrigAULA 		<= 2'b11;
+				oOrigBULA 		<= 2'b11;	 
 				oMem2Reg 		<= 3'b000;
 				oOrigPC 			<= 2'b00;
 				oIouD 			<= 1'b0;
 				oRegWrite 		<= 1'b0;
 				oMemWrite 		<= 1'b0;
 				oMemRead 		<= 1'b0;
-				oALUControl 	<= OPNULL;
+				oALUControl 	<= OPADD;
 `ifdef RV32IMF                                                 //RV32IMF
 				oFRegWrite     <= 1'b0;
 				oFPALUControl  <= OPNULL;
@@ -2015,6 +2972,13 @@ always @(*)
 				oWrite2Mem     <= 1'b0;
 `endif	
 
+				oCSRegWrite	 <= 1'b1; // escreve nos csr (uval)
+				oUCAUSEWrite <= 1'b1; // escreve ucause
+				oUEPCWrite 	 <= 1'b1; // escreve uepc
+				oCSType 		 <= 2'b01; // tipo exception
+				oUCAUSEData  <= 32'h00000002; // causa = 2
+				oCSRWSource  <= 3'b110; // escreve instrucao de erro em uval
+				oBreak 		 <= 1'b0; // nao da break
 				
 				nx_state 		<= ST_ERRO;
 			end

@@ -313,9 +313,11 @@ Datapath_MULTI DATAPATH0 (
     .mRegDispSelect(mRegDispSelect),
     .mRegDisp(mRegDisp),
 	 .mFRegDisp(mFRegDisp),
+	 .mCSRegDisp(mCSRegDisp), //
     .mVGASelect(mVGASelect),
     .mVGARead(mVGARead),
 	 .mFVGARead(mFVGARead),
+	 .mCSVGARead(mCSVGARead), //
 	 .mRead1(mRead1),
 	 .mRead2(mRead2),
 	 .mRegWrite(mRegWrite),

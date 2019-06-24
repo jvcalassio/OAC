@@ -19,10 +19,12 @@ module Datapath_MULTI (
 	 output wire [31:0] mDebug,
     input  wire [ 4:0] mRegDispSelect,
     output wire [31:0] mRegDisp,
-	 output wire [31:0] mFRegDisp,	 
+	 output wire [31:0] mFRegDisp,
+	 output wire [31:0] mCSRegDisp, //	 
     input  wire [ 4:0] mVGASelect,
     output wire [31:0] mVGARead,
     output wire [31:0] mFVGARead,
+	 output wire [31:0] mCSVGARead, //
 	 output wire [31:0] mRead1,
 	 output wire [31:0] mRead2,
 	 output wire [31:0] mRegWrite,
@@ -78,7 +80,7 @@ module Datapath_MULTI (
 
 
 // Sinais de monitoramento e Debug
-wire [31:0] wRegDisp, wFRegDisp, wVGARead, wFVGARead;
+wire [31:0] wRegDisp, wFRegDisp, wVGARead, wFVGARead, wCSVGARead;
 wire [ 4:0] wRegDispSelect, wVGASelect;
 
 assign mPC					= PC; 
@@ -92,6 +94,7 @@ assign wRegDispSelect 	= mRegDispSelect;
 assign wVGASelect 		= mVGASelect;
 assign mRegDisp			= wRegDisp;
 assign mVGARead			= wVGARead;
+assign mCSVGARead			= wCSVGARead;
 
 `ifdef RV32IMF
 assign mFRegDisp			= wFRegDisp;
@@ -115,7 +118,7 @@ assign mCFRegWrite      = wCFRegWrite;
 // ****************************************************** 
 // Instanciação e Inicializacao dos registradores		  						 
 
-reg 	[31:0] PC, PCBack, IR, MDR, A, B, ALUOut;
+reg 	[31:0] PC, PCBack, IR, MDR, A, B, ALUOut, CSRDA, CSRDB;
 `ifdef RV32IMF
 reg   [31:0] FA, FB, FPALUOut;
 `endif
@@ -132,6 +135,8 @@ begin
 	MDR 		<= ZERO;
 	A 			<= ZERO;
 	B 			<= ZERO;
+	CSRDA		<= ZERO;
+	CSRDB		<= ZERO;
 `ifdef RV32IMF
 	FA       <= ZERO;
 	FB       <= ZERO;
@@ -243,23 +248,23 @@ FRegisters REGISTERS1 (
 
 // Banco de registradores de controle e status
 wire [31:0] wCSRead; // dado lido do registrador csr
-CSRegisters REGISTERS2(
+CSRegisters REGISTERS2 (
 	.iCLK(iCLK),
 	.iRST(iRST),
-	.iCSReadRegister(),
+	.iCSReadRegister(wCSReadRegister),
 	.oCSReadData(wCSRead),
-	.iCSWriteRegister(),
-	.iCSWriteData(),
-	.iCSRegWrite(),
-	.iUCAUSEWrite(),
-	.iUEPCWrite(),
-	.iUCAUSEData(),
-	.iUEPCData(PC),
+	.iCSWriteRegister(wCSWriteRegister),
+	.iCSWriteData(wCSWriteData),
+	.iCSRegWrite(wSCSRegWrite),
+	.iUCAUSEWrite(wSUCAUSEWrite),
+	.iUEPCWrite(wSUEPCWrite),
+	.iUCAUSEData(wSUCAUSEData),
+	.iUEPCData(PCBack),
 	
 	.iRegDispSelect(wRegDispSelect),    // seleção para display
    .oRegDisp(wCSRegDisp),                // Reg display
    .iVGASelect(wVGASelect),            // para mostrar Regs na tela
-   .oVGARead(wCSVGARead)   
+   .oVGARead(wCSVGARead)                 // para mostrar Regs na tela
 );
 
 	
@@ -320,28 +325,29 @@ FPALU FPALU0 (
 // fios de selecao dos dados CSR
 wire [2:0]  wSCSRWSource, wSCOrigPC;
 wire [1:0]  wSCSType;
-wire 		   wSCSRegWrite, wSUCAUSEWrite, wSUEPCWrite;
+wire 		   wSCSRegWrite, wSUCAUSEWrite, wSUEPCWrite, wSCEscrevePC;
 wire [31:0] wSUCAUSEData;
-// wire [31:0] wCSULAOPA, wCSULAOPB;
 
 // selecao dos dados CSR
 always @(*) begin
-	if(PC[1:0] != 2'b00) begin // endereco de instrucao desalinhado
+	/*if(PC[1:0] != 2'b00) begin // endereco de instrucao desalinhado
 		wSUCAUSEWrite	<= ON; // escreve ucause
 		wSUCAUSEData 	<= 32'h00000000;
 		wSUEPCWrite 	<= ON; // escreve UEPC
-		wSCOrigPC 		<= 3'b100; // PC vem do CSR
+		wSCOrigPC 		<= 2'b11; // PC vem do CSR
 		wSCSRegWrite 	<= ON; // escreve em csr
 		wSCSRWSource	<= 3'b111; 
 		wSCSType			<= 2'b01; // excessao com ucause
+		wSCEscrevePC	<= 1'b1;
 	end else if (PC < BEGINNING_TEXT || PC > END_TEXT) begin // endereco fora do segmento .text
 		wSUCAUSEWrite	<= ON; // escreve ucause
 		wSUCAUSEData 	<= 32'h00000001;
 		wSUEPCWrite 	<= ON; // escreve UEPC
-		wSCOrigPC 		<= 3'b100; // PC vem do CSR
+		wSCOrigPC 		<= 2'b11; // PC vem do CSR
 		wSCSRegWrite 	<= ON; // escreve em csr
 		wSCSRWSource	<= 3'b111; 
 		wSCSType			<= 2'b01; // excessao com ucause
+		wSCEscrevePC	<= 1'b1;
 	end
 	else if(wLoadException == 2'b01) begin // endereco de load desalinhado
 		wSCSType 		<= 2'b01;
@@ -349,8 +355,9 @@ always @(*) begin
 		wSUCAUSEData  	<= 32'h00000004; // causa = 4;
 		wSUCAUSEWrite 	<= ON;
 		wSUEPCWrite 	<= ON;
-		wSCOrigPC		<= 3'b100;
+		wSCOrigPC		<= 2'b11;
 		wSCSRegWrite   <= ON;
+		wSCEscrevePC	<= 1'b1;
 	end
 	else if(wLoadException == 2'b10) begin // endereco de load fora dos segmentos
 		wSCSType 		<= 2'b01;
@@ -358,8 +365,9 @@ always @(*) begin
 		wSUCAUSEData  	<= 32'h00000005; // causa = 5;
 		wSUCAUSEWrite 	<= ON;
 		wSUEPCWrite 	<= ON;
-		wSCOrigPC		<= 3'b100;
+		wSCOrigPC		<= 2'b11;
 		wSCSRegWrite  	<= ON;
+		wSCEscrevePC	<= 1'b1;
 	end
 	else if(wStoreException == 2'b01) begin // endereco de store desalinhado
 		wSCSType 		<= 2'b01;
@@ -367,8 +375,9 @@ always @(*) begin
 		wSUCAUSEData  	<= 32'h00000006; // causa = 6;
 		wSUCAUSEWrite 	<= ON;
 		wSUEPCWrite 	<= ON;
-		wSCOrigPC		<= 3'b100;
+		wSCOrigPC		<= 2'b11;
 		wSCSRegWrite   <= ON;
+		wSCEscrevePC	<= 1'b1;
 	end
 	else if(wStoreException == 2'b10) begin // endereco de store fora dos segmentos
 		wSCSType 		<= 2'b01;
@@ -376,10 +385,11 @@ always @(*) begin
 		wSUCAUSEData  	<= 32'h00000007; // causa = 7;
 		wSUCAUSEWrite 	<= ON;
 		wSUEPCWrite 	<= ON;
-		wSCOrigPC		<= 3'b100;
+		wSCOrigPC		<= 2'b11;
 		wSCSRegWrite  	<= ON;
+		wSCEscrevePC	<= 1'b1;
 	end
-	else begin // sem exception
+	else*/ begin // sem exception
 		wSCSRWSource 	<= wCSRWSource;
 		wSCSType			<= wCSType;
 		wSCSRegWrite 	<= wCSRegWrite;
@@ -387,11 +397,13 @@ always @(*) begin
 		wSUCAUSEData	<= wUCAUSEData;
 		wSUEPCWrite		<= wUEPCWrite;
 		wSCOrigPC		<= wCOrigPC;
+		wSCEscrevePC	<= wCEscrevePC;
 	end
 end
 
 // fonte do dado a ser escrito no CSR
 wire [31:0] wCSWriteData;
+assign wCSWriteData = wALUresult; // resultado da saida da ula
 /* Modificar:
 	No multiciclo, a ula pode fazer todas as operacoes
 	Fazer operacoes dos csr na ula e retornar resultado
@@ -452,7 +464,7 @@ always @(*)
         2'b00:    wOrigAULA <= A;
 		  2'b01:		wOrigAULA <= PC;
 		  2'b10:		wOrigAULA <= PCBack;
-		  //2'b11: wOrigAULA <= wCSULAOPA; // numero escolhido (de acordo com a instrucao) p/ operar na ula com o csr
+		  2'b11: 	wOrigAULA <= CSRDA; // numero escolhido (de acordo com a instrucao) p/ operar na ula com o csr
 		  default:	wOrigAULA <= ZERO;
     endcase
 
@@ -463,7 +475,7 @@ always @(*)
         2'b00:    wOrigBULA <= B;
         2'b01:    wOrigBULA <= 32'h4;
 		  2'b10:		wOrigBULA <= wImmediate;
-		  //2'b11: wOrigBULA <= wCSULAOPB; // numero escolhido (de acordo com a instrucao) p/ operar na ula com o csr
+		  2'b11: 	wOrigBULA <= CSRDB; // numero escolhido (de acordo com a instrucao) p/ operar na ula com o csr
 		  default:	wOrigBULA <= ZERO;
     endcase	 
 	 
@@ -474,7 +486,7 @@ always @(*)
         3'b000:    wRegWrite <= ALUOut;
         3'b001:    wRegWrite <= PC;
         3'b010:    wRegWrite <= MDR;
-		  //3'b100:	 wRegWrite <= wCSRead; // dado lido do registrador csr
+		  3'b100:	 wRegWrite <= wCSRead; // dado lido do registrador csr
 `ifdef RV32IMF                                        //RV32IMF
 		  3'b011:    wRegWrite <= FPALUOut; // Uma entrada a mais no multiplexador de escrita no registrador de inteiros
 `endif
@@ -484,7 +496,7 @@ always @(*)
 	 
 wire [31:0] wiPC;	 
 always @(*)
-	case(wCOrigPC)
+	case(wSCOrigPC)
 		2'b00:     wiPC <= wALUresult;				// PC+4
       2'b01:     wiPC <= ALUOut;						// Branches e jal
 		2'b10:	  wiPC <= wALUresult & ~(32'h1);	// jalr
@@ -546,6 +558,8 @@ always @(posedge iCLK or posedge iRST)
 		MDR 		<= ZERO;
 		A 			<= ZERO;
 		B 			<= ZERO;
+		CSRDA		<= ZERO;
+		CSRDB		<= ZERO;
 `ifdef RV32IMF
 	   FA       <= ZERO;
 	   FB       <= ZERO;
@@ -565,6 +579,46 @@ always @(posedge iCLK or posedge iRST)
 		FB       <= wFRead2;
 `endif
 
+		// csr
+		case(wSCSRWSource)
+			3'b000: begin // CSRRW
+				CSRDA <= wRead1;
+				CSRDB <= ZERO;
+			end
+			3'b001: begin // CSRRS
+				CSRDA <= wCSRead;
+				CSRDB <= wRead1;
+			end
+			3'b010: begin // CSRRC
+				CSRDA <= wCSRead;
+				CSRDB <= ~(wRead1);
+			end
+			3'b011: begin // CSRRWI
+				CSRDA <= wRs1;
+				CSRDB <= ZERO;
+			end
+			3'b100: begin // CSRRSI
+				CSRDA <= wCSRead;
+				CSRDB <= wRs1;
+			end
+			3'b101: begin // CSRRCI
+				CSRDA <= wCSRead;
+				CSRDB <= ~(wRs1);
+			end
+			3'b110: begin // escreve instrucao
+				CSRDA <= wInstr;
+				CSRDB <= ZERO;
+			end
+			3'b111: begin // escreve PC
+				CSRDA <= PCBack;
+				CSRDB <= ZERO;
+			end
+			default: begin
+				CSRDA <= ZERO;
+				CSRDB <= ZERO;
+			end
+		endcase
+		
 		// Conditional 
 		if (wCEscreveIR)
 			IR	<= wReadData;
@@ -572,7 +626,7 @@ always @(posedge iCLK or posedge iRST)
 		if (wCEscrevePCBack)
 			PCBack <= PC;
 			
-		if (wCEscrevePC || wBranch & wCEscrevePCCond)
+		if (wSCEscrevePC || wBranch & wCEscrevePCCond)
 			PC	<= wiPC;	
 
 	  end

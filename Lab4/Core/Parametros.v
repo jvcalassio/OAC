@@ -321,6 +321,16 @@ parameter
 	ST_FPALUREGWRITE 	= 6'd26,
 	ST_FPSTART       	= 6'd27, // Estado que inicializa a operacao na FPULA
 	ST_FPWAIT		  	= 6'd28, 
+	
+	// Estados CSR
+	ST_CSRRW1			= 6'd29,
+	ST_CSRRS1			= 6'd30,
+	ST_CSRRC1			= 6'd31,
+	ST_CSRRWI1			= 6'd32,
+	ST_CSRRSI1			= 6'd33,
+	ST_CSRRCI1			= 6'd34,
+	ST_ECALL1			= 6'd35,
+	ST_URET1				= 6'd36,
 
 	ST_ERRO        	= 6'd63, // Estado de Erro
 	
