@@ -264,9 +264,6 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	#sw t1,4(t0) # troca displays na variavel
 	########## fim mudar display (contina no fim do loop)
 	
-	#call INIT_NOVO_BARRIL
-	
-	#call MOV_BARRIS
 	# verifica e toca o som ambiente
 	call AMBIENT_SOUND
 	
@@ -281,6 +278,9 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	
 	# Verifica se precisa remover algum texto
 	call CHECK_POINTS_TIMER
+	
+	# Faz o movimento dos barris
+	#call MOV_BARRIS
 	
 	# Verifica se precisa remover o martelo
 	call MARIO_CHECK_HAMMER

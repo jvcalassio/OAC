@@ -1,14 +1,19 @@
 .data
 .include "../sprites/bin/dk_1.s"
 .include "../sprites/bin/dk_2.s"
+.include "../sprites/bin/dk_3.s"
+.include "../sprites/bin/dk_4.s"
 .include "../sprites/bin/lady_p1.s"
 .include "../sprites/bin/lady_p2.s"
 .include "../sprites/bin/bolsa.s"
 .include "../sprites/bin/guardachuva.s"
 .include "../sprites/bin/martelo_x.s"
 .include "../sprites/bin/martelo_y.s"
+.include "../sprites/bin/barril_lateral_p1.s"
+.include "../sprites/bin/barril.s"
 var_dk: .word 0
 var_lady: .word 0
+var_barris: .word 0, 0, 0, 0, 0, 0 #posicoes de 6 barris, usar GETXY para converter para coordenadas
 
 # strings de jogo
 victory_text: .string "PARABENS VC VENCEU"
@@ -28,6 +33,95 @@ points_timer: .word 0,0 # variaveis do tempo de exibicao do texto de pontos ganh
 points_pos: .half 0,0,0,0 # texto 1 (x,y) , texto 2 (x,y)
 .text
 
+######################################################
+#Calcula X e Y, dado um endereco do bitmap display
+#a0 = endereco
+#a1 = endereco base
+#retorna X em a0 e Y em a1
+######################################################
+GET_XY:
+	sub	a0, a0, a1
+	li	t0, 320
+	rem	a0, a0, t0	# x = end%320
+	div	a1, a1, t0	# y = end/320
+	jr	ra, 0
+
+
+#inicializa uma nova variável para um barril, dentro de var_barris
+#a0 = x
+#a1 = y
+INIT_NOVO_BARRIL:
+	la	a2, display
+	lw	a2, 0(a2)
+	save_stack(ra)
+	call	GET_POSITION
+	free_stack(ra)
+	
+	#encontra primeira posicao zerada na var_barris e armazena lá o novo valor do barril
+	la	t0, var_barris
+	
+	loop_verifica_barris1:
+	lw	t1, 0(t0)
+	beqz	t1, fim_init_novo_barril
+	addi	t0,t0,4
+	j	loop_verifica_barris1
+	
+	fim_init_novo_barril:
+	sw	a0, 0(t0)
+	ret
+
+#responsável pelo movimento dos barris
+MOV_BARRIS:
+	save_stack(ra)
+	la	t0, var_barris
+	li	t1, 0	#t1 = i
+	
+	loop_mov_barris:
+	li	t2, 6
+	beq	t2, t1, FIM_MOV_BARRIS
+	lw	t2, 0(t0)
+	
+	save_stack(t0)
+	save_stack(t1)
+	bnez	t2, MOVER_BARRIL
+	
+	continue_MOV_BARRIS:
+	free_stack(t1)
+	free_stack(t0)
+	
+	addi	t0, t0, 4
+	addi	t1, t1, 1
+	j	loop_mov_barris
+	
+	MOVER_BARRIL:
+		mv	a0, t2
+		la	a1, display
+		lw	a1, 0(a1)
+		call	GET_XY
+		save_stack(a0)
+		save_stack(a1)	#salva x e y
+		
+		la	a2, display
+		lw	a2, 0(a2)
+		la	a3, fase_current
+		la	a4, barril
+		call	CLEAR_OBJPOS
+		
+		free_stack(a1)
+		free_stack(a0)
+		addi	a0, a0, 1	#movendo o barril 1 pixel para a direita
+		la	a2, display
+		lw	a2, 0(a2)
+		la	a3, barril
+		call	PRINT_OBJ
+		
+		j	continue_MOV_BARRIS
+		
+			
+	FIM_MOV_BARRIS:
+		free_stack(ra)
+		ret
+		
 # Faz danca do Donkey Kong fase 1
 INIT_DK_DANCA:
 	la	t4, var_dk
@@ -51,16 +145,58 @@ DK_DANCA_LOOP:
 	li	t1, 100		#100
 	beq	t0, t1, DK_DANCA_FRAME2	#i==100? goto FRAME2
 	
+	
+	li	t0, 1
+	la	t1, fase
+	lb	t1, 0(t1)
+	bne	t0, t1, NAO_BARRIS	#se a fase não for a primeira, pula-se os frames responsáveis pelo spawn do barril
+	
+	#checa se 6 barris já foram lancados
+	la	t0, var_barris
+	li	t2,0	#t2 = i
+	loop_verifica_barris:
+	li	t1, 6	#parada em 6
+	beq	t2, t1, NAO_BARRIS #verificou todos e n ha nenhum zerado
+	lw	t1, 0(t0)
+	beqz	t1, exit_verifica_barris
+	addi	t0, t0, 4
+	addi	t2, t2, 1
+	j	loop_verifica_barris
+	
+	exit_verifica_barris:
+	la	t4, var_dk
+	lw	t0, 0(t4)	#i
+	li	t1, 150	
+	beq	t0, t1, DK_DANCA_FRAME3	#i==150? goto FRAME3
+	
+	la	t4, var_dk
+	lw	t0, 0(t4)	#i
+	li	t1, 200
+	beq	t0, t1, DK_DANCA_FRAME4	#i==200? goto FRAME4
+	
+	la	t4, var_dk
+	lw	t0, 0(t4)	#i
+	li	t1, 250
+	beq	t0, t1, DK_DANCA_FRAME5	#i==200? goto FRAME5
+	
+	la	t4, var_dk
+	lw	t0, 0(t4)	#i
+	li	t1, 300
+	bge	t0, t1, DK_DANCA_RESET	#i>=300? goto RESETi
+	
+	j	i_MAISMAIS
+	
+	NAO_BARRIS:
 	la	t4, var_dk
 	lw	t0, 0(t4)	#i
 	li	t1, 150		#150
 	bge	t0, t1, DK_DANCA_RESET	#i>=150? goto RESETi
 	
+	i_MAISMAIS:
 	la	t4, var_dk
 	lw	t0, 0(t4)
 	addi 	t0, t0, 1	#i++
 	sw	t0, 0(t4)
-	
 	j	FIM_DK_DANCA
 
 	DK_DANCA_RESET:
@@ -136,8 +272,97 @@ DK_DANCA_LOOP:
 		addi 	t0, t0, 1	#i++
 		sw	t0, 0(t4)
 		
-		j	FIM_DK_DANCA	
+		j	FIM_DK_DANCA
 	
+	DK_DANCA_FRAME3:
+		jal	SET_POSDK
+		#li	a2, DISPLAY0
+		la 	a2, display
+		lw	a2, 0(a2) # display atual
+		la	a3, fase_current
+		la	a4, dk_4
+		call	CLEAR_OBJPOS
+		
+		jal	SET_POSDK
+		#li	a2, DISPLAY0
+		la 	a2, display
+		lw	a2, 0(a2) # display atual
+		la	a3, dk_4
+		call 	PRINT_OBJ
+		
+		la	t4, var_dk
+		lw	t0, 0(t4)
+		addi 	t0, t0, 1	#i++
+		sw	t0, 0(t4)
+		
+		j	FIM_DK_DANCA
+	
+	DK_DANCA_FRAME4:
+		jal	SET_POSDK
+		#li	a2, DISPLAY0
+		la 	a2, display
+		lw	a2, 0(a2) # display atual
+		la	a3, fase_current
+		la	a4, dk_3
+		call	CLEAR_OBJPOS
+		
+		jal	SET_POSDK
+		#li	a2, DISPLAY0
+		la 	a2, display
+		lw	a2, 0(a2) # display atual
+		la	a3, dk_3
+		call 	PRINT_OBJ
+		
+		#printar barril na mao do dk
+		li	a0, 78
+		li	a1, 52
+		la	a2, display
+		lw	a2, 0(a2)
+		la	a3, barril_lateral_p1
+		call	PRINT_OBJ
+		
+		la	t4, var_dk
+		lw	t0, 0(t4)
+		addi 	t0, t0, 1	#i++
+		sw	t0, 0(t4)
+		
+		j	FIM_DK_DANCA
+	
+	DK_DANCA_FRAME5:
+		jal	SET_POSDK
+		#li	a2, DISPLAY0
+		la 	a2, display
+		lw	a2, 0(a2) # display atual
+		la	a3, fase_current
+		la	a4, dk_4
+		call	CLEAR_OBJPOS
+		
+		jal	SET_POSDK
+		#li	a2, DISPLAY0
+		la 	a2, display
+		lw	a2, 0(a2) # display atual
+		la	a3, dk_4
+		call 	PRINT_OBJ_MIRROR
+		
+		#printar barril no chao
+		li	a0, 111
+		li	a1, 52
+		la	a2, display
+		lw	a2, 0(a2)
+		la	a3, barril
+		call	PRINT_OBJ
+		
+		li	a0, 111
+		li	a1, 52
+		call	INIT_NOVO_BARRIL
+		
+		la	t4, var_dk
+		lw	t0, 0(t4)
+		addi 	t0, t0, 1	#i++
+		sw	t0, 0(t4)
+		
+		j	FIM_DK_DANCA
+		
 	FIM_DK_DANCA:
 		free_stack(ra)
 		ret
