@@ -55,8 +55,8 @@ INIT_GAME:
 	sw zero,0(t0)
 	
 	# Como o jogo comeca na fase 1, nao precisa passar por "init fase1", e consequentemente, carregar
-	jal SET_FASE3
-	call F3_ADD_BLOCKS
+	#jal SET_FASE3
+	#call F3_ADD_BLOCKS
 	jal PRINT_FASE
 	call PRINT_TEXT_INITIAL
 	call INIT_MARIO
@@ -264,6 +264,9 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	#sw t1,4(t0) # troca displays na variavel
 	########## fim mudar display (contina no fim do loop)
 	
+	#call INIT_NOVO_BARRIL
+	
+	#call MOV_BARRIS
 	# verifica e toca o som ambiente
 	call AMBIENT_SOUND
 	
