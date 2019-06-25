@@ -1,3 +1,7 @@
+########################################################
+# Responsavel por gerenciar o ambiente, como	       #
+# - Textos, animacoes, objetos (estaticos e dinamicos) #
+########################################################
 .data
 .include "../sprites/bin/dk_1.s"
 .include "../sprites/bin/dk_2.s"

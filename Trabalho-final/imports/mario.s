@@ -1,6 +1,7 @@
-#################################################
-# Responsavel por gerenciar movimentos do Mario
-#################################################
+##################################################
+# Responsavel por gerenciar movimentos, colisoes #
+# interacoes com cenario e objetos do Mario	 #
+##################################################
 .data
 # Sprites
 .include "../sprites/bin/mario_parado.s"
@@ -698,7 +699,7 @@ MARIO_PULO_UP:
 		lb t1,0(t0)
 		andi s0,t1,0x04 # verificador de qual o lado do mario
 		
-		set_mario_move(0,-1,mario_pulando) # se move 1px pra cima
+		set_mario_move(0,-2,mario_pulando) # se move 1px pra cima
 		
 		beqz s0,PULO_UP_PDIR
 		j PULO_UP_PESQ
@@ -733,7 +734,7 @@ MARIO_PULO_UP:
 		lb t1,0(t0)
 		andi s0,t1,0x04 # pega para qual lado o mario esta virado
 		
-		set_mario_move(0,1,mario_pulando) # se move 1px pra baixo
+		set_mario_move(0,2,mario_pulando) # se move 1px pra baixo
 		
 		beqz s0,PULO_UP_PDIR
 		j PULO_UP_PESQ
@@ -767,7 +768,7 @@ MARIO_PULO_UP:
 MARIO_PULO_DIR:
 	la t0,mario_state 
 	lb t1,0(t0)
-	andi t1,t1,0x18 # verifica se pode pular
+	andi t1,t1,0x08 # verifica se pode pular
 	bne t1,zero,FIM_PULO_DIR # se nao puder pular, sai
 	
 	rmv_mario(mario_pulando) # remove mario na posicao atual
@@ -777,13 +778,18 @@ MARIO_PULO_DIR:
 	lb t2,1(t0) # carrega estado de subida do pulo do mario
 	li t3,12
 	beq t2,t3,MARIO_PULO_DIR_INIT_DESCIDA # se ja tiver chegado no ponto maximo, inicia descida
-	beq t1,t3,MARIO_PULO_DIR_RESET # se ambos tiverem em 12, termina pulo
-	bgt t1,zero,MARIO_PULO_DIR_DESCE # se descida tiver > 0 e < 12, faz movimento de descer
+	bge t1,t3,MARIO_PULO_DIR_DESCE_RETO # se ambos >= 12, verifica se precisa parar, ou morrer
+	bgt t1,zero,MARIO_PULO_DIR_DESCE_DIAG # se descida tiver > 0 e < 12, faz movimento de descer
 	bgt t2,zero,MARIO_PULO_DIR_SOBE # se subida tiver > 0 e < 12, sobe 1px
 	
 	MARIO_PULO_DIR_INIT_SUBIDA:
 		# verifica se em algum ponto da trajetoria tem uma parede
 		# se tiver, nao realiza pulo
+		la t0,mario_state
+		lb t1,0(t0)
+		andi t1,t1,0x10 # verifica se esta com martelo
+		bnez t1,FIM_PULO_DIR # se estiver com martelo, nao inicia subida
+		
 		save_stack(s0)
 		mario_mappos(s0)
 		mv t0,s0
@@ -804,8 +810,6 @@ MARIO_PULO_DIR:
 		la t0,mario_state
 		li t1,0x03
 		sb t1,0(t0) # grava mario state de pulando pra direita
-		
-		# verificar se tem degrau
 		
 		la t0,pulo_px
 		lb t1,1(t0)
@@ -839,25 +843,114 @@ MARIO_PULO_DIR:
 		
 		j PULO_DIR_ANIM
 	
-	MARIO_PULO_DIR_DESCE:
+	MARIO_PULO_DIR_DESCE_DIAG:
 		la t0,pulo_px
 		lb t1,0(t0)
 		addi t1,t1,1 # desce 1px no pulopx
 		sb t1,0(t0)
 		
-		set_mario_move(2,1,mario_pulando) # se move 1px pra baixo, 1px pra direita
+		la t0,pos_mario
+		lh s0,0(t0) # x do mario
+		lh s1,2(t0) # y do mario
+		addi s1,s1,18
+		li s2,18
+		MPDIR_VERIF_GROUND:
+			beqz s2,CONT_MPDIR_VERIF_GROUND
+			addi a0,s0,1 # x crescente p/ procurar px de chao
+			addi a1,s1,0 # y do pe
+			la a2,display
+			lw a2,0(a2)
+			call GET_POSITION
+			lb t0,0(a0)
+			li t1,128
+			beq t0,t1,MARIO_PULO_DIR_RESET # para ao achar chao azul
+			li t1,0x46
+			beq t0,t1,MARIO_PULO_DIR_RESET # para ao achar chao rosa
+			addi s0,s0,1 # incrementa x
+			addi s2,s2,-1 # decrementa contador
+			j MPDIR_VERIF_GROUND
+		
+		CONT_MPDIR_VERIF_GROUND: # se nao tiver chao, move o mario
+			set_mario_move(2,2,mario_pulando) # se move 1px pra baixo, 1px pra direita
+		
+		j PULO_DIR_ANIM
+		
+	MARIO_PULO_DIR_DESCE_RETO:
+		la t0,fase
+		lb t1,0(t0)
+		li t0,3
+		beq t0,t1,MARIO_PULO_DIR_RESET_F3 # se for fase 3, ele sempre cai na mesma altura
+		
+		la t0,pulo_px
+		lb t1,0(t0)
+		addi t1,t1,1 # desce 1px no pulopx
+		sb t1,0(t0)
+		
+		li t0,18
+		# bge t1,t0,MARIO_PULO_DIR_RESET_DEATH # se cair mais q 1,5 x altura do mario, morre
+		
+		la t0,pos_mario
+		lh s0,0(t0) # x do mario
+		lh s1,2(t0) # y do mario
+		addi s1,s1,18
+		li s2,18
+		MPDIR_VERIF_GROUND_R:
+			beqz s2,CONT_MPDIR_VERIF_GROUND_R
+			addi a0,s0,1 # x crescente p/ procurar px de chao
+			addi a1,s1,0 # y do pe
+			la a2,display
+			lw a2,0(a2)
+			call GET_POSITION
+			lb t0,0(a0)
+			li t1,0x46
+			beq t0,t1,MARIO_PULO_DIR_RESET # para ao achar chao rosa
+			addi s0,s0,1 # incrementa x
+			addi s2,s2,-1 # decrementa contador
+			j MPDIR_VERIF_GROUND_R
+		
+		CONT_MPDIR_VERIF_GROUND_R: # se nao tiver chao, move o mario
+			set_mario_move(1,2,mario_pulando) # se move 1px pra baixo, 1px pra direita
 		
 		j PULO_DIR_ANIM
 	
+	MARIO_PULO_DIR_RESET_DEATH:
+		la t0,pulo_px
+		sb zero,0(t0)
+		sb zero,1(t0)
+		
+		la t0,mario_state
+		lb t1,0(t0)
+		andi t1,t1,0x10
+		sb t1,0(t0) # salva estado do mario no chao, virado pra direita, com ou sem martelo
+	
+		set_mario_move(0,0,mario_pulando)
+		j PULO_DIR_ANIM
+		
+	MARIO_PULO_DIR_RESET_F3:
+		la t0,pulo_px
+		sb zero,0(t0)
+		sb zero,1(t0) # reseta pulopx
+		
+		la t0,mario_state
+		lb t1,0(t0)
+		andi t1,t1,0x10
+		sb t1,0(t0) # salva estado do mario no chao, virado pra direita, com ou sem martelo
+	
+		set_mario_move(4,4,mario_parado) # se move 4px pra baixo, 4px pra direita p/ finalizar pulo
+		
+		j PULO_DIR_ANIM
+		
 	MARIO_PULO_DIR_RESET:
 		la t0,pulo_px
 		sb zero,0(t0)
 		sb zero,1(t0) # reseta pulopx
 		
 		la t0,mario_state
-		sb zero,0(t0) # salva estado do mario no chao, virado pra direita
+		lb t1,0(t0)
+		andi t1,t1,0x10
+		sb t1,0(t0) # salva estado do mario no chao, virado pra direita, com ou sem martelo
 	
-		set_mario_move(4,8,mario_parado) # se move 8px pra baixo, 4px pra direita p/ finalizar pulo
+		set_mario_move(0,0,mario_parado) # muda pro sprite do mario parado
 		
 	PULO_DIR_ANIM: # pula pra direita em movimento
 		call PRINT_OBJ
@@ -869,7 +962,7 @@ MARIO_PULO_DIR:
 MARIO_PULO_ESQ:
 	la t0,mario_state
 	lb t1,0(t0)
-	andi t1,t1,0x18 # verifica se pode pular
+	andi t1,t1,0x08 # verifica se pode pular
 	bne t1,zero,FIM_PULO_ESQ # se nao puder, sai
 	
 	rmv_mario(mario_pulando) # remove mario na posicao atual
@@ -879,11 +972,18 @@ MARIO_PULO_ESQ:
 	lb t2,1(t0) # carrega estado de subida do pulo do mario
 	li t3,12
 	beq t2,t3,MARIO_PULO_ESQ_INIT_DESCIDA # se ja tiver chegado no ponto maximo, inicia descida
-	beq t1,t3,MARIO_PULO_ESQ_RESET # se ambos tiverem em 12, termina pulo
-	bgt t1,zero,MARIO_PULO_ESQ_DESCE # se descida tiver > 0 e < 12, faz movimento de descer
+	#beq t1,t3,MARIO_PULO_ESQ_RESET # se ambos tiverem em 12, termina pulo
+	bge t1,t3,MARIO_PULO_ESQ_DESCE_RETO # se ambos >= 12, verifica se precisa parar (ou morrer)
+	bgt t1,zero,MARIO_PULO_ESQ_DESCE_DIAG # se descida tiver > 0 e < 12, faz movimento de descer diagonal ate o chao
 	bgt t2,zero,MARIO_PULO_ESQ_SOBE # se subida tiver > 0 e < 12, sobe 1px
 	
 	MARIO_PULO_ESQ_INIT_SUBIDA:
+		# verifica se esta com martelo
+		la t0,mario_state
+		lb t1,0(t0)
+		andi t1,t1,0x10 # verifica se esta com martelo
+		bnez t1,FIM_PULO_ESQ # se estiver com martelo, nao inicia subida
+		
 		# verifica se em algum ponto da trajetoria tem uma parede
 		# se tiver, nao realiza pulo	
 		save_stack(s0)
@@ -905,7 +1005,7 @@ MARIO_PULO_ESQ:
 		
 		la t0,mario_state
 		li t1,0x07
-		sb t1,0(t0) # grava mario state de pulando pra direita
+		sb t1,0(t0) # grava mario state de pulando pra esquerda
 		
 		la t0,pulo_px
 		lb t1,1(t0)
@@ -940,27 +1040,116 @@ MARIO_PULO_ESQ:
 		
 		j PULO_ESQ_ANIM
 	
-	MARIO_PULO_ESQ_DESCE:
+	MARIO_PULO_ESQ_DESCE_DIAG:
 		la t0,pulo_px
 		lb t1,0(t0)
 		addi t1,t1,1 # desce 1px no pulopx
 		sb t1,0(t0)
 		
-		set_mario_move(-2,1,mario_pulando) # se move 1px pra baixo, 1px pra esquerda
+		la t0,pos_mario
+		lh s0,0(t0) # x do mario
+		lh s1,2(t0) # y do mario
+		addi s1,s1,18
+		li s2,18
+		MPESQ_VERIF_GROUND:
+			beqz s2,CONT_MPESQ_VERIF_GROUND
+			addi a0,s0,1 # x crescente p/ procurar px de chao
+			addi a1,s1,0 # y do pe
+			la a2,display
+			lw a2,0(a2)
+			call GET_POSITION
+			lb t0,0(a0)
+			li t1,0x46
+			beq t0,t1,MARIO_PULO_ESQ_RESET # para ao achar chao rosa
+			addi s0,s0,1 # incrementa x
+			addi s2,s2,-1 # decrementa contador
+			j MPESQ_VERIF_GROUND
+		
+		CONT_MPESQ_VERIF_GROUND: # se nao tiver chao, move o mario
+			set_mario_move(-2,2,mario_pulando) # se move 1px pra baixo, 1px pra esquerda
 		
 		j PULO_ESQ_ANIM
 	
+	MARIO_PULO_ESQ_DESCE_RETO:
+		la t0,fase
+		lb t1,0(t0)
+		li t0,3
+		beq t0,t1,MARIO_PULO_ESQ_RESET_F3 # se for fase 3, termina o pulo (pois eh tudo no msm nivel)
+		
+		la t0,pulo_px
+		lb t1,0(t0)
+		addi t1,t1,1 # desce 1px no pulopx
+		sb t1,0(t0)
+		
+		li t0,18
+		bge t1,t0,MARIO_PULO_ESQ_RESET_DEATH # se cair mais q 1,5 x altura do mario, morre
+		
+		la t0,pos_mario
+		lh s0,0(t0) # x do mario
+		lh s1,2(t0) # y do mario
+		addi s1,s1,18
+		li s2,18
+		MPESQ_VERIF_GROUND_R:
+			beqz s2,CONT_MPESQ_VERIF_GROUND_R
+			addi a0,s0,1 # x crescente p/ procurar px de chao
+			addi a1,s1,0 # y do pe
+			la a2,display
+			lw a2,0(a2)
+			call GET_POSITION
+			lb t0,0(a0)
+			li t1,0x46
+			beq t0,t1,MARIO_PULO_ESQ_RESET # para ao achar chao rosa
+			addi s0,s0,1 # incrementa x
+			addi s2,s2,-1 # decrementa contador
+			j MPESQ_VERIF_GROUND_R
+		
+		CONT_MPESQ_VERIF_GROUND_R: # se nao tiver chao, move o mario
+			set_mario_move(-1,2,mario_pulando) # se move 1px pra baixo, 1px pra esquerda
+		
+		j PULO_ESQ_ANIM
+	
+	MARIO_PULO_ESQ_RESET_DEATH:
+		la t0,pulo_px
+		sb zero,0(t0)
+		sb zero,1(t0) # reseta pulopx
+		
+		la t0,mario_state
+		lb t1,0(t0)
+		andi t1,t1,0x10
+		ori t1,t1,0x04
+		sb t1,0(t0) # salva estado do mario no chao, virado pra esquerda, com ou sem martelo
+	
+		set_mario_move(0,0,mario_pulando)
+			
+		j PULO_ESQ_ANIM
+		
+	MARIO_PULO_ESQ_RESET_F3:
+		la t0,pulo_px
+		sb zero,0(t0)
+		sb zero,1(t0) # reseta pulopx
+		
+		la t0,mario_state
+		lb t1,0(t0)
+		andi t1,t1,0x10
+		ori t1,t1,0x04
+		sb t1,0(t0) # salva estado do mario no chao, virado pra esquerda, com ou sem martelo
+	
+		set_mario_move(-4,4,mario_parado) # se move 4px pra baixo, 4px pra esquerda p/ finalizar pulo
+		j PULO_ESQ_ANIM
+		
 	MARIO_PULO_ESQ_RESET:
 		la t0,pulo_px
 		sb zero,0(t0)
 		sb zero,1(t0) # reseta pulopx
 		
 		la t0,mario_state
-		li t1,0x04
-		sb t1,0(t0) # salva estado do mario no chao, virado pra esquerda
+		lb t1,0(t0)
+		andi t1,t1,0x10
+		ori t1,t1,0x04
+		sb t1,0(t0) # salva estado do mario no chao, virado pra esquerda, com ou sem martelo
 	
-		set_mario_move(-4,8,mario_parado) # se move 8px pra baixo, 4px pra esquerda p/ finalizar pulo
-		#set_mario_move(0,0,mario_parado)
+		set_mario_move(0,0,mario_parado) # muda sprite pro mario parado
+		
 	PULO_ESQ_ANIM: # pula pra esquerda em movimento
 		call PRINT_OBJ_MIRROR
 	
