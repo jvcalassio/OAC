@@ -1,5 +1,5 @@
 #########################################################################
-# Rotina de tratamento de excecao e interrupcao		v1.4		#
+# Rotina de tratamento de excecao e interrupcao		v1.3		#
 # Lembre-se: Os ecalls originais do Rars possuem precedencia sobre	#
 # 	     estes definidos aqui					#
 # Os ecalls 1XX usam o BitMap Display e Keyboard Display MMIO Tools	#
@@ -14,8 +14,6 @@
 # Luthiery Costa Cavalcante - 17/0040631
 # Matheus Breder Branquinho Nogueira - 17/0018997
 #
-# v14 2019/1
-# Grupo 2
 
 #definicao do mapa de enderecamento de MMIO
 .eqv VGAADDRESSINI0     0xFF000000
@@ -66,6 +64,10 @@
 
 
 .data
+# UTVEC e UEPC Enquanto nao tem o sistema de gerenciamento de interrupcao e excecao
+UEPC:	.word 0x00000000
+UTVEC:	.word 0x00000000
+
 # Tabela de caracteres desenhados segundo a fonte 8x8 pixels do ZX-Spectrum
 LabelTabChar:
 .word 	0x00000000, 0x00000000, 0x10101010, 0x00100010, 0x00002828, 0x00000000, 0x28FE2828, 0x002828FE, 
@@ -136,159 +138,20 @@ NumInfP:		.string "+Infinity"
 NumInfN:		.string "-Infinity"
 NumNaN:			.string "NaN"
 
-# textos da tela azul de excessoes
-TextError0: .string "Error 0: Instruction address misaligned"
-TextError1: .string "Error 1: Instruction access fault"
-TextError2: .string "Error 2: Ilegal instruction"
-TextError4: .string "Error 4: Load address misaligned"
-TextError5: .string "Error 5: Load access fault"
-TextError6: .string "Error 6: Store address misaligned"
-TextError7: .string "Error 7: Store access fault"
 
-TextErrorPC: .string "PC:"
-TextErrorInst: .string "Instruction:"
 
 ### Obs.: a forma 'LABEL: instrucao' embora fique feio facilita o debug no Rars, por favor nao reformatar!!!
 
 ########################################################################################
 .text
 
-###### Devem ser colocadas aqui as identificaï¿½ï¿½es das interrupï¿½ï¿½es e exceï¿½ï¿½es
-exceptionHandling:	addi sp,sp,-8 # salva t0 e t1 na pilha
-			sw t0,0(sp) # salva t0 na pilha
-			sw t1,4(sp) # salva t1 na pilha
-			csrrsi t0,66,0 # carrega ucause
-			li t1,8
-			beq t0,t1,ecallException # chama ecall se ucause = 8
-			j errorException 	 # chama erro se ucause for qlqr outro
+###### Devem ser colocadas aqui as identificações das interrupções e exceções
+exceptionHandling:  j ecallException		# Por enquanto somente a exceção de ecall
 	
-	
-	# do contrario, chama tela azul
-	
-endException:  	lw t1,4(sp) # recupera valor de t1
-		lw t0,0(sp) # recupera valor de t0
-		addi sp,sp,8
-		csrrw tp, 65, zero	# le o valor de EPC salvo no registrador uepc (reg 65)
+endException:  	csrrw tp, 65, zero	# le o valor de EPC salvo no registrador uepc (reg 65)
 		addi tp, tp, 4		# soma 4 para obter a instrucao seguinte ao ecall
 		csrrw zero, 65, tp	# coloca no registrador uepc
-		uret			# retorna PC=uepc
-
-############# interrupcao de erro  ####################
-errorException: ebreak
-		li a0,0x0099 # printa blue screen
-		add a1,zero,zero
-		jal clsCLS
-		csrrsi t0,66,0 # carrega ucause
-		
-	addi t1,zero,2
-	beq t0,t1,errorException_2 # se for exception 2, printa o "Instruction:"
-	# para todas as outras, sempre printa "PC: "
-	la a0,TextErrorPC
-	addi a1,zero,4
-	addi a2,zero,15
-	li a3,0x99ff
-	li a4,0
-	jal printString # printa pc:
-	
-	addi a1,zero,5 # prepara posicao para texto da exception
-	addi a2,zero,5
-	li a3,0x99ff
-	li a4,0
-	csrrsi t0,66,0 # carrega ucause
-	beq t0,zero,errorException_0
-	addi t1,zero,1
-	beq t0,t1,errorException_1
-	addi t1,zero,4
-	beq t0,t1,errorException_4
-	addi t1,zero,5
-	beq t0,t1,errorException_5
-	addi t1,zero,6
-	beq t0,t1,errorException_6
-	addi t1,zero,7
-	beq t0,t1,errorException_7
-	j goToExit
-	
-	errorException_0: 
-		la a0,TextError0 # excessao instrucao desalinhada
-		jal printString
-		
-		csrrsi a0,67,0 # carrega uval
-		addi a1,zero,35
-		addi a2,zero,15
-		li a3,0x99ff
-		jal printHex # printa endereco de pc
-		
-		j goToExit
-	errorException_1: la a0,TextError1
-		jal printString
-		
-		csrrsi a0,67,0 # carrega uval
-		addi a1,zero,35
-		addi a2,zero,15
-		li a3,0x99ff
-		jal printHex # printa endereco de pc
-		
-		j goToExit
-	errorException_2: addi a1,zero,5 # prepara posicao para texto da exception
-		addi a2,zero,5
-		li a3,0x99ff
-		la a0,TextError2 # excessao instrucao ilegal
-		jal printString # printa texto 
-		
-		la a0,TextErrorInst
-		addi a1,zero,4
-		addi a2,zero,15
-		li a3,0x99ff
-		jal printString # printa instrucao:
-		
-		csrrsi a0,67,0 # carrega uval
-		addi a1,zero,110
-		addi a2,zero,15
-		li a3,0x99ff
-		jal printHex # printa codigo hex da instrucao
-		
-		j goToExit
-	errorException_4: la a0,TextError4
-		jal printString
-		
-		csrrsi a0,67,0 # carrega uval
-		addi a1,zero,35
-		addi a2,zero,15
-		li a3,0x99ff
-		jal printHex # printa endereco de pc
-		
-		j goToExit
-	errorException_5: la a0,TextError5
-		jal printString
-		
-		csrrsi a0,67,0 # carrega uval
-		addi a1,zero,35
-		addi a2,zero,15
-		li a3,0x99ff
-		jal printHex # printa endereco de pc
-		
-		j goToExit
-	errorException_6: la a0,TextError6
-		jal printString
-		
-		csrrsi a0,67,0 # carrega uval
-		addi a1,zero,35
-		addi a2,zero,15
-		li a3,0x99ff
-		jal printHex # printa endereco de pc
-		
-		j goToExit
-	errorException_7: la a0,TextError7
-		jal printString
-		
-		csrrsi a0,67,0 # carrega uval
-		addi a1,zero,35
-		addi a2,zero,15
-		li a3,0x99ff
-		jal printHex # printa endereco de pc
-		
-		j goToExit
-	
+		M_Uret			# retorna PC=uepc
 
 ############# interrupcao de ECALL ###################
 ecallException:     addi    sp, sp, -264              # Salva todos os registradores na pilha
@@ -296,8 +159,8 @@ ecallException:     addi    sp, sp, -264              # Salva todos os registrad
     sw      x2,    4(sp)
     sw      x3,    8(sp)
     sw      x4,   12(sp)
-    #sw      x5,   16(sp) nao precisa salvar t0 (ja foi salvo)
-    #sw      x6,   20(sp) nao precisa salvar t1 (ja foi salvo)
+    sw      x5,   16(sp)
+    sw      x6,   20(sp)
     sw      x7,   24(sp)
     sw      x8,   28(sp)
     sw      x9,   32(sp)
@@ -456,8 +319,8 @@ endEcall: lw	x1, 0(sp)  # recupera QUASE todos os registradores na pilha
 	lw	x2,   4(sp)	
 	lw	x3,   8(sp)	
 	lw	x4,  12(sp)      	
-	#lw	x5,  16(sp) nao precisa recuperar t0 (ja vai ser recuperado no uret)
-    	#lw	x6,  20(sp) nao precisa recuperar t1 (ja vai ser recuperado no uret)
+	lw	x5,  16(sp)      	
+    	lw	x6,  20(sp)	
     	lw	x7,  24(sp)
     	lw	x8,  28(sp)
     	lw	x9,    32(sp)
@@ -524,7 +387,7 @@ goToExit:   	DE1(goToExitDE2)	# se for a DE2
   		li 	a7, 10		# chama o ecall normal do Rars
   		ecall			# exit ecall
   		
-goToExitDE2:	j 	goToExitDE2		# trava o processador : Nï¿½o tem sistema operacional!
+goToExitDE2:	j 	goToExitDE2		# trava o processador : Não tem sistema operacional!
 
 goToPrintInt:	jal     printInt               	# chama printInt
 		j       endEcall
@@ -583,7 +446,6 @@ goToBRES:	jal     BRESENHAM               # chama BRESENHAM
 #  a1    =    x                             #
 #  a2    =    y  			    #
 #  a3    =    cor                           #
-#  a4	 =    frame			    #
 #############################################
 
 printInt:	addi 	sp, sp, -4			# Aloca espaco
@@ -631,7 +493,6 @@ fimprintInt:	ret					# retorna
 #  a1    =    x                             #
 #  a2    =    y                             #
 #  a3    =    cor			    #
-#  a4	 =    frame			    #
 #############################################
 
 printHex:	addi    sp, sp, -4    		# aloca espaco
@@ -672,7 +533,6 @@ fimprintHex:	ret				# retorna
 #  a1    =  x                       #
 #  a2    =  y                       #
 #  a3    =  cor		    	    #
-#  a4	 =  frame		    #
 #####################################
 
 printString:	addi	sp, sp, -8			# aloca espaco
@@ -793,7 +653,7 @@ endForChar2I:	ret				# retorna
 
 #########################################
 # ReadChar           			#
-# a0 = valor ascii da tecla (retorno)	#
+# a0 = valor ascii da tecla   		#
 # 2017/2  				#
 ######################################### 
 
@@ -905,7 +765,7 @@ fimreadString: 	sb 	zero, 0(a0)			# grava NULL no buffer
 ###########################
 #    ReadInt              #
 # a0 = valor do inteiro   #
-# (retorno)               #
+#                         #
 ###########################
 
 readInt: 	addi 	sp,sp,-4		# reserva espaco na pilha
@@ -1075,14 +935,11 @@ Melody:     	lw      t5, 0(t4)
 fimmidiOutSync:	ret
 
 
-#######################################
-# Print Float                 	      #
-# fa0	= 	float a ser impresso  #
-# a1	=	x		      #
-# a2 	=	y		      #
-# a3	=	cor		      #
-# a4	=	frame		      #
-#######################################
+#################################
+# printFloat                    #
+# imprime Float em fa0          #
+# na posicao (a1,a2)	cor a3  #
+#################################
 # muda s0, s1
 
 printFloat:	addi 	sp, sp, -4
@@ -1493,7 +1350,6 @@ fimRandom:	ret			# retorna
 #    CLS                        #
 #  Clear Screen                 #
 #  a0 = cor                     #
-#  a1 = frame			#
 #################################
 
 clsCLS:	beq 	a1, zero, frame0CLS

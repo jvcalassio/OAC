@@ -55,8 +55,8 @@ INIT_GAME:
 	sw zero,0(t0)
 	
 	# Como o jogo comeca na fase 1, nao precisa passar por "init fase1", e consequentemente, carregar
-	jal SET_FASE3
-	call F3_ADD_BLOCKS
+	#jal SET_FASE3
+	#call F3_ADD_BLOCKS
 	jal PRINT_FASE
 	call PRINT_TEXT_INITIAL
 	call INIT_MARIO
@@ -278,6 +278,9 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	
 	# Verifica se precisa remover algum texto
 	call CHECK_POINTS_TIMER
+	
+	# Faz o movimento dos barris
+	#call MOV_BARRIS
 	
 	# Verifica se precisa remover o martelo
 	call MARIO_CHECK_HAMMER
