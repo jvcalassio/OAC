@@ -887,7 +887,7 @@ MARIO_PULO_DIR:
 		sb t1,0(t0)
 		
 		li t0,18
-		# bge t1,t0,MARIO_PULO_DIR_RESET_DEATH # se cair mais q 1,5 x altura do mario, morre
+		bge t1,t0,MARIO_PULO_DIR_RESET_DEATH # se cair mais q 1,5 x altura do mario, morre
 		
 		la t0,pos_mario
 		lh s0,0(t0) # x do mario
@@ -1201,10 +1201,10 @@ MARIO_COLLISIONS:
 		lh a1,2(t0) # carrega y
 		addi a1,a1,16
 		la a2,fase_current # carrega endereco da fase atual
+		#la a2,display
+		#lw a2,0(a2) # carrega endereco do display (por causa dos degraus)
 		call GET_POSITION
 		lb t0,0(a0) # t0 = pixel ao lado
-		li t2,128
-		beq t0,t2,MVDIR_PXUP # se for piso azul
 		li t2,0x46
 		bne t0,t2,VERIF_MV_DIR_DOWNDEG # se px ao lado nao for chao, verifica se tem descida
 		MVDIR_PXUP: call MV_1PXUP # se px ao lado for chao, sobe 1px
@@ -1217,11 +1217,17 @@ MARIO_COLLISIONS:
 		lh a1,2(t0) # carrega y
 		addi a1,a1,17
 		la a2,fase_current # carrega endereco da fase atual
+		#la a2,display
+		#lw a2,0(a2) # carrega endereco do display (por causa dos degraus)
 		call GET_POSITION
 		lb t0,0(a0)
+		#li t2,0xffffffc7
+		#beq t0,t2,MVDIR_PXDW
+		#beqz t0,MVDIR_PXDW
+		#j MARIO_CL_ALLOW
 		li t2,0x00
 		bne t0,t2,MARIO_CL_ALLOW # se px abaixo nao for preto, simplesmente permite mov
-		call MV_1PXDW # se px abaixo for preto (acabou chao), desce 1 degrau
+		MVDIR_PXDW: call MV_1PXDW # se px abaixo for preto (acabou chao), desce 1 degrau
 		j MARIO_CL_ALLOW # se der zero, permite
 		
 	VERIF_MV_ESQ:
@@ -1243,10 +1249,10 @@ MARIO_COLLISIONS:
 		lh a1,2(t0) # carrega y
 		addi a1,a1,16
 		la a2,fase_current # carrega endereco da fase atual
+		#la a2,display
+		#lw a2,0(a2) # carrega endereco do display (por causa dos degraus)
 		call GET_POSITION
 		lb t0,0(a0)
-		li t2,128
-		beq t0,t2,MVESQ_PXUP # se for piso azul
 		li t2,0x46
 		bne t0,t2,VERIF_MV_ESQ_DOWNDEG # se px ao lado nao for chao, verifica se tem descida
 		MVESQ_PXUP: call MV_1PXUP # se px ao lado for chao, sobe 1px
@@ -1259,6 +1265,8 @@ MARIO_COLLISIONS:
 		lh a1,2(t0) # carrega y
 		addi a1,a1,17
 		la a2,fase_current # carrega endereco da fase atual
+		#la a2,display
+		#lw a2,0(a2) # carrega endereco do display (por causa dos degraus)
 		call GET_POSITION
 		lb t0,0(a0)
 		li t2,0x00
@@ -1345,6 +1353,8 @@ MARIO_GRAVITY:
 	
 	mario_mappos(s0)
 	lb t1,0(s0) # carrega posicao do mario atual no map
+	li t2,0x10
+	beq t1,t2,MARIO_GRAVITY_ELEVATOR # se estiver no elevador, sobe junto
 	li t2,0x02
 	bne t1,t2,FIM_MARIO_GRAVITY # se for qualquer coisa exceto gravity, sai
 	# se for 0010 eh ponto de queda e tem q cair
@@ -1371,7 +1381,39 @@ MARIO_GRAVITY:
 		set_mario_move(0,4,mario_andando_p2)
 		call PRINT_OBJ # printa mario posicao abaixo
 		#sleep(20) # questionavel, avaliar desempenho
-	
+		j FIM_MARIO_GRAVITY
+		
+	MARIO_GRAVITY_ELEVATOR:
+		la t0,pos_mario
+		lh s0,0(t0)
+		lh a1,2(t0)
+		addi a1,a1,17
+		li t2,18
+		LOOP_SEARCH_GROUND_MGE:
+			beqz t2,MARIO_GRAVITY_ELEVATOR_FALL
+			mv a0,s0
+			la a2,display
+			lw a2,0(a2)
+			call GET_POSITION # pega posicao de baixo do pe do mario
+			lb t0,0(a0) # carrega byte do mapa nessa posicao
+			li t1,0x46
+			beq t0,t1,MARIO_GRAVITY_ELEVATOR_RISE
+			beqz t0,MARIO_GRAVITY_ELEVATOR_FALL
+			addi t2,t2,-1
+			addi s0,s0,1
+			j LOOP_SEARCH_GROUND_MGE
+		
+		MARIO_GRAVITY_ELEVATOR_RISE:
+			rmv_mario(mario_parado)
+			set_mario_move(0,-1,mario_parado)
+			call PRINT_OBJ
+			j FIM_MARIO_GRAVITY
+		
+		MARIO_GRAVITY_ELEVATOR_FALL:
+			rmv_mario(mario_parado)
+			set_mario_move(0,2,mario_parado)
+			call PRINT_OBJ
+			
 	FIM_MARIO_GRAVITY:
 		free_stack(s0)
 		free_stack(ra)
@@ -1504,27 +1546,6 @@ MARIO_HAMMER_SPRITE:
 	MARIO_HAMMER_SPRITE_DIR: # faz o martelo caso o mario esteja virado p/ direita
 		beqz t1,MARIO_HAMMER_SPRITE_DIR_BAIXO # se for 0, faz martelo p/ direita baixo
 		# do contrario, faz martelo p/ direita cima
-		# remove martelo pra baixo
-		#la t0,pos_mario
-		#lh t1,0(t0) # x do mario
-		#lh t2,2(t0) # y do mario
-		#addi a0,t1,16 # x + 16 p/ posicao correta do martelo
-		#addi a1,t2,5 # y + 5
-		#la a2,display
-		#lw a2,0(a2) # display atual
-		#la a3,fase_current
-		#la a4,martelo_x
-		#call CLEAR_OBJPOS
-		# printa martelo pra cima
-		#la t0,pos_mario
-		#lh t1,0(t0) # x do mario
-		#lh t2,2(t0) # y do mario
-		#addi a0,t1,4 # x + 4 p/ posicao correta do martelo
-		#addi a1,t2,-14 # y -14
-		#la a2,display
-		#lw a2,0(a2) # display atual
-		#la a3,martelo_y
-		#call PRINT_OBJ
 		jal GET_MAP_BACKUP
 		la t0,pos_mario
 		lh t1,0(t0) # x do mario
@@ -1545,27 +1566,6 @@ MARIO_HAMMER_SPRITE:
 		call PRINT_OBJ
 		j FIM_MARIO_HAMMER_SPRITE
 		MARIO_HAMMER_SPRITE_DIR_BAIXO:
-			# remove martelo pra cima
-			#la t0,pos_mario
-			#lh t1,0(t0) # x do mario
-			#lh t2,2(t0) # y do mario
-			#addi a0,t1,4
-			#addi a1,t2,-14
-			#la a2,display
-			#lw a2,0(a2)
-			#la a3,fase_current
-			#la a4,martelo_y
-			#call CLEAR_OBJPOS
-			# printa martelo pra baixo
-			#la t0,pos_mario
-			#lh t1,0(t0) # x do mario
-			#lh t2,2(t0) # y do mario
-			#addi a0,t1,16 # x + 16 p/ posicao correta do martelo
-			#addi a1,t2,5 # y + 5
-			#la a2,display
-			#lw a2,0(a2) # display atual
-			#la a3,martelo_x
-			#call PRINT_OBJ
 			jal GET_MAP_BACKUP
 			la t0,pos_mario
 			lh t1,0(t0) # x do mario
@@ -1588,19 +1588,6 @@ MARIO_HAMMER_SPRITE:
 		
 	MARIO_HAMMER_SPRITE_ESQ:
 		beqz t1,MARIO_HAMMER_SPRITE_ESQ_BAIXO # se for 0, faz martelo p/ esquerda baixo
-		# do contrario, faz martelo p/ esquerda cima
-		# remove martelo pra baixo
-		#la t0,pos_mario
-		#lh t1,0(t0) # x do mario
-		#lh t2,2(t0) # y do mario
-		#addi a0,t1,-13 # x -13 p/ posicao correta do martelo
-		#addi a1,t2,5 # y + 5
-		#la a2,display
-		#lw a2,0(a2) # display atual
-		#la a3,fase_current
-		#la a4,martelo_x
-		#call CLEAR_OBJPOS
-		jal GET_MAP_BACKUP
 		la t0,pos_mario
 		lh t1,0(t0) # x do mario
 		lh t2,2(t0) # y do mario
@@ -1621,17 +1608,6 @@ MARIO_HAMMER_SPRITE:
 		call PRINT_OBJ_MIRROR
 		j FIM_MARIO_HAMMER_SPRITE
 		MARIO_HAMMER_SPRITE_ESQ_BAIXO:
-			# remove martelo pra cima
-			#la t0,pos_mario
-			#lh t1,0(t0) # x do mario
-			#lh t2,2(t0) # y do mario
-			#addi a0,t1,5
-			#addi a1,t2,-14
-			#la a2,display
-			#lw a2,0(a2)
-			#la a3,fase_current
-			#la a4,martelo_y
-			#call CLEAR_OBJPOS
 			jal GET_MAP_BACKUP
 			la t0,pos_mario
 			lh t1,0(t0) # x do mario
@@ -1663,7 +1639,6 @@ MARIO_HAMMER_SPRITE:
 # a3 = altura
 SET_MAP_BACKUP:
 	save_stack(ra) # salva ra e salvos na pilha
-	
 	la t0,map_backup_info
 	sh a0,0(t0) # salva x
 	sh a1,2(t0) # salva y

@@ -24,13 +24,13 @@ Esquemas do mapa:
 0000_0100
 1111_1011
 
-4 msb = relativos a alguns coletaveis
+4 msb = relativos a alguns coletaveis (removido)
 
-0000 = nada
-0001 = chao quebradico (fase 3)	= F
-0010 = item bonus (800 pts)		= B
-0100 = martelo					= H
-1000 = vitoria					= V (ar), W (chao)
+0000 = nada	
+0001 = area de elevador			= L
+0010 = item bonus (800 pts)		= B (removido)
+0100 = martelo					= H (removido)
+1000 = vitoria					= V (ar)
 
 
 */
@@ -55,6 +55,10 @@ int main(){
 				t = 1;
 				printf("0x01");
 			}
+			if(mapa[i] == 'L'){
+				t = 1;
+				printf("0x10");
+			}
 			if(mapa[i] == 'G'){
 				t = 1;
 				printf("0x02");
@@ -78,10 +82,6 @@ int main(){
 			if(mapa[i] == 'V'){
 				t = 1;
 				printf("0x80");
-			}
-			if(mapa[i] == 'W'){
-				t = 1;
-				printf("0x81");
 			}
 			if(mapa[i] == 'B'){
 				t = 1;

@@ -1,7 +1,7 @@
 #####################################################
 # Responsavel por gerenciar as fases e loop de jogo #
 #####################################################
-.include "macros.s"
+.include "macros.s"  
 .include "macros2.s"
       
 .data
@@ -59,10 +59,9 @@ INIT_GAME:
 	
 	# Como o jogo comeca na fase 1, nao precisa passar por "init fase1", e consequentemente, carregar
 	jal SET_FASE2
+	call INIT_FASE2_ELEVATORS
 	#call F3_ADD_BLOCKS
 	jal PRINT_FASE
-	call INIT_FASE2_ELEVATOR1
-	call INIT_FASE2_ELEVATOR2
 	call PRINT_TEXT_INITIAL
 	call INIT_MARIO
 	call INIT_DK_DANCA
@@ -90,9 +89,8 @@ INIT_FASE1:
 INIT_FASE2:
 	jal LOADING_SCR
 	jal SET_FASE2
+	call INIT_FASE2_ELEVATORS
 	jal PRINT_FASE
-	call INIT_FASE2_ELEVATOR1
-	call INIT_FASE2_ELEVATOR2
 	call PRINT_TEXT_INITIAL
 	call INIT_MARIO
 	call INIT_DK_DANCA
@@ -203,7 +201,7 @@ SET_FASE3:
 	# do contrario, carregar do endereco no RARS
 	la s1,fase_current # endereco do mapa geral
 	li t0,76800
-	#la t1,fase3
+	la t1,fase3
 	addi t1,t1,8 # pula as words que indicam o tamanho da imagem
 	FOR_LOADFASE3:
 		beqz t0,FIM_LOADFASE3
@@ -288,6 +286,8 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	
 	# Faz o movimento dos barris
 	#call MOV_BARRIS
+	
+	call F2_ELEVATORS_UPDATE
 	
 	# Verifica se precisa remover o martelo
 	call MARIO_CHECK_HAMMER
