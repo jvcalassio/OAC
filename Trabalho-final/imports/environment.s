@@ -11,9 +11,12 @@
 .include "../sprites/bin/martelo_y.s"
 .include "../sprites/bin/barril_lateral_p1.s"
 .include "../sprites/bin/barril.s"
-var_dk: .word 0
-var_lady: .word 0
-var_barris: .word 0, 0, 0, 0, 0, 0 #posicoes de 6 barris, usar GETXY para converter para coordenadas
+.include "../sprites/bin/barril_y.s"
+var_dk:		.word 0
+var_lady:	.word 0
+var_barris:	.half 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 #posicoes de 6 barris, armazenados em pares x, y
+var_barris1:	.byte 0, 0, 0, 0, 0, 0	#armazena a direcao que os barris devem ir  (0 direita, 1 esquerda)
+var_barris2: 	.byte 0, 0, 0, 0, 0, 0 #armazena como o barril sera printado (0,1,2,3) 4 formas de printar
 
 # strings de jogo
 victory_text: .string "PARABENS VC VENCEU"
@@ -33,91 +36,230 @@ points_timer: .word 0,0 # variaveis do tempo de exibicao do texto de pontos ganh
 points_pos: .half 0,0,0,0 # texto 1 (x,y) , texto 2 (x,y)
 .text
 
-######################################################
-#Calcula X e Y, dado um endereco do bitmap display
-#a0 = endereco
-#a1 = endereco base
-#retorna X em a0 e Y em a1
-######################################################
-GET_XY:
-	sub	a0, a0, a1
-	li	t0, 320
-	rem	a0, a0, t0	# x = end%320
-	div	a1, a1, t0	# y = end/320
-	jr	ra, 0
-
-
 #inicializa uma nova variável para um barril, dentro de var_barris
 #a0 = x
 #a1 = y
 INIT_NOVO_BARRIL:
-	la	a2, display
-	lw	a2, 0(a2)
-	save_stack(ra)
-	call	GET_POSITION
-	free_stack(ra)
-	
 	#encontra primeira posicao zerada na var_barris e armazena lá o novo valor do barril
 	la	t0, var_barris
-	
 	loop_verifica_barris1:
-	lw	t1, 0(t0)
+	lh	t1, 0(t0)
+	lh	t2, 2(t0)
+	add	t1, t1, t2
 	beqz	t1, fim_init_novo_barril
-	addi	t0,t0,4
+	addi	t0, t0, 4
 	j	loop_verifica_barris1
 	
 	fim_init_novo_barril:
-	sw	a0, 0(t0)
+	sh	a0, 0(t0)
+	sh	a1, 2(t0)
 	ret
 
 #responsável pelo movimento dos barris
 MOV_BARRIS:
 	save_stack(ra)
-	la	t0, var_barris
+	
+	li	t0, 1
+	la	t1, fase
+	lb	t1, 0(t1)
+	bne	t0, t1, FIM_MOV_BARRIS
+	
+	la	t0, var_barris	#localizacao dos barris
 	li	t1, 0	#t1 = i
+	la	t4, var_barris1 #direcao dos barris
+	la	t5, var_barris2 #print dos barris
 	
 	loop_mov_barris:
 	li	t2, 6
-	beq	t2, t1, FIM_MOV_BARRIS
-	lw	t2, 0(t0)
+	beq	t1, t2, FIM_MOV_BARRIS
 	
-	save_stack(t0)
-	save_stack(t1)
-	bnez	t2, MOVER_BARRIL
+	lh	t2, 0(t0)	#x[i]
+	lh	t3, 2(t0)	#y[i]
+	add	t2, t2, t3
+	save_stack(t0)	#salvando a atual posicao do endereco
+	save_stack(t1)	#salvando a atual posicao de i
+	save_stack(t4)	#salva end da direcao do barril
+	save_stack(t5)	#salva end da forma de printar o barril
+	bnez	t2, MOV_BARRIS1
 	
-	continue_MOV_BARRIS:
+	continueMOV_BARRIS:
+	free_stack(t5)
+	free_stack(t4)
 	free_stack(t1)
 	free_stack(t0)
-	
 	addi	t0, t0, 4
 	addi	t1, t1, 1
+	addi	t4, t4, 1
+	addi	t5, t5, 1
 	j	loop_mov_barris
 	
-	MOVER_BARRIL:
-		mv	a0, t2
-		la	a1, display
-		lw	a1, 0(a1)
-		call	GET_XY
-		save_stack(a0)
-		save_stack(a1)	#salva x e y
-		
+	MOV_BARRIS1:
+		#limpando o barril da posicao atual
+		save_stack(t5)
+		lh	a0, 0(t0)
+		lh	a1, 2(t0)
 		la	a2, display
 		lw	a2, 0(a2)
 		la	a3, fase_current
 		la	a4, barril
+		save_stack(t0)
+		save_stack(t4)
 		call	CLEAR_OBJPOS
+		free_stack(t4)
+		free_stack(t0)
 		
-		free_stack(a1)
-		free_stack(a0)
-		addi	a0, a0, 1	#movendo o barril 1 pixel para a direita
+		#seta a direcao que o barril deve ir
+		lh	t1, 0(t0)
+		li	t2, 256
+		bge	t1, t2, set_esquerda_barris
+		li	t2, 51
+		ble	t1, t2, set_direita_barris
+		
+		continueset_barris:
+		lb	t4, 0(t4)
+		bnez	t4, esquerda_barris
+		
+		#movimento para a direita
+		lh	a0, 0(t0)
+		lh	a1, 2(t0)
+		addi	a1, a1, 12
 		la	a2, display
 		lw	a2, 0(a2)
+		save_stack(t0)
+		call	GET_POSITION
+		free_stack(t0)		
+		li	t1, 0x46
+		lb	a0, 0(a0)
+		beq	a0, t1, MOV_BARRIS_DIREITA
+		
+		continueMOV_BARRISdireita:
+		lh	a0, 0(t0)
+		lh	a1, 2(t0)
+		addi	a1, a1, 12
+		la	a2, display
+		lw	a2, 0(a2)
+		save_stack(t0)
+		call	GET_POSITION
+		free_stack(t0)
+		li	t1, 0x00
+		lb	a0, 0(a0)
+		beq	a0, t1, MOV_BARRIS_BAIXO
+		
+		j 	continueMOV_BARRISfim
+		
+		
+		#movimento para a esquerda
+		esquerda_barris:
+		lh	a0, 0(t0)
+		lh	a1, 2(t0)
+		addi	a0, a0, 13
+		addi	a1, a1, 12
+		la	a2, display
+		lw	a2, 0(a2)
+		save_stack(t0)
+		call	GET_POSITION
+		free_stack(t0)		
+		li	t1, 0x46
+		lb	a0, 0(a0)
+		beq	a0, t1, MOV_BARRIS_ESQUERDA
+		
+		continueMOV_BARRISesquerda:
+		lh	a0, 0(t0)
+		lh	a1, 2(t0)
+		addi	a0, a0, 13
+		addi	a1, a1, 12
+		la	a2, display
+		lw	a2, 0(a2)
+		save_stack(t0)
+		call	GET_POSITION
+		free_stack(t0)
+		li	t1, 0x00
+		lb	a0, 0(a0)
+		beq	a0, t1, MOV_BARRIS_BAIXO
+		
+		continueMOV_BARRISfim:
+		free_stack(t5)
+		
+		back_to_print:
+		lb	t2, 0(t5)
+		
+		lh	a0, 0(t0)
+		lh	a1, 2(t0)
+		la	a2, display
+		lw	a2, 0(a2)
+		
+		li	t1, 0
+		beq	t2, t1, print_barril0
+		li	t1, 1
+		beq	t2, t1, print_barril1
+		li	t1, 2
+		beq	t2, t1, print_barril2
+		li	t1, 3
+		beq	t2, t1, print_barril3
+		
+		sb	zero, 0(t5)
+		j	back_to_print
+		
+		print_barril0:
 		la	a3, barril
+		addi	t2, t2, 1
+		sb	t2, 0(t5)
 		call	PRINT_OBJ
+		j	continueMOV_BARRIS
+		print_barril1:
+		la	a3, barril
+		addi	t2, t2, 1
+		sb	t2, 0(t5)
+		call	PRINT_OBJ_MIRROR
+		j	continueMOV_BARRIS
+		print_barril2:
+		la	a3, barril_y
+		addi	t2, t2, 1
+		sb	t2, 0(t5)
+		call	PRINT_OBJ
+		j	continueMOV_BARRIS
+		print_barril3:
+		la	a3, barril_y
+		addi	t2, t2, 1
+		sb	t2, 0(t5)
+		call	PRINT_OBJ_MIRROR
+		j	continueMOV_BARRIS
 		
-		j	continue_MOV_BARRIS
 		
-			
+		MOV_BARRIS_DIREITA:
+			lh	t1, 0(t0)	#x
+			lh	t2, 2(t0)	#y
+			addi	t1, t1, 2	#pulando 1 pixel em x
+			sh	t1, 0(t0)
+			sh	t2, 2(t0)
+			j	continueMOV_BARRISdireita
+		
+		MOV_BARRIS_ESQUERDA:
+			lh	t1, 0(t0)	#x
+			lh	t2, 2(t0)	#y
+			addi	t1, t1, -2	#pulando 1 pixel em x
+			sh	t1, 0(t0)
+			sh	t2, 2(t0)
+			j	continueMOV_BARRISesquerda
+		
+		MOV_BARRIS_BAIXO:
+			lh	t1, 0(t0)	#x
+			lh	t2, 2(t0)	#y
+			addi	t2, t2, 1	#pulando 1 pixel em y
+			sh	t1, 0(t0)
+			sh	t2, 2(t0)
+			j	continueMOV_BARRISfim
+		
+		set_esquerda_barris:
+			li	t3, 1
+			sb	t3, 0(t4)
+			j	continueset_barris
+		
+		set_direita_barris:
+			li	t3, 0
+			sb	t3, 0(t4)
+			j	continueset_barris
+		
 	FIM_MOV_BARRIS:
 		free_stack(ra)
 		ret
@@ -137,14 +279,13 @@ DK_DANCA_LOOP:
 	
 	la	t4, var_dk
 	lw	t0, 0(t4)	#i
-	li	t1, 50		#50
+	li	t1, 20		#50
 	beq	t0, t1, DK_DANCA_FRAME1	#i==50? goto FRAME1
 	
 	la	t4, var_dk
 	lw	t0, 0(t4)	#i
-	li	t1, 100		#100
+	li	t1, 40		#100
 	beq	t0, t1, DK_DANCA_FRAME2	#i==100? goto FRAME2
-	
 	
 	li	t0, 1
 	la	t1, fase
@@ -153,35 +294,39 @@ DK_DANCA_LOOP:
 	
 	#checa se 6 barris já foram lancados
 	la	t0, var_barris
-	li	t2,0	#t2 = i
+	li	t1,0	#t1 = i
 	loop_verifica_barris:
-	li	t1, 6	#parada em 6
-	beq	t2, t1, NAO_BARRIS #verificou todos e n ha nenhum zerado
-	lw	t1, 0(t0)
-	beqz	t1, exit_verifica_barris
-	addi	t0, t0, 4
-	addi	t2, t2, 1
+	li	t2, 6	#parada em 6
+	beq	t1, t2, NAO_BARRIS #verificou todos e n ha nenhum zerado
+	
+	lh	t2, 0(t0)	#x[i]
+	lh	t3, 2(t0)	#y[i]
+	add	t2, t2, t3	#se a soma de x e y é zero, então um novo barril pode ser lancado
+	beqz	t2, exit_verifica_barris
+	
+	addi	t0, t0, 4	#end++
+	addi	t1, t1, 1	#i++
 	j	loop_verifica_barris
 	
 	exit_verifica_barris:
 	la	t4, var_dk
 	lw	t0, 0(t4)	#i
-	li	t1, 150	
+	li	t1, 60
 	beq	t0, t1, DK_DANCA_FRAME3	#i==150? goto FRAME3
 	
 	la	t4, var_dk
 	lw	t0, 0(t4)	#i
-	li	t1, 200
+	li	t1, 80
 	beq	t0, t1, DK_DANCA_FRAME4	#i==200? goto FRAME4
 	
 	la	t4, var_dk
 	lw	t0, 0(t4)	#i
-	li	t1, 250
+	li	t1, 100
 	beq	t0, t1, DK_DANCA_FRAME5	#i==200? goto FRAME5
 	
 	la	t4, var_dk
 	lw	t0, 0(t4)	#i
-	li	t1, 300
+	li	t1, 120
 	bge	t0, t1, DK_DANCA_RESET	#i>=300? goto RESETi
 	
 	j	i_MAISMAIS
@@ -189,7 +334,7 @@ DK_DANCA_LOOP:
 	NAO_BARRIS:
 	la	t4, var_dk
 	lw	t0, 0(t4)	#i
-	li	t1, 150		#150
+	li	t1, 60		#150
 	bge	t0, t1, DK_DANCA_RESET	#i>=150? goto RESETi
 	
 	i_MAISMAIS:

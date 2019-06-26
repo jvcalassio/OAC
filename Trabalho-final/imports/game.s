@@ -280,7 +280,7 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	call CHECK_POINTS_TIMER
 	
 	# Faz o movimento dos barris
-	#call MOV_BARRIS
+	call MOV_BARRIS
 	
 	# Verifica se precisa remover o martelo
 	call MARIO_CHECK_HAMMER
