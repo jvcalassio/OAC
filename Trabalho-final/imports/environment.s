@@ -112,7 +112,7 @@ MOV_BARRIS:
 		lh	t1, 0(t0)
 		li	t2, 256
 		bge	t1, t2, set_esquerda_barris
-		li	t2, 51
+		li	t2, 50
 		ble	t1, t2, set_direita_barris
 		
 		continueset_barris:
@@ -179,15 +179,20 @@ MOV_BARRIS:
 		
 		continueMOV_BARRISfim:
 		free_stack(t5)
-		
-		back_to_print:
-		lb	t2, 0(t5)
-		
 		lh	a0, 0(t0)
 		lh	a1, 2(t0)
 		la	a2, display
 		lw	a2, 0(a2)
 		
+		#barril cair mais rapido quando esta em bordas
+		li	t1, 256
+		bge	a0, t1, barril_cair_mais
+		li	t1, 50
+		ble	a0, t1, barril_cair_mais
+
+		
+		back_to_print:
+		lb	t2, 0(t5)	#decisao de como o barril será printado
 		li	t1, 0
 		beq	t2, t1, print_barril0
 		li	t1, 1
@@ -200,6 +205,11 @@ MOV_BARRIS:
 		sb	zero, 0(t5)
 		j	back_to_print
 		
+		barril_cair_mais:
+		addi	a1, a1, 1
+		sh	a1, 2(t0)
+		j	back_to_print
+		
 		print_barril0:
 		la	a3, barril
 		addi	t2, t2, 1
@@ -207,6 +217,7 @@ MOV_BARRIS:
 		call	PRINT_OBJ
 		j	continueMOV_BARRIS
 		print_barril1:
+		addi	a0, a0, -1	#correcao de posicao no print
 		la	a3, barril
 		addi	t2, t2, 1
 		sb	t2, 0(t5)
@@ -219,12 +230,12 @@ MOV_BARRIS:
 		call	PRINT_OBJ
 		j	continueMOV_BARRIS
 		print_barril3:
+		addi	a0, a0, -1	#correcao de posicao no print
 		la	a3, barril_y
 		addi	t2, t2, 1
 		sb	t2, 0(t5)
 		call	PRINT_OBJ_MIRROR
 		j	continueMOV_BARRIS
-		
 		
 		MOV_BARRIS_DIREITA:
 			lh	t1, 0(t0)	#x
