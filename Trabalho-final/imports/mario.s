@@ -1716,7 +1716,54 @@ GET_MAP_BACKUP:
 	FIM_GET_MAPBACKUP:
 		free_stack(ra)
 		ret
+
+# Verifica a colisao do Mario com os barris da fase 1	
+MARIO_BARREL_COLLISION:
+	la t0,fase
+	lb t1,0(t0)
+	li t0,1
+	bne t0,t1,FIM_MARIO_BARREL_COLLISION # se nao estiver na fase 1, nao faz nada
+	
+	la t0,pos_mario
+	lh s0,0(t0) # x do mario
+	lh s1,2(t0) # y do mario
+	la t0,mario_state
+	lb t1,0(t0)
+	andi t1,t1,0x08 # verifica escada
+	srli t1,t1,1
+	addi s1,s1,15
+	sub s1,s1,t1 # se tiver na escada, considera menos pixels
+	# se y_mario + 18 (tamanho) >= y do barril && y_mario + 18 <= y_barril + 14
+	la s2,var_barris
+	li s3,6
+	MBC_VERIF_Y: # verifica se o mario esta na altura passiva de colisao com barril
+		beqz s3,FIM_MARIO_BARREL_COLLISION # verificados todos os barris, encerra
+		lh a0,0(s2) # x do barril
+		lh a1,2(s2) # y do barril
+		addi t0,a1,14
+		slt t0,s1,t0 # y_mario + 18 < y_barril + 14 ? 1 : 0 tem q dar 1
+		slt t1,s1,a1 # y_mario + 18 < y_barril ? 1 : 0 tem q dar 0
+		add t0,t0,t1 # soma as duas condicoes
+		li t1,1
+		beq t0,t1,MBC_VERIF_X # se estiver no range do barril, verifica eixo x 
+		CONTINUE_MBC_VERIF_Y:
+		addi s2,s2,4 # passa p/ proximo barril
+		addi s3,s3,-1 # decrementa contador
+		j MBC_VERIF_Y
 		
+	MBC_VERIF_X:
+		slt t0,a0,s0 # x_barril < x_mario ? 1 : 0  tem q dar 1
+		addi t1,a0,12
+		slt t1,t1,s0 # x_barril + 14 < x_mario tem q dar 0
+		add t0,t0,t1 # soma as duas condicoes
+		li t1,1
+		beq t0,t1,MARIO_DEATH # se colidir, morre
+		j CONTINUE_MBC_VERIF_Y # do contrario, verifica os outros barris
+	
+	FIM_MARIO_BARREL_COLLISION:
+		ret
+
+
 # faz a morte do mario
 MARIO_DEATH:
 	# animacao e som de morte do mario
