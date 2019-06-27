@@ -95,9 +95,9 @@ INIT_GAME:
 	sw zero,0(t0)
 	
 	# Como o jogo comeca na fase 1, nao precisa passar por "init fase1", e consequentemente, carregar
-	jal SET_FASE3
+	#jal SET_FASE3
 	#call INIT_FASE2_ELEVATORS
-	call F3_ADD_BLOCKS
+	#call F3_ADD_BLOCKS
 	jal PRINT_FASE
 	call PRINT_TEXT_INITIAL
 	call INIT_MARIO
@@ -162,7 +162,7 @@ SET_FASE1:
 	# do contrario, carregar do endereco no RARS
 	la s1,fase_current # endereco do mapa geral
 	li t0,76800
-#la t1,fase1
+	la t1,fase1
 	addi t1,t1,8 # pula as words que indicam o tamanho da imagem
 	FOR_LOADFASE1:
 		beqz t0,FIM_LOADFASE1
@@ -200,7 +200,7 @@ SET_FASE2:
 	# do contrario, carregar do endereco no RARS
 	la s1,fase_current # endereco do mapa geral
 	li t0,76800
-	#la t1,fase2
+	la t1,fase2
 	addi t1,t1,8 # pula as words que indicam o tamanho da imagem
 	FOR_LOADFASE2:
 		beqz t0,FIM_LOADFASE2
@@ -238,7 +238,7 @@ SET_FASE3:
 	# do contrario, carregar do endereco no RARS
 	la s1,fase_current # endereco do mapa geral
 	li t0,76800
-#	la t1,fase3
+	la t1,fase3
 	addi t1,t1,8 # pula as words que indicam o tamanho da imagem
 	FOR_LOADFASE3:
 		beqz t0,FIM_LOADFASE3
