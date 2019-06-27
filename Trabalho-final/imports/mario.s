@@ -658,7 +658,7 @@ MARIO_PULO_UP:
 	la t0,pulo_px
 	lb t1,0(t0) # carrega estado de descida do pulo do mario
 	lb t2,1(t0) # carrega estado de subida do pulo do mario
-	li t3,12
+	li t3,13
 	beq t2,t3,MARIO_PULO_UP_INIT_DESCIDA # se ja tiver chegado no ponto maximo, inicia descida
 	beq t1,t3,MARIO_PULO_UP_RESET # se ambos tiverem em 12, termina pulo
 	bgt t1,zero,MARIO_PULO_UP_DESCE # se descida tiver > 0 e < 12, faz movimento de descer
@@ -768,7 +768,7 @@ MARIO_PULO_UP:
 MARIO_PULO_DIR:
 	la t0,mario_state 
 	lb t1,0(t0)
-	andi t1,t1,0x08 # verifica se pode pular
+	andi t1,t1,0x28 # verifica se pode pular
 	bne t1,zero,FIM_PULO_DIR # se nao puder pular, sai
 	
 	rmv_mario(mario_pulando) # remove mario na posicao atual
@@ -776,7 +776,7 @@ MARIO_PULO_DIR:
 	la t0,pulo_px
 	lb t1,0(t0) # carrega estado de descida do pulo do mario
 	lb t2,1(t0) # carrega estado de subida do pulo do mario
-	li t3,12
+	li t3,14
 	beq t2,t3,MARIO_PULO_DIR_INIT_DESCIDA # se ja tiver chegado no ponto maximo, inicia descida
 	bge t1,t3,MARIO_PULO_DIR_DESCE_RETO # se ambos >= 12, verifica se precisa parar, ou morrer
 	bgt t1,zero,MARIO_PULO_DIR_DESCE_DIAG # se descida tiver > 0 e < 12, faz movimento de descer
@@ -787,8 +787,8 @@ MARIO_PULO_DIR:
 		# se tiver, nao realiza pulo
 		la t0,mario_state
 		lb t1,0(t0)
-		andi t1,t1,0x10 # verifica se esta com martelo
-		bnez t1,FIM_PULO_DIR # se estiver com martelo, nao inicia subida
+		andi t1,t1,0x11 # verifica se esta com martelo ou se ja estava pulando
+		bnez t1,FIM_PULO_DIR # se estiver com martelo, ou pulando, nao inicia subida
 		
 		save_stack(s0)
 		mario_mappos(s0)
@@ -936,7 +936,7 @@ MARIO_PULO_DIR:
 		andi t1,t1,0x10
 		sb t1,0(t0) # salva estado do mario no chao, virado pra direita, com ou sem martelo
 	
-		set_mario_move(4,4,mario_parado) # se move 4px pra baixo, 4px pra direita p/ finalizar pulo
+		set_mario_move(4,2,mario_parado) # se move 2px pra baixo, 4px pra direita p/ finalizar pulo
 		
 		j PULO_DIR_ANIM
 		
@@ -962,7 +962,7 @@ MARIO_PULO_DIR:
 MARIO_PULO_ESQ:
 	la t0,mario_state
 	lb t1,0(t0)
-	andi t1,t1,0x08 # verifica se pode pular
+	andi t1,t1,0x28 # verifica se pode pular
 	bne t1,zero,FIM_PULO_ESQ # se nao puder, sai
 	
 	rmv_mario(mario_pulando) # remove mario na posicao atual
@@ -970,7 +970,7 @@ MARIO_PULO_ESQ:
 	la t0,pulo_px
 	lb t1,0(t0) # carrega estado de descida do pulo do mario
 	lb t2,1(t0) # carrega estado de subida do pulo do mario
-	li t3,12
+	li t3,14
 	beq t2,t3,MARIO_PULO_ESQ_INIT_DESCIDA # se ja tiver chegado no ponto maximo, inicia descida
 	#beq t1,t3,MARIO_PULO_ESQ_RESET # se ambos tiverem em 12, termina pulo
 	bge t1,t3,MARIO_PULO_ESQ_DESCE_RETO # se ambos >= 12, verifica se precisa parar (ou morrer)
@@ -981,8 +981,8 @@ MARIO_PULO_ESQ:
 		# verifica se esta com martelo
 		la t0,mario_state
 		lb t1,0(t0)
-		andi t1,t1,0x10 # verifica se esta com martelo
-		bnez t1,FIM_PULO_ESQ # se estiver com martelo, nao inicia subida
+		andi t1,t1,0x11 # verifica se esta com martelo, ou pulando
+		bnez t1,FIM_PULO_ESQ # se estiver com martelo, ou pulando, nao inicia subida
 		
 		# verifica se em algum ponto da trajetoria tem uma parede
 		# se tiver, nao realiza pulo	
@@ -1134,7 +1134,7 @@ MARIO_PULO_ESQ:
 		ori t1,t1,0x04
 		sb t1,0(t0) # salva estado do mario no chao, virado pra esquerda, com ou sem martelo
 	
-		set_mario_move(-4,4,mario_parado) # se move 4px pra baixo, 4px pra esquerda p/ finalizar pulo
+		set_mario_move(-4,2,mario_parado) # se move 2px pra baixo, 4px pra esquerda p/ finalizar pulo
 		j PULO_ESQ_ANIM
 		
 	MARIO_PULO_ESQ_RESET:
@@ -1388,7 +1388,8 @@ MARIO_GRAVITY:
 		lh s0,0(t0)
 		lh a1,2(t0)
 		addi a1,a1,17
-		li t2,18
+		li t2,16
+		addi s0,s0,1
 		LOOP_SEARCH_GROUND_MGE:
 			beqz t2,MARIO_GRAVITY_ELEVATOR_FALL
 			mv a0,s0

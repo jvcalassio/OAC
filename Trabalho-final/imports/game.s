@@ -52,14 +52,51 @@ INIT_GAME:
 	la t0,level 
 	sb t1,0(t0) # seta lvl1
 	
+	la t0,var_barris
+	sh zero,0(t0)
+	sh zero,2(t0)
+	sh zero,4(t0)
+	sh zero,6(t0)
+	sh zero,8(t0)
+	sh zero,10(t0)
+	sh zero,12(t0)
+	sh zero,14(t0)
+	sh zero,16(t0)
+	sh zero,18(t0)
+	sh zero,20(t0)
+	sh zero,22(t0)
+	la t0,var_barris1
+	sh zero,0(t0)
+	sh zero,2(t0)
+	sh zero,4(t0)
+	sh zero,6(t0)
+	sh zero,8(t0)
+	sh zero,10(t0)
+	la t0,var_barris2
+	sh zero,0(t0)
+	sh zero,2(t0)
+	sh zero,4(t0)
+	sh zero,6(t0)
+	sh zero,8(t0)
+	sh zero,10(t0)
+	
+	la t0,fase2_elevator1
+	sh zero,0(t0)
+	sh zero,2(t0)
+	sh zero,4(t0)
+	la t0,fase2_elevator2
+	sh zero,0(t0)
+	sh zero,2(t0)
+	sh zero,4(t0)
+	
 	la t0,ambient_sound_counter
 	sb zero,0(t0) # salva counter em 0
 	la t0,ambient_sound_timer
 	sw zero,0(t0)
 	
 	# Como o jogo comeca na fase 1, nao precisa passar por "init fase1", e consequentemente, carregar
-	jal SET_FASE2
-	call INIT_FASE2_ELEVATORS
+	#jal SET_FASE3
+	#call INIT_FASE2_ELEVATORS
 	#call F3_ADD_BLOCKS
 	jal PRINT_FASE
 	call PRINT_TEXT_INITIAL
@@ -125,7 +162,7 @@ SET_FASE1:
 	# do contrario, carregar do endereco no RARS
 	la s1,fase_current # endereco do mapa geral
 	li t0,76800
-#la t1,fase1
+	la t1,fase1
 	addi t1,t1,8 # pula as words que indicam o tamanho da imagem
 	FOR_LOADFASE1:
 		beqz t0,FIM_LOADFASE1
@@ -285,7 +322,7 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	call CHECK_POINTS_TIMER
 	
 	# Faz o movimento dos barris
-	#call MOV_BARRIS
+	call MOV_BARRIS
 	
 	call F2_ELEVATORS_UPDATE
 	
@@ -543,7 +580,7 @@ GAME_VICTORY:
 	la t0,fase
 	lb t1,0(t0) # carrega fase atual
 	li t0,1
-	beq t0,t1,INIT_FASE3
+	beq t0,t1,INIT_FASE2
 	li t0,2
 	beq t0,t1,INIT_FASE3
 	li t0,3
