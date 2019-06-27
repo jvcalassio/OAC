@@ -1,3 +1,8 @@
+#####################################################
+# Responsavel por gerenciar as mecanicas da fase 3: #
+# - Piso dourado				    #
+# - Animacao de vitoria				    #
+#####################################################
 .data
 .include "../../sprites/bin/fase3_golden_block.s"
 .include "../../sprites/bin/fase3_blue_block.s"

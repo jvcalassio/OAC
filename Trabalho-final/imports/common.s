@@ -1,6 +1,6 @@
 ##########################################################
-#  Arquivo com funcoes comuns a todo o jogo  
-#########################################################
+#  Arquivo com funcoes comuns a todo o jogo  		 #
+##########################################################
 .text
 
 ######################################################
@@ -160,12 +160,12 @@ PRINT_OBJ_MIRRORY:
 KEYBIND:
 	# verificar se alguma tecla esta sendo pressionada (teclado)
 	DE1(KEYBIND_JOYSTICK)
-	li t0,0xff200000
-	lw t1,0(t0)
-	beqz t1,KEYB_RET_0
-		lw a0,4(t0) # retorna tecla pressionada, caso alguma esteja sendo pressionada
-		ret
-	
+	KEYBIND_KEYBOARD:
+		li t0,0xff200000
+		lw t1,0(t0)
+		beqz t1,KEYB_RET_0
+			lw a0,4(t0) # retorna tecla pressionada, caso alguma esteja sendo pressionada
+			ret
 	KEYB_RET_0: # se nenhuma tecla esta sendo pressionada, retorna 0
 		li a0,0
 		ret
@@ -186,8 +186,7 @@ KEYBIND:
 		li t0,CTRL_BTN_ADDR
 		lw t2,0(t0) # pulo
 		beqz t2,PULO_BTN_CTRL
-		li a0,0
-		ret
+		j KEYBIND_KEYBOARD # se nao tiver direcao no joystick, verifica teclado
 		
 		Y_DOWN_ALONE: # descer
 			li a0,119

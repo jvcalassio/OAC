@@ -174,8 +174,7 @@ endException:  	lw t1,4(sp) # recupera valor de t1
 		uret			# retorna PC=uepc
 
 ############# interrupcao de erro  ####################
-errorException: ebreak
-		li a0,0x0099 # printa blue screen
+errorException: li a0,0x0099 # printa blue screen
 		add a1,zero,zero
 		jal clsCLS
 		csrrsi t0,66,0 # carrega ucause
