@@ -324,6 +324,7 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	# Faz o movimento dos barris
 	call MOV_BARRIS
 	
+	# Atualiza as posicoes dos elevadores (fase 2)
 	call F2_ELEVATORS_UPDATE
 	
 	# Verifica se precisa remover o martelo
@@ -389,7 +390,15 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		call DK_DANCA_LOOP
 		call LADY_LOOP
 		call F3_CHECK_BLOCK
+		call MARIO_BARREL_COLLISION
 		
+		###########################################
+		# Continuacao mudar display
+		#li t0,CDISPLAY
+		#lw t1,0(t0) # carrega qual o display mostrado atual
+		#xori t1,t1,0x01
+		#sw t1,0(t0) # seta display
+		###########################################
 		la t0,level
 		lb t1,0(t0) # carrega lvl atual
 		# escolhe sleep baseado no lvl
@@ -403,13 +412,6 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		li a7,32
 		ecall
 		MAINLOOP_RET_SLEEP0: # sem sleep
-		###########################################
-		# Continuacao mudar display
-		#li t0,CDISPLAY
-		#lw t1,0(t0) # carrega qual o display mostrado atual
-		#xori t1,t1,0x01
-		#sw t1,0(t0) # seta display
-		###########################################
 		j MAINLOOP
 	MPUP: tail MARIO_PULO_UP
 	MPDIR: tail MARIO_PULO_DIR
