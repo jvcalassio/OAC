@@ -36,26 +36,32 @@ points_timer: .word 0,0 # variaveis do tempo de exibicao do texto de pontos ganh
 points_pos: .half 0,0,0,0 # texto 1 (x,y) , texto 2 (x,y)
 .text
 
-#inicializa uma nova variável para um barril, dentro de var_barris
+#inicializa uma nova variavel para um barril, dentro de var_barris
 #a0 = x
 #a1 = y
 INIT_NOVO_BARRIL:
-	#encontra primeira posicao zerada na var_barris e armazena lá o novo valor do barril
+	#encontra primeira posicao zerada na var_barris e armazena la o novo valor do barril
 	la	t0, var_barris
+	la	t4, var_barris1
+	la	t5, var_barris2
 	loop_verifica_barris1:
 	lh	t1, 0(t0)
 	lh	t2, 2(t0)
 	add	t1, t1, t2
 	beqz	t1, fim_init_novo_barril
 	addi	t0, t0, 4
+	addi	t4, t4, 1
+	addi	t5, t5, 1
 	j	loop_verifica_barris1
 	
 	fim_init_novo_barril:
 	sh	a0, 0(t0)
 	sh	a1, 2(t0)
+	sb	zero, 0(t4)
+	sb	zero, 0(t5)
 	ret
 
-#responsável pelo movimento dos barris
+#responsavel pelo movimento dos barris
 MOV_BARRIS:
 	save_stack(ra)
 	
@@ -69,6 +75,7 @@ MOV_BARRIS:
 	la	t4, var_barris1 #direcao dos barris
 	la	t5, var_barris2 #print dos barris
 	
+	#checa quais barris ja foram inicializados (x+y!=0)
 	loop_mov_barris:
 	li	t2, 6
 	beq	t1, t2, FIM_MOV_BARRIS
@@ -109,6 +116,7 @@ MOV_BARRIS:
 		free_stack(t0)
 		
 		#seta a direcao que o barril deve ir
+		#checando se o barril deve desaparecer
 		lh	t1, 0(t0)
 		li	t2, 256
 		bge	t1, t2, set_esquerda_barris
@@ -116,6 +124,10 @@ MOV_BARRIS:
 		ble	t1, t2, set_direita_barris
 		
 		continueset_barris:
+		li	t2, 62
+		ble	t1, t2, zerar_barril
+		
+		continuezerar_barril:
 		lb	t4, 0(t4)
 		bnez	t4, esquerda_barris
 		
@@ -146,7 +158,6 @@ MOV_BARRIS:
 		beq	a0, t1, MOV_BARRIS_BAIXO
 		
 		j 	continueMOV_BARRISfim
-		
 		
 		#movimento para a esquerda
 		esquerda_barris:
@@ -192,7 +203,7 @@ MOV_BARRIS:
 
 		
 		back_to_print:
-		lb	t2, 0(t5)	#decisao de como o barril será printado
+		lb	t2, 0(t5)	#decisao de como o barril sera printado
 		li	t1, 0
 		beq	t2, t1, print_barril0
 		li	t1, 1
@@ -237,6 +248,17 @@ MOV_BARRIS:
 		call	PRINT_OBJ_MIRROR
 		j	continueMOV_BARRIS
 		
+		zerar_barril:
+			lh	t1, 2(t0)
+			li	t2, 198
+			bge	t1, t2, zerar_barril1
+			j	continuezerar_barril
+		zerar_barril1:
+			free_stack(t5)
+			sh	zero, 0(t0)
+			sh	zero, 2(t0)
+			j	continueMOV_BARRIS
+		
 		MOV_BARRIS_DIREITA:
 			lh	t1, 0(t0)	#x
 			lh	t2, 2(t0)	#y
@@ -270,6 +292,7 @@ MOV_BARRIS:
 			li	t3, 0
 			sb	t3, 0(t4)
 			j	continueset_barris
+			
 		
 	FIM_MOV_BARRIS:
 		free_stack(ra)
