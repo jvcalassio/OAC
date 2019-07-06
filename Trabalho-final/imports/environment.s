@@ -872,6 +872,34 @@ INIT_ITEMS:
 	j FIM_INIT_ITEMS
 	
 	INIT_ITEMS_F1:
+		# martelo 1
+		li a0,65
+		li a1,130
+		la a2,display
+		lw a2,0(a2)
+		la a3,martelo_y
+		call PRINT_OBJ
+		# martelo 2
+		li a0,65
+		li a1,73
+		la a2,display
+		lw a2,0(a2)
+		la a3,martelo_y
+		call PRINT_OBJ
+		
+		la t0,fase1_items
+		sb zero,0(t0)
+		la t0,points_timer
+		sw zero,0(t0)
+		la t0,points_pos
+		sh zero,0(t0)
+		sh zero,2(t0)
+		sh zero,4(t0)
+		sh zero,6(t0)
+		la t0,mario_hammer_timer
+		sw zero,0(t0)
+		la t0,mario_hammer_type
+		sb zero,0(t0)
 		j FIM_INIT_ITEMS
 		
 	INIT_ITEMS_F2:
@@ -944,8 +972,33 @@ CHECK_ITEMS:
 	j FIM_CHECK_ITEMS
 	
 	CHECK_ITEMS_F1:
+		la t0,pos_mario
+		lh t1,2(t0) # y do mario
+		li t0,145
+		bge t1,t0,FIM_CHECK_ITEMS # nao tem martelo abaixo do 3o andar
+		li t0,129
+		bge t1,t0,CHECK_ITEMS_F1_MARTELO1 # verifica martelo de baixo
+		li t0,85
+		bge t1,t0,FIM_CHECK_ITEMS # abaixo do 5o andar (exceto outro martelo), nao tem nada
+		li t0,70
+		bge t1,t0,CHECK_ITEMS_F1_MARTELO2 # verifica martelo de cima
 		j FIM_CHECK_ITEMS
-		
+		CHECK_ITEMS_F1_MARTELO1:
+			la t0,pos_mario
+			lh t1,0(t0) # x do mario
+			slti t0,t1,66 # x < 66 ?
+			beqz t0,FIM_CHECK_ITEMS # se x >= 66, nao esta na pos do martelo
+			li a0,1 # martelo 1
+			li a1,1 # fase 1
+			j REMOVE_ITEM
+		CHECK_ITEMS_F1_MARTELO2:
+			la t0,pos_mario
+			lh t1,0(t0) # x do mario
+			slti t0,t1,66 # x < 66 ?
+			beqz t0,FIM_CHECK_ITEMS # se x >= 66, nao esta na pos do martelo
+			li a0,2 # martelo 2
+			li a1,1 # fase 1
+			j REMOVE_ITEM
 	CHECK_ITEMS_F2:
 		j FIM_CHECK_ITEMS
 		
@@ -1050,8 +1103,6 @@ CHECK_ITEMS:
 			li a1,3 # fase 3
 			li t2,1
 			beq t0,t2,REMOVE_ITEM
-			
-		
 	FIM_CHECK_ITEMS:
 		free_stack(ra)
 		ret
@@ -1060,9 +1111,54 @@ CHECK_ITEMS:
 # a0 = numero do item
 # a1 = fase (p/ nao ter q fazer a verificacao novamente)
 REMOVE_ITEM:
+	li t0,1
+	beq a1,t0,RMV_ITEM_F1
 	li t0,3
 	beq a1,t0,RMV_ITEM_F3
 	j FIM_REMOVE_ITEM
+	
+	RMV_ITEM_F1: # verifica e remove itens da fase 1
+		li t1,1
+		sll t0,t1,a0 # procura bit do item desejado
+		la t1,fase1_items
+		lb t1,0(t1)
+		and t1,t1,t0 # pega bit do item desejado
+		bnez t1,FIM_REMOVE_ITEM # se nao der 0, o item ja foi pego
+		li t0,1
+		beq a0,t0,RMV_F1_HAMMER1 # remove martelo 1
+		li t0,2
+		beq a0,t0,RMV_F1_HAMMER2 # remove martelo 2
+		j FIM_REMOVE_ITEM
+		
+		RMV_F1_HAMMER1:
+			li a0,65
+			li a1,130
+			la a2,display
+			lw a2,0(a2)
+			la a3,fase_current
+			la a4,martelo_y
+			call CLEAR_OBJPOS # remove sprite
+			la t0,fase1_items
+			lb t1,0(t0)
+			ori t1,t1,0x01 # adiciona bit do martelo 1 andar
+			sb t1,0(t0)
+			call MARIO_SET_HAMMER
+			j FIM_REMOVE_ITEM
+			
+		RMV_F1_HAMMER2:
+			li a0,65
+			li a1,73
+			la a2,display
+			lw a2,0(a2)
+			la a3,fase_current
+			la a4,martelo_y
+			call CLEAR_OBJPOS # remove sprite
+			la t0,fase1_items
+			lb t1,0(t0)
+			ori t1,t1,0x02 # adiciona bit do martelo 1 andar
+			sb t1,0(t0)
+			call MARIO_SET_HAMMER
+			j FIM_REMOVE_ITEM
 	
 	RMV_ITEM_F3: # verifica e remove itens da fase 3
 		# da os pontos
