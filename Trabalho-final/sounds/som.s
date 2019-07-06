@@ -23,3 +23,8 @@ NOTAS_MARIOMORRE:
 NUM_PASSOS: .word 2
 NOTAS_PASSOS: 								# a2 = 120
 	.word 62,10,69,10 						# Tocar em looping
+	
+NUM_MARTELO: .word 18
+NOTAS_MARTELO: 	
+	.word 60,200,60,200,60,200,60,200,60,200,64,200,60,200,64,200,60,200,		# a2 = 80
+	64,200,64,200,64,200,64,200,64,200,67,200,64,200,67,200,64,200,			# Tocar em looping
