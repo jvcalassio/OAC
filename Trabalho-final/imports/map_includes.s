@@ -4,6 +4,7 @@
 .include "../sprites/bin/fase1.s"
 .include "../sprites/bin/fase2.s"
 .include "../sprites/bin/fase3.s"
+.include "../sprites/bin/fase4.s"
 
 .text
 # Recebe mapa atraves do USB na DE1

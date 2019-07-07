@@ -47,6 +47,8 @@ INIT_MARIO:
 	beq t0,t1,INIT_MARIO_F2 # se fase atual for fase 2, printa mario parado na fase 2
 	li t1,3
 	beq t0,t1,INIT_MARIO_F3 # se fase atual for fase 3, printa mario parado na fase 3
+	li t1,4
+	beq t0,t1,INIT_MARIO_F4 # se fase atual for fase 3, printa mario parado na fase 4
 	j FIM_INIT_MARIO
 	
 	INIT_MARIO_F1:
@@ -67,6 +69,13 @@ INIT_MARIO:
 		la t0,pos_mario
 		sw zero,0(t0) # zera pos mario
 		set_mario_move(START_MARIO_X_FASE3,START_MARIO_Y_FASE3,mario_parado)
+		call PRINT_OBJ # printa mario na posicao inicial, reseta pos mario
+		j FIM_INIT_MARIO
+		
+	INIT_MARIO_F4:
+		la t0,pos_mario
+		sw zero,0(t0) # zera pos mario
+		set_mario_move(START_MARIO_X_FASE4,START_MARIO_Y_FASE4,mario_parado)
 		call PRINT_OBJ # printa mario na posicao inicial, reseta pos mario
 		
 	FIM_INIT_MARIO:
@@ -132,6 +141,8 @@ MARIO_MAP_POS:
 	beq t0,t1,MMPOS_FASE2
 	li t1,3
 	beq t0,t1,MMPOS_FASE3
+	li t1,4
+	beq t0,t1,MMPOS_FASE4
 	j FIM_MMPOS
 	
 	MMPOS_FASE1:
@@ -142,6 +153,9 @@ MARIO_MAP_POS:
 	j MMPOS_CONTINUE
 	MMPOS_FASE3:
 	la a1,fase3_obj
+	j MMPOS_CONTINUE
+	MMPOS_FASE4:
+	la a1,fase1_obj # TEMPORARIO LEMBRAR DE MUDAR ISSO
 	MMPOS_CONTINUE:
 	li a0,80
 	mul a0,s0,a0 # (y * 80)
@@ -2106,6 +2120,8 @@ MARIO_DEATH:
 		beq t0,t1,MARIO_DEATH_FASE2 # se tiver na fase 2, reseta na fase2
 		li t0,3
 		beq t0,t1,MARIO_DEATH_FASE3 # se tiver na fase 3, reseta na fase3
+		li t0,4
+		beq t0,t1,MARIO_DEATH_FASE4 # se tiver na fase 4, reseta na fase4
 		tail GAME_OVER
 		
 		MARIO_DEATH_FASE1:
@@ -2114,6 +2130,8 @@ MARIO_DEATH:
 			tail INIT_FASE2
 		MARIO_DEATH_FASE3:
 			tail INIT_FASE3
+		MARIO_DEATH_FASE4:
+			tail INIT_FASE4
 	
 	
 	

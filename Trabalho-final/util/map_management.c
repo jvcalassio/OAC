@@ -50,6 +50,8 @@ int main()
 				fd = fopen("../sprites/bin/fase2.s", "r");
 			else if (buf[0] == 3)
 				fd = fopen("../sprites/bin/fase3.s", "r");
+			else if (buf[0] == 4)
+				fd = fopen("../sprites/bin/fase4.s", "r");
 			else
 				continue;
 			

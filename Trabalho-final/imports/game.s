@@ -151,6 +151,20 @@ INIT_FASE3:
 	call INIT_ITEMS
 	call INIT_SOUND
 	j MAINLOOP
+	
+# Inicia a fase extra (4)
+INIT_FASE4:
+	jal LOADING_SCR
+	jal SET_FASE4
+	jal PRINT_FASE
+	call PRINT_TEXT_INITIAL
+	call INIT_MARIO
+	call INIT_DK_DANCA
+	call INIT_LADY
+	call INIT_BONUS
+	call INIT_ITEMS
+	call INIT_SOUND
+	j MAINLOOP
 
 # Imprime fase 1 no fase current, e salva no indicador de fase atual
 SET_FASE1:
@@ -266,6 +280,44 @@ SET_FASE3:
 		#la t0,fase3_given_blocks
 		#sb zero,0(t0) # reseta contador de golden blocks na fase 3
 	RET_LOADFASE3:
+		ret
+		
+# Imprime fase 4 no fase current, e salva no indicador de fase atual
+SET_FASE4:
+	la t0,fase
+	lb t1,0(t0)
+	li t0,4
+	beq t0,t1,RET_LOADFASE4 # se ja estava na fase 4, nao precisa carregar denovo
+	DE1(LOADFASE4_DE1) # se estiver na DE1, carrega o mapa do USB serial
+	# do contrario, carregar do endereco no RARS
+	la s1,fase_current # endereco do mapa geral
+	li t0,76800
+	la t1,fase4
+	addi t1,t1,8 # pula as words que indicam o tamanho da imagem
+	FOR_LOADFASE4:
+		beqz t0,FIM_LOADFASE4
+		lb t2,0(t1) # carrega byte do mapa
+		sb t2,0(s1) # grava byte no current
+		addi t1,t1,1
+		addi s1,s1,1
+		addi t0,t0,-1
+		j FOR_LOADFASE4
+		
+	LOADFASE4_DE1:
+		save_stack(ra)
+		li a0,4
+		call MAP_RETRIEVER
+		free_stack(ra)
+	
+	FIM_LOADFASE4:
+		la t0,fase
+		li t1,4
+		sb t1,0(t0) # salva fase atual como 4
+		la t0,ambient_sound_counter
+		sb zero,0(t0) # reseta contador do som
+		la t0,ambient_sound_timer
+		sw zero,0(t0) # reseta timer do som
+	RET_LOADFASE4:
 		ret
 
 # Imprime a fase atual na tela
@@ -427,6 +479,8 @@ AMBIENT_SOUND:
 	lb t1,0(t0)
 	li t0,2
 	beq t0,t1,FIM_AMBIENT_SOUND # fase 2 nao tem som ambiente
+	li t0,4
+	beq t0,t1,FIM_AMBIENT_SOUND # fase 4 nao tem som ambiente
 	
 	la t0,ambient_sound_timer
 	lw t1,0(t0)
@@ -540,7 +594,7 @@ CHECK_VICTORY:
 	lb t1,0(t0)
 	li t0,3
 	beq t0,t1,CHECK_VICTORY_F1
-	# Verifica posicao de vitoria nas fases 1 e 2
+	# Verifica posicao de vitoria nas fases 1, 2 e 4
 	CHECK_VICTORY_F0:
 		save_stack(ra)
 		mario_mappos(a0)
@@ -584,7 +638,9 @@ GAME_VICTORY:
 	li t0,1
 	beq t0,t1,INIT_FASE2
 	li t0,2
-	beq t0,t1,INIT_FASE3
+	beq t0,t1,INIT_FASE4
+	li t0,4
+	beq t0,t1,INIT_FASE3 
 	li t0,3
 	beq t0,t1,NEXT_LVL # se estava na fase 3, passa para o prox lvl e volta p/ fase 1
 	
