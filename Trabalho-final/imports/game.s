@@ -11,6 +11,7 @@
 .include "fases/fase1_obj.s"
 .include "fases/fase2_obj.s"
 .include "fases/fase3_obj.s"
+.include "fases/fase4_obj.s"  
 
 .include "../sprites/bin/fase_current.s" # fase atual (inicialmente fase 1)
 # Variaveis de jogo
@@ -98,6 +99,7 @@ INIT_GAME:
 	#jal SET_FASE3
 	#call INIT_FASE2_ELEVATORS
 	#call F3_ADD_BLOCKS
+	jal SET_FASE4
 	jal PRINT_FASE
 	call PRINT_TEXT_INITIAL
 	call INIT_MARIO

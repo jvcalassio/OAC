@@ -155,7 +155,7 @@ MARIO_MAP_POS:
 	la a1,fase3_obj
 	j MMPOS_CONTINUE
 	MMPOS_FASE4:
-	la a1,fase1_obj # TEMPORARIO LEMBRAR DE MUDAR ISSO
+	la a1,fase4_obj
 	MMPOS_CONTINUE:
 	li a0,80
 	mul a0,s0,a0 # (y * 80)
@@ -934,6 +934,8 @@ MARIO_PULO_DIR:
 		lb t1,0(t0)
 		li t0,3
 		beq t0,t1,MARIO_PULO_DIR_RESET_F3 # se for fase 3, ele sempre cai na mesma altura
+		li t0,4
+		beq t0,t1,MARIO_PULO_DIR_RESET_F3 # o mesmo pra fase 4
 		
 		la t0,pulo_px
 		lb t1,0(t0)
@@ -1169,6 +1171,8 @@ MARIO_PULO_ESQ:
 		lb t1,0(t0)
 		li t0,3
 		beq t0,t1,MARIO_PULO_ESQ_RESET_F3 # se for fase 3, termina o pulo (pois eh tudo no msm nivel)
+		li t0,4
+		beq t0,t1,MARIO_PULO_ESQ_RESET_F3 # o mesmo pra fase 4
 		
 		la t0,pulo_px
 		lb t1,0(t0)
