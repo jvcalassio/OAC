@@ -16,7 +16,7 @@ var_dk:		.word 0
 var_lady:	.word 0
 var_barris:	.half 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 #posicoes de 6 barris, armazenados em pares x, y
 var_barris1:	.byte 0, 0, 0, 0, 0, 0	#armazena a direcao que os barris devem ir  (0 direita, 1 esquerda)
-var_barris2: 	.byte 0, 0, 0, 0, 0, 0 #armazena como o barril sera printado (0,1,2,3) 4 formas de printar
+var_barris2: 	.byte 0, 0, 0, 0, 0, 0 #armazena como o barril sera printado (0,1,2,3, 4) 4 formas de printar
 
 # strings de jogo
 victory_text: .string "PARABENS VC VENCEU"
@@ -116,7 +116,6 @@ MOV_BARRIS:
 		free_stack(t0)
 		
 		#seta a direcao que o barril deve ir
-		#checando se o barril deve desaparecer
 		lh	t1, 0(t0)
 		li	t2, 256
 		bge	t1, t2, set_esquerda_barris
@@ -124,10 +123,25 @@ MOV_BARRIS:
 		ble	t1, t2, set_direita_barris
 		
 		continueset_barris:
+		#verifica x para saber se o barril deve desaparecer
 		li	t2, 62
 		ble	t1, t2, zerar_barril
 		
 		continuezerar_barril:
+		#checando se o barril está em uma escada
+		lh	t1, 0(t0)
+		li	t2, 136
+		beq	t1, t2, escada0
+		li	t2, 137
+		beq	t1, t2, escada0
+		continue_escada0:
+		lh	t1, 0(t0)
+		li	t2, 232
+		beq	t1, t2, escada1
+		li	t2, 233
+		beq	t1,t2, escada1
+		continue_escada1:
+		
 		lb	t4, 0(t4)
 		bnez	t4, esquerda_barris
 		
@@ -200,7 +214,6 @@ MOV_BARRIS:
 		bge	a0, t1, barril_cair_mais
 		li	t1, 50
 		ble	a0, t1, barril_cair_mais
-
 		
 		back_to_print:
 		lb	t2, 0(t5)	#decisao de como o barril sera printado
@@ -248,12 +261,27 @@ MOV_BARRIS:
 		call	PRINT_OBJ_MIRROR
 		j	continueMOV_BARRIS
 		
+		escada0:
+			lh	t1, 2(t0)
+			li	t2, 52
+			beq	t1, t2, escada0pt2
+			j	continue_escada0
+			escada0pt2:
+				li	a7, 10
+				ecall
+				j	continue_escada0
+		escada1:
+			j	continue_escada1
+			
+		
+		#verifica y pra saber se o barril deve desaparecer
 		zerar_barril:
 			lh	t1, 2(t0)
 			li	t2, 198
 			bge	t1, t2, zerar_barril1
 			j	continuezerar_barril
 		zerar_barril1:
+		#zera as variaveis de posicao do barril
 			free_stack(t5)
 			sh	zero, 0(t0)
 			sh	zero, 2(t0)
