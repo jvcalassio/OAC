@@ -53,33 +53,7 @@ INIT_GAME:
 	la t0,level 
 	sb t1,0(t0) # seta lvl1
 	
-	la t0,var_barris
-	sh zero,0(t0)
-	sh zero,2(t0)
-	sh zero,4(t0)
-	sh zero,6(t0)
-	sh zero,8(t0)
-	sh zero,10(t0)
-	sh zero,12(t0)
-	sh zero,14(t0)
-	sh zero,16(t0)
-	sh zero,18(t0)
-	sh zero,20(t0)
-	sh zero,22(t0)
-	la t0,var_barris1
-	sh zero,0(t0)
-	sh zero,2(t0)
-	sh zero,4(t0)
-	sh zero,6(t0)
-	sh zero,8(t0)
-	sh zero,10(t0)
-	la t0,var_barris2
-	sh zero,0(t0)
-	sh zero,2(t0)
-	sh zero,4(t0)
-	sh zero,6(t0)
-	sh zero,8(t0)
-	sh zero,10(t0)
+	call RESET_BARRIS
 	
 	la t0,fase2_elevator1
 	sh zero,0(t0)
@@ -99,7 +73,6 @@ INIT_GAME:
 	#jal SET_FASE3
 	#call INIT_FASE2_ELEVATORS
 	#call F3_ADD_BLOCKS
-	#jal SET_FASE4
 	jal PRINT_FASE
 	call PRINT_TEXT_INITIAL
 	call INIT_MARIO
@@ -115,6 +88,7 @@ INIT_FASE1:
 	jal LOADING_SCR
 	jal SET_FASE1
 	jal PRINT_FASE
+	call RESET_BARRIS
 	call PRINT_TEXT_INITIAL
 	call INIT_MARIO
 	call INIT_DK_DANCA

@@ -128,7 +128,7 @@ MOV_BARRIS:
 		ble	t1, t2, zerar_barril
 		
 		continuezerar_barril:
-		#checando se o barril est· em uma escada
+		#checando se o barril est? em uma escada
 		lh	t1, 0(t0)
 		li	t2, 136
 		beq	t1, t2, escada0
@@ -267,8 +267,8 @@ MOV_BARRIS:
 			beq	t1, t2, escada0pt2
 			j	continue_escada0
 			escada0pt2:
-				li	a7, 10
-				ecall
+		#		li	a7, 10
+		#		ecall
 				j	continue_escada0
 		escada1:
 			j	continue_escada1
@@ -325,6 +325,37 @@ MOV_BARRIS:
 	FIM_MOV_BARRIS:
 		free_stack(ra)
 		ret
+	
+# Reseta as variaveis dos barris	
+RESET_BARRIS:
+	la t0,var_barris
+	sh zero,0(t0)
+	sh zero,2(t0)
+	sh zero,4(t0)
+	sh zero,6(t0)
+	sh zero,8(t0)
+	sh zero,10(t0)
+	sh zero,12(t0)
+	sh zero,14(t0)
+	sh zero,16(t0)
+	sh zero,18(t0)
+	sh zero,20(t0)
+	sh zero,22(t0)
+	la t0,var_barris1
+	sh zero,0(t0)
+	sh zero,2(t0)
+	sh zero,4(t0)
+	sh zero,6(t0)
+	sh zero,8(t0)
+	sh zero,10(t0)
+	la t0,var_barris2
+	sh zero,0(t0)
+	sh zero,2(t0)
+	sh zero,4(t0)
+	sh zero,6(t0)
+	sh zero,8(t0)
+	sh zero,10(t0)
+	ret
 		
 # Faz danca do Donkey Kong fase 1
 INIT_DK_DANCA:
@@ -352,9 +383,9 @@ DK_DANCA_LOOP:
 	li	t0, 1
 	la	t1, fase
 	lb	t1, 0(t1)
-	bne	t0, t1, NAO_BARRIS	#se a fase n√£o for a primeira, pula-se os frames respons√°veis pelo spawn do barril
+	bne	t0, t1, NAO_BARRIS	#se a fase n„o for a primeira, pula-se os frames respons·veis pelo spawn do barril
 	
-	#checa se 6 barris j√° foram lancados
+	#checa se 6 barris j· foram lancados
 	la	t0, var_barris
 	li	t1,0	#t1 = i
 	loop_verifica_barris:
@@ -363,7 +394,7 @@ DK_DANCA_LOOP:
 	
 	lh	t2, 0(t0)	#x[i]
 	lh	t3, 2(t0)	#y[i]
-	add	t2, t2, t3	#se a soma de x e y √© zero, ent√£o um novo barril pode ser lancado
+	add	t2, t2, t3	#se a soma de x e y È zero, ent„o um novo barril pode ser lancado
 	beqz	t2, exit_verifica_barris
 	
 	addi	t0, t0, 4	#end++
@@ -1041,7 +1072,7 @@ CHECK_ITEMS:
 			lh t1,0(t0) # x do mario
 			slti t0,t1,66 # x < 66 ?
 			beqz t0,FIM_CHECK_ITEMS # se x >= 66, nao esta na pos do martelo
-			li a0,1 # martelo 1
+			li a0,0 # martelo 1
 			li a1,1 # fase 1
 			j REMOVE_ITEM
 		CHECK_ITEMS_F1_MARTELO2:
@@ -1049,7 +1080,7 @@ CHECK_ITEMS:
 			lh t1,0(t0) # x do mario
 			slti t0,t1,66 # x < 66 ?
 			beqz t0,FIM_CHECK_ITEMS # se x >= 66, nao esta na pos do martelo
-			li a0,2 # martelo 2
+			li a0,1 # martelo 2
 			li a1,1 # fase 1
 			j REMOVE_ITEM
 	CHECK_ITEMS_F2:
@@ -1193,7 +1224,7 @@ REMOVE_ITEM:
 			call CLEAR_OBJPOS # remove sprite
 			la t0,fase1_items
 			lb t1,0(t0)
-			ori t1,t1,0x01 # adiciona bit do martelo 1 andar
+			ori t1,t1,0x01 # adiciona bit do martelo 3 andar
 			sb t1,0(t0)
 			call MARIO_SET_HAMMER
 			j FIM_REMOVE_ITEM
@@ -1208,7 +1239,7 @@ REMOVE_ITEM:
 			call CLEAR_OBJPOS # remove sprite
 			la t0,fase1_items
 			lb t1,0(t0)
-			ori t1,t1,0x02 # adiciona bit do martelo 1 andar
+			ori t1,t1,0x02 # adiciona bit do martelo 4 andar
 			sb t1,0(t0)
 			call MARIO_SET_HAMMER
 			j FIM_REMOVE_ITEM
@@ -1227,10 +1258,6 @@ REMOVE_ITEM:
 		li t0,4
 		beq a0,t0,RMV_F3_HAMMER2 # se for martelo, nao adiciona pontos
 		
-		#la t0,score
-		#lw t1,0(t0)
-		#addi t1,t1,800
-		#sw t1,0(t0)
 		mv s0,a0
 		li a0,800
 		la t0,pos_mario
@@ -1393,8 +1420,7 @@ CHECK_POINTS_TIMER:
 		
 	FIM_CHECK_POINTS_TIMER:
 		ret
-
-
+		
 # sons iniciais das fases
 INIT_SOUND:
 	la t0,sounds
@@ -1454,4 +1480,3 @@ SOUND_CLEARSTAGE:
 		j FOR_SOUND_CLEARSTAGE
 	FIM_SOUND_CLEARSTAGE:
 	ret
-

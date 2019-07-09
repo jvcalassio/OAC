@@ -31,8 +31,6 @@ pos_mario: .half 0,0 # salva posicao atual do mario (x,y)
 movement_counter: .word 0 # contador de passos dos movimentos
 mario_hammer_timer: .word 0 # contador de tempo do martelo
 mario_hammer_type: .byte 0 # tipo de animacao do martelo (1 = baixo, 0 = cima)
-#map_backup_info: .half 0,0,0,0 # (x,y),(largura,altura)
-#map_backup_data: .space 176
 .text
 
 # Printa o Mario na posicao inicial
@@ -163,7 +161,6 @@ MARIO_MAP_POS:
 	
 	FIM_MMPOS:
 	ret
-	
 
 # Faz o movimento do mario para a direita
 MOVE_MARIO_DIREITA:
@@ -807,7 +804,7 @@ MARIO_PULO_DIR:
 		save_stack(s0)
 		mario_mappos(s0)
 		mv t0,s0
-		li t1,6
+		li t1,7
 		MPDIS_CHECKWALL:
 			beqz t1,MPDIS_CHECKWALL_PASS
 			lb t2,0(t0)
@@ -818,6 +815,7 @@ MARIO_PULO_DIR:
 			j MPDIS_CHECKWALL
 		MPDIS_CHECKWALL_FAIL:
 			set_mario_move(0,0,mario_parado)
+			free_stack(s0)
 			j PULO_DIR_ANIM
 		MPDIS_CHECKWALL_PASS: # se nao tiver nenhuma parede, faz pulo
 	
@@ -856,7 +854,7 @@ MARIO_PULO_DIR:
 		la t0,pos_mario
 		lh s0,0(t0) # x do mario
 		lh s1,2(t0) # y do mario
-		addi s1,s1,18
+		addi s1,s1,16
 		# y_mario + 18 < y_barril && y_mario + 18 > y_barril - 15(altura do pulo do mario)
 		la s2,var_barris
 		li s3,6
@@ -864,9 +862,9 @@ MARIO_PULO_DIR:
 			beqz s3,CONT_MARIO_PULO_DIR_INIT_DESCIDA # verificados todos os barris, encerra
 			lh a0,0(s2) # x do barril
 			lh a1,2(s2) # y do barril
-			slt t0,s1,a1 # y_mario + 18 < y_barril ? 1 : 0 tem q dar 1
+			slt t0,s1,a1 # y_mario + 16 < y_barril ? 1 : 0 tem q dar 1
 			addi a1,a1,-15 # y_barril - 15
-			slt t1,s1,t1 # y_mario + 18 < y_barril - 15 ? 1 : 0 tem q dar 0
+			slt t1,s1,t1 # y_mario + 16 < y_barril - 15 ? 1 : 0 tem q dar 0
 			add t0,t0,t1
 			li t1,1
 			beq t0,t1,MBC_VERIF_X_PDIR # se estiver acima do barril, verifica eixo x 
@@ -877,8 +875,8 @@ MARIO_PULO_DIR:
 			
 		MBC_VERIF_X_PDIR:
 			slt t0,a0,s0 # x_barril < x_mario ? 1 : 0  tem q dar 1
-			addi t1,a0,12
-			slt t1,t1,s0 # x_barril + 14 < x_mario tem q dar 0
+			addi t1,a0,10
+			slt t1,t1,s0 # x_barril + 10 < x_mario tem q dar 0
 			add t0,t0,t1 # soma as duas condicoes
 			li t1,1
 			beq t0,t1,MBC_VERIF_X_PDIR_GPOINTS # se estiver na posicao, da pontos
@@ -888,7 +886,7 @@ MARIO_PULO_DIR:
 				la t0,pos_mario
 				lh a1,0(t0)
 				lh a2,2(t0)
-				addi a2,a2,15
+				addi a2,a2,-10
 				call GIVE_POINTS
 			j CONTINUE_MBC_VERIF_Y_PDIR # do contrario, verifica os outros barris
 		
@@ -1045,7 +1043,7 @@ MARIO_PULO_ESQ:
 		save_stack(s0)
 		mario_mappos(s0) # pega posicao atual do mario
 		mv t0,s0
-		li t1,6
+		li t1,7
 		MPEIS_CHECKWALL:
 			beqz t1,MPEIS_CHECKWALL_PASS
 			lb t2,0(t0)
@@ -1056,6 +1054,7 @@ MARIO_PULO_ESQ:
 			j MPEIS_CHECKWALL
 		MPEIS_CHECKWALL_FAIL:
 			set_mario_move(0,0,mario_parado)
+			free_stack(s0)
 			j PULO_ESQ_ANIM
 		MPEIS_CHECKWALL_PASS: # se nao tiver nenhuma parede, faz pulo
 		
@@ -1095,7 +1094,7 @@ MARIO_PULO_ESQ:
 		la t0,pos_mario
 		lh s0,0(t0) # x do mario
 		lh s1,2(t0) # y do mario
-		addi s1,s1,18
+		addi s1,s1,16
 		# y_mario + 18 < y_barril && y_mario + 18 > y_barril - 15(altura do pulo do mario)
 		la s2,var_barris
 		li s3,6
@@ -1103,9 +1102,9 @@ MARIO_PULO_ESQ:
 			beqz s3,CONT_MARIO_PULO_ESQ_INIT_DESCIDA # verificados todos os barris, encerra
 			lh a0,0(s2) # x do barril
 			lh a1,2(s2) # y do barril
-			slt t0,s1,a1 # y_mario + 18 < y_barril ? 1 : 0 tem q dar 1
+			slt t0,s1,a1 # y_mario + 16 < y_barril ? 1 : 0 tem q dar 1
 			addi a1,a1,-15 # y_barril - 15
-			slt t1,s1,t1 # y_mario + 18 < y_barril - 15 ? 1 : 0 tem q dar 0
+			slt t1,s1,t1 # y_mario + 16 < y_barril - 15 ? 1 : 0 tem q dar 0
 			add t0,t0,t1
 			li t1,1
 			beq t0,t1,MBC_VERIF_X_PESQ # se estiver acima do barril, verifica eixo x 
@@ -1116,8 +1115,8 @@ MARIO_PULO_ESQ:
 			
 		MBC_VERIF_X_PESQ:
 			slt t0,a0,s0 # x_barril < x_mario ? 1 : 0  tem q dar 1
-			addi t1,a0,12
-			slt t1,t1,s0 # x_barril + 14 < x_mario tem q dar 0
+			addi t1,a0,-10
+			slt t1,t1,s0 # x_barril + 10 < x_mario tem q dar 0
 			add t0,t0,t1 # soma as duas condicoes
 			li t1,1
 			beq t0,t1,MBC_VERIF_X_PESQ_GPOINTS # se estiver na posicao, da pontos
@@ -1127,7 +1126,7 @@ MARIO_PULO_ESQ:
 				la t0,pos_mario
 				lh a1,0(t0)
 				lh a2,2(t0)
-				addi a2,a2,15
+				addi a2,a2,-10
 				call GIVE_POINTS
 			j CONTINUE_MBC_VERIF_Y_PESQ # do contrario, verifica os outros barris
 		
@@ -1557,7 +1556,7 @@ MARIO_CHECK_HAMMER:
 	la t0,mario_state
 	lb t1,0(t0)
 	andi t1,t1,0x02
-	bnez t1,FIM_MARIO_CHECK_HAMMER # se estiver andando, nao muda o sprite
+	bnez t1,CONT_MCHT_PRINT_NORMAL0 # se estiver andando, nao muda o sprite, apenas remove martelo
 	# se estiver parado, muda o sprite p/ parado
 	rmv_mario(mario_parado)
 	set_mario_move(0,0,mario_parado)
@@ -1620,12 +1619,13 @@ MARIO_CHECK_HAMMER:
 # tipo (cima ou baixo) pegado da variavel
 MARIO_HAMMER_SPRITE:
 	save_stack(ra)
+	beqz a0,RMV_MARIO_HAMMER_SPRITE
+	
 	la t0,mario_state
 	lb t1,0(t0)
 	andi t1,t1,0x10
 	beqz t1,FIM_MARIO_HAMMER_SPRITE # se nao tiver martelo, nao faz nada
 	
-	beqz a0,RMV_MARIO_HAMMER_SPRITE
 	la t0,mario_hammer_type
 	lb t1,0(t0) # carrega o tipo do martelo (cima ou baixo) p/ as duas funcoes
 	li t0,1
@@ -1635,17 +1635,11 @@ MARIO_HAMMER_SPRITE:
 	j FIM_MARIO_HAMMER_SPRITE
 	
 	RMV_MARIO_HAMMER_SPRITE:
-		#jal GET_MAP_BACKUP
-		#la t0,map_backup_info
-		#sh zero,0(t0)
-		#sh zero,2(t0)
-		#sh zero,4(t0)
-		#sh zero,6(t0)
 		# limpa direita
 		la t0,pos_mario
 		lh t1,0(t0) # x do mario
 		lh t2,2(t0) # y do mario
-		addi a0,t1,16 # x + 16 p/ posicao correta do martelo
+		addi a0,t1,17 # x + 16 p/ posicao correta do martelo
 		addi a1,t2,5 # y + 5
 		la a2,display
 		lw a2,0(a2) # display atual
@@ -1668,7 +1662,7 @@ MARIO_HAMMER_SPRITE:
 		lh t1,0(t0) # x do mario
 		lh t2,2(t0) # y do mario
 		addi a0,t1,4 # x + 4 p/ posicao correta do martelo
-		addi a1,t2,-14 # y -14
+		addi a1,t2,-15 # y -14
 		la a2,display
 		lw a2,0(a2) # display atual
 		la a3,fase_current
@@ -1678,20 +1672,11 @@ MARIO_HAMMER_SPRITE:
 	MARIO_HAMMER_SPRITE_DIR: # faz o martelo caso o mario esteja virado p/ direita
 		beqz t1,MARIO_HAMMER_SPRITE_DIR_BAIXO # se for 0, faz martelo p/ direita baixo
 		# do contrario, faz martelo p/ direita cima
-		#jal GET_MAP_BACKUP
-		#la t0,pos_mario
-		#lh t1,0(t0) # x do mario
-		#lh t2,2(t0) # y do mario
-		#addi a0,t1,4 # x + 4 p/ posicao correta do martelo
-		#addi a1,t2,-14 # y -14
-		#li a2,10
-		#li a3,13
-		#jal SET_MAP_BACKUP
 		# limpa direita
 		la t0,pos_mario
 		lh t1,0(t0) # x do mario
 		lh t2,2(t0) # y do mario
-		addi a0,t1,16 # x + 16 p/ posicao correta do martelo
+		addi a0,t1,17 # x + 16 p/ posicao correta do martelo
 		addi a1,t2,5 # y + 5
 		la a2,display
 		lw a2,0(a2) # display atual
@@ -1709,6 +1694,17 @@ MARIO_HAMMER_SPRITE:
 		la a3,fase_current
 		la a4,martelo_x
 		call CLEAR_OBJPOS
+		# limpa em cima
+		la t0,pos_mario
+		lh t1,0(t0) # x do mario
+		lh t2,2(t0) # y do mario
+		addi a0,t1,4 # x + 4 p/ posicao correta do martelo
+		addi a1,t2,-15 # y -14
+		la a2,display
+		lw a2,0(a2) # display atual
+		la a3,fase_current
+		la a4,martelo_y
+		call CLEAR_OBJPOS
 		# printa em cima
 		la t0,pos_mario
 		lh t1,0(t0) # x do mario
@@ -1721,21 +1717,34 @@ MARIO_HAMMER_SPRITE:
 		call PRINT_OBJ
 		j FIM_MARIO_HAMMER_SPRITE
 		MARIO_HAMMER_SPRITE_DIR_BAIXO:
-			#jal GET_MAP_BACKUP
-			#la t0,pos_mario
-			#lh t1,0(t0) # x do mario
-			#lh t2,2(t0) # y do mario
-			#addi a0,t1,16 # x + 16 p/ posicao correta do martelo
-			#addi a1,t2,5 # y + 5
-			#li a2,15
-			#li a3,10
-			#jal SET_MAP_BACKUP
+			# limpa direita
+			la t0,pos_mario
+			lh t1,0(t0) # x do mario
+			lh t2,2(t0) # y do mario
+			addi a0,t1,17 # x + 16 p/ posicao correta do martelo
+			addi a1,t2,5 # y + 5
+			la a2,display
+			lw a2,0(a2) # display atual
+			la a3,fase_current
+			la a4,martelo_x
+			call CLEAR_OBJPOS
+			# limpa esquerda
+			la t0,pos_mario
+			lh t1,0(t0) # x do mario
+			lh t2,2(t0) # y do mario
+			addi a0,t1,-13 # x - 13 p/ posicao correta do martelo
+			addi a1,t2,5 # y + 5
+			la a2,display
+			lw a2,0(a2) # display atual
+			la a3,fase_current
+			la a4,martelo_x
+			call CLEAR_OBJPOS
 			# limpa em cima
 			la t0,pos_mario
 			lh t1,0(t0) # x do mario
 			lh t2,2(t0) # y do mario
 			addi a0,t1,4 # x + 4 p/ posicao correta do martelo
-			addi a1,t2,-14 # y -14
+			addi a1,t2,-15 # y -14
 			la a2,display
 			lw a2,0(a2) # display atual
 			la a3,fase_current
@@ -1755,18 +1764,11 @@ MARIO_HAMMER_SPRITE:
 		
 	MARIO_HAMMER_SPRITE_ESQ:
 		beqz t1,MARIO_HAMMER_SPRITE_ESQ_BAIXO # se for 0, faz martelo p/ esquerda baixo
-		#la t0,pos_mario
-		#lh t1,0(t0) # x do mario
-		#lh t2,2(t0) # y do mario
-		#addi a0,t1,5 # x + 5 p/ posicao correta do martelo
-		#addi a1,t2,-14 # y - 14
-		#li a2,10
-		#li a3,13
-		#jal SET_MAP_BACKUP# limpa direita
+		# limpa direita
 		la t0,pos_mario
 		lh t1,0(t0) # x do mario
 		lh t2,2(t0) # y do mario
-		addi a0,t1,16 # x + 16 p/ posicao correta do martelo
+		addi a0,t1,17 # x + 16 p/ posicao correta do martelo
 		addi a1,t2,5 # y + 5
 		la a2,display
 		lw a2,0(a2) # display atual
@@ -1784,11 +1786,22 @@ MARIO_HAMMER_SPRITE:
 		la a3,fase_current
 		la a4,martelo_x
 		call CLEAR_OBJPOS
+		# limpa em cima
+		la t0,pos_mario
+		lh t1,0(t0) # x do mario
+		lh t2,2(t0) # y do mario
+		addi a0,t1,4 # x + 4 p/ posicao correta do martelo
+		addi a1,t2,-15 # y -14
+		la a2,display
+		lw a2,0(a2) # display atual
+		la a3,fase_current
+		la a4,martelo_y
+		call CLEAR_OBJPOS
 		# printa martelo pra cima
 		la t0,pos_mario
 		lh t1,0(t0) # x do mario
 		lh t2,2(t0) # y do mario
-		addi a0,t1,5 # x + 5 p/ posicao correta do martelo
+		addi a0,t1,4 # x + 4 p/ posicao correta do martelo
 		addi a1,t2,-14 # y -14
 		la a2,display
 		lw a2,0(a2) # display atual
@@ -1796,21 +1809,34 @@ MARIO_HAMMER_SPRITE:
 		call PRINT_OBJ_MIRROR
 		j FIM_MARIO_HAMMER_SPRITE
 		MARIO_HAMMER_SPRITE_ESQ_BAIXO:
-			#jal GET_MAP_BACKUP
-			#la t0,pos_mario
-			#lh t1,0(t0) # x do mario
-			#lh t2,2(t0) # y do mario
-			#addi a0,t1,-13 # x - 13 p/ posicao correta do martelo
-			#addi a1,t2,5 # y + 5
-			#li a2,15
-			#li a3,10
-			#jal SET_MAP_BACKUP
+			# limpa direita
+			la t0,pos_mario
+			lh t1,0(t0) # x do mario
+			lh t2,2(t0) # y do mario
+			addi a0,t1,17 # x + 16 p/ posicao correta do martelo
+			addi a1,t2,5 # y + 5
+			la a2,display
+			lw a2,0(a2) # display atual
+			la a3,fase_current
+			la a4,martelo_x
+			call CLEAR_OBJPOS
+			# limpa esquerda
+			la t0,pos_mario
+			lh t1,0(t0) # x do mario
+			lh t2,2(t0) # y do mario
+			addi a0,t1,-13 # x - 13 p/ posicao correta do martelo
+			addi a1,t2,5 # y + 5
+			la a2,display
+			lw a2,0(a2) # display atual
+			la a3,fase_current
+			la a4,martelo_x
+			call CLEAR_OBJPOS
 			# limpa em cima
 			la t0,pos_mario
 			lh t1,0(t0) # x do mario
 			lh t2,2(t0) # y do mario
-			addi a0,t1,4 # x + 4 p/ posicao correta do martelo
-			addi a1,t2,-14 # y -14
+			addi a0,t1,5 # x + 4 p/ posicao correta do martelo
+			addi a1,t2,-15 # y -14
 			la a2,display
 			lw a2,0(a2) # display atual
 			la a3,fase_current
@@ -1831,90 +1857,6 @@ MARIO_HAMMER_SPRITE:
 		free_stack(ra)
 		ret
 
-# Salva o backup do mapa 
-# a0 = x
-# a1 = y
-# a2 = largura
-# a3 = altura
-#SET_MAP_BACKUP:
-#	save_stack(ra) # salva ra e salvos na pilha
-#	la t0,map_backup_info
-#	sh a0,0(t0) # salva x
-#	sh a1,2(t0) # salva y
-#	sh a2,4(t0) # salva largura
-#	sh a3,6(t0) # salva altura
-#	save_stack(a2)
-#	# a0 definido na chamada
-#	# a1 definido na chamada
-#	li a2,DISPLAY0
-#	call GET_POSITION # retorna endereco para pegar do display
-#	free_stack(a2)
-#	# a0 = endereco desejado do display
-#	# a2 = largura
-#	# a3 = altura
-#	la a1,map_backup_data # endereco a escrever dados
-#	MAPBACKUP_LOOP0: # imprime nas colunas
-#		beq a2,zero,MAPBACKUP_LOOP1 # se chegar no (N)esimo pixel, pula para linha de baixo
-#		lb t0,0(a0) # carrega em t0 byte correspondente do mapa
-#		sb t0,0(a1) # imprime imagem no bitmap display
-#		addi a2,a2,-1 # decrementa j
-#		addi a0,a0,1 # passa para prox endereco
-#		addi a1,a1,1 # passa para prox endereco
-#		j MAPBACKUP_LOOP0
-#		
-#		MAPBACKUP_LOOP1: 
-#			beq a3,zero,FIM_MAPBACKUP # se chegar no fim das linhas, termina execucao do procedimento
-#			addi a3,a3,-1 # decrementa i
-#			la t0,map_backup_info
-#			lh t0,4(t0) # carrega largura
-#			li t1,320
-#			sub t1,t1,t0 # 320 - largura
-#			add a0,a0,t1 # pula (320 - n) pixel no display
-#			mv a2,t0 # reseta j
-#			j MAPBACKUP_LOOP0
-#			
-#	FIM_MAPBACKUP:
-#		free_stack(ra)
-#		ret
-		
-# Retorna o backup do mapa 
-#GET_MAP_BACKUP:
-#	save_stack(ra) # salva ra e salvos na pilha
-	
-#	la t0,map_backup_info
-#	lh a0,0(t0) # carrega x
-#	lh a1,2(t0) # carrega y
-#	li a2,DISPLAY0
-#	call GET_POSITION # retorna endereco para pegar do display
-#	# a0 = endereco desejado do display
-#	la t0,map_backup_info
-#	lh a2,4(t0) # a2 = largura
-#	lh a3,6(t0) # a3 = altura
-#	la a1,map_backup_data # endereco a escrever dados
-#	GET_MAPBACKUP_LOOP0: # imprime nas colunas
-#		beq a2,zero,GET_MAPBACKUP_LOOP1 # se chegar no (N)esimo pixel, pula para linha de baixo
-#		lb t0,0(a1) # carrega em t0 byte correspondente do mapa
-#		sb t0,0(a0) # imprime imagem no bitmap display
-#		addi a2,a2,-1 # decrementa j
-#		addi a0,a0,1 # passa para prox endereco
-#		addi a1,a1,1 # passa para prox endereco
-#		j GET_MAPBACKUP_LOOP0
-		
-#		GET_MAPBACKUP_LOOP1: 
-#			beq a3,zero,FIM_GET_MAPBACKUP # se chegar no fim das linhas, termina execucao do procedimento
-#			addi a3,a3,-1 # decrementa i
-#			la t0,map_backup_info
-#			lh t0,4(t0) # carrega largura
-#			li t1,320
-#			sub t1,t1,t0 # 320 - largura
-#			add a0,a0,t1 # pula (320 - n) pixel no display
-#			mv a2,t0 # reseta j
-#			j GET_MAPBACKUP_LOOP0
-			
-#	FIM_GET_MAPBACKUP:
-#		free_stack(ra)
-#		ret
-
 # Verifica a colisao do Mario com os barris da fase 1	
 MARIO_BARREL_COLLISION:
 	la t0,fase
@@ -1931,7 +1873,7 @@ MARIO_BARREL_COLLISION:
 	bnez t0,MBC_HAMMER
 	andi t1,t1,0x08 # verifica escada
 	srli t1,t1,1
-	addi s1,s1,15
+	addi s1,s1,13
 	sub s1,s1,t1 # se tiver na escada, considera menos pixels
 	# se y_mario + 18 (tamanho) >= y do barril && y_mario + 18 <= y_barril + 14
 	la s2,var_barris
@@ -1953,8 +1895,15 @@ MARIO_BARREL_COLLISION:
 		
 	MBC_VERIF_X:
 		slt t0,a0,s0 # x_barril < x_mario ? 1 : 0  tem q dar 1
-		addi t1,a0,12
+		addi t1,a0,10
 		slt t1,t1,s0 # x_barril + 14 < x_mario tem q dar 0
+		add t0,t0,t1 # soma as duas condicoes
+		li t1,1
+		beq t0,t1,MARIO_DEATH # se colidir, morre
+		addi t2,s0,12
+		slt t0,a0,t2 # x_barril < x_mario + 16 tem q dar 1
+		addi t1,a0,10
+		slt t1,t1,t2 # x_barril + 14 < x_mario + 16 tem q dar 0
 		add t0,t0,t1 # soma as duas condicoes
 		li t1,1
 		beq t0,t1,MARIO_DEATH # se colidir, morre
@@ -1982,10 +1931,19 @@ MARIO_BARREL_COLLISION:
 			j MBC_VERIF_Y_HAMMER
 		
 		MBC_VERIF_X_HAMMER:
-			addi s0,s0,10 # x + 10 (por causa do martelo)
-			slt t0,a0,s0 # x_barril < x_mario ? 1 : 0  tem q dar 1
+			addi t2,s0,16 # -16 na posicao, por causa do martelo esquerda
+			slt t0,a0,t2 # x_barril < x_mario - 16 ? 1 : 0  tem q dar 1
 			addi t1,a0,12
-			slt t1,t1,s0 # x_barril + 14 < x_mario tem q dar 0
+			slt t1,t1,t2 # x_barril + 14 < x_mario - 16 tem q dar 0
+			add t0,t0,t1 # soma as duas condicoes
+			li t1,1
+			mv a0,s3 # numero do barril (decrescente)
+			mv a1,s2 # endereco do barril
+			beq t0,t1,MARIO_BARREL_DESTROY # se colidir, destroi barril
+			addi t2,s0,-16 # +16 na posicao, por causa do martelo direita
+			slt t0,a0,t2 # x_barril < x_mario - 16 ? 1 : 0  tem q dar 1
+			addi t1,a0,12
+			slt t1,t1,t2 # x_barril + 14 < x_mario + 16 tem q dar 0
 			add t0,t0,t1 # soma as duas condicoes
 			li t1,1
 			mv a0,s3 # numero do barril (decrescente)
