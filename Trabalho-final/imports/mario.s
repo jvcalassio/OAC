@@ -1998,6 +1998,66 @@ MARIO_BARREL_DESTROY:
 	sb zero,0(t0) # zera contador
 	free_stack(ra)
 	j FIM_MARIO_BARREL_COLLISION
+	
+# Colisao do mario com os foguinhos
+MARIO_FIRE_COLLISION:
+	la t0,pos_mario
+	lh s0,0(t0) # x do mario
+	lh s1,2(t0) # y do mario
+	
+	la t0,fogo1
+	lh t1,0(t0) # x do foguinho 1
+	lh t2,2(t0) # y do foguinho 2
+	
+	# mario direita, fogo esquerda
+	addi t1,t1,14 
+	slt t0,s0,t1 # x_mario < (fogo_x + 16) ? tem q dar 1
+	addi t3,s0,14
+	addi t1,t1,-14
+	slt t3,t3,t1 # x_mario + 16 < (fogo_x) ? tem q dar 0
+	add t0,t0,t3 # t0 = se esta no range do X
+	li t3,1
+	beq t0,t3,VERIF_MF1COLLISION_Y
+	j VERIF_MF2COLLISION
+	
+	VERIF_MF1COLLISION_Y:
+		addi t3,s1,14
+		slt t0,t3,t2 # y_mario + 16 < y_foguinho ? tem q dar 0
+		addi t2,t2,14
+		slt t3,t3,t2 # y_mario + 16 < y_foguinho + 16 ? tem q dar 1
+		add t0,t0,t3
+		li t3,1
+		beq t0,t3,MARIO_DEATH # se colidir, morre
+		j FIM_MARIO_FIRE_COLLISION
+		
+	VERIF_MF2COLLISION:
+		la t0,fogo2
+		lh t1,0(t0) # x do foguinho 1
+		lh t2,2(t0) # y do foguinho 2
+	
+		# mario direita, fogo esquerda
+		addi t1,t1,14 
+		slt t0,s0,t1 # x_mario < (fogo_x + 16) ? tem q dar 1
+		addi t3,s0,14
+		addi t1,t1,-14
+		slt t3,t3,t1 # x_mario + 16 < (fogo_x) ? tem q dar 0
+		add t0,t0,t3 # t0 = se esta no range do X
+		li t3,1
+		beq t0,t3,VERIF_MF2COLLISION_Y
+		j FIM_MARIO_FIRE_COLLISION
+	
+		VERIF_MF2COLLISION_Y:
+			addi t3,s1,14
+			slt t0,t3,t2 # y_mario + 16 < y_foguinho ? tem q dar 0
+			addi t2,t2,14
+			slt t3,t3,t2 # y_mario + 16 < y_foguinho + 16 ? tem q dar 1
+			add t0,t0,t3
+			li t3,1
+			beq t0,t3,MARIO_DEATH # se colidir, morre
+			j FIM_MARIO_FIRE_COLLISION
+	
+	FIM_MARIO_FIRE_COLLISION:
+		ret
 
 # faz a morte do mario
 MARIO_DEATH:

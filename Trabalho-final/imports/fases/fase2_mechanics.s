@@ -211,3 +211,38 @@ F2_REMOVE_ELEVATOR:
 		free_stack(s0)
 		free_stack(ra)
 		ret
+		
+# Manuseia os foguinhos da fase 2
+FASE2_START_FOGUINHOS:
+	save_stack(ra)
+	la t0,fogo1
+	li a0,110 # x fogo 1
+	li a1,160 # y fogo 1
+	sh a0,0(t0)
+	sh a1,2(t0) # salva variavel
+	la a2,display
+	lw a2,0(a2) # display atual
+	la a3,foguinho_p1
+	call PRINT_OBJ
+	la t0,fogo1
+	li t1,64 # sobe 64
+	sh t1,6(t0) # salva contador vertical inicial
+	
+	la t0,fogo2
+	li a0,245 # x fogo 1
+	li a1,104 # y fogo 1
+	sh a0,0(t0)
+	sh a1,2(t0) # salva variavel
+	la a2,display
+	lw a2,0(a2) # display atual
+	la a3,foguinho_p1
+	call PRINT_OBJ
+	la t0,fogo2
+	li t1,-8 # anda 8 pra direita
+	sh t1,4(t0)
+	li t1,40 # sobe 40
+	sh t1,6(t0) # salva contador vertical inicial
+	
+	FIM_FASE2_FOGUINHOS:
+		free_stack(ra)
+		ret

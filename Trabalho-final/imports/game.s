@@ -32,6 +32,13 @@ ambient_sound_counter: .byte 0 # contador de qual o ultimo som da fase
 ambient_sound_timer: .word 0 # tempo de reproducao
 sounds: .byte 0 # sons ligados
 given_extra_life: .byte 0 # flag de vida extra concedida ou nao
+
+# temporario, mover pro environment
+# foguinhos
+.include "../sprites/bin/foguinho_p1.s"
+.include "../sprites/bin/foguinho_p2.s"
+fogo1: .half 0,0,0,0,0,0 # x, y, contador horizontal, contador vertical, sprite (0 ou 1), passo do movimento
+fogo2: .half 0,0,0,0,0,0 # x, y, contador horizontal, contador vertical, sprite (0 ou 1), passo do movimento
 .text
 	M_SetEcall(exceptionHandling)
 # Inicia o jogo (iniciando as variaveis) 
@@ -70,15 +77,15 @@ INIT_GAME:
 	sw zero,0(t0)
 	
 	# Como o jogo comeca na fase 1, nao precisa passar por "init fase1", e consequentemente, carregar
-	#jal SET_FASE2  
-	#call INIT_FASE2_ELEVATORS
+	jal SET_FASE2  
+	call INIT_FASE2_ELEVATORS
 	#call F3_ADD_BLOCKS
-	jal SET_FASE4
 	jal PRINT_FASE
 	call PRINT_TEXT_INITIAL
 	call INIT_MARIO
 	call INIT_DK_DANCA
 	call INIT_LADY
+	call INIT_FIRES
 	call INIT_BONUS
 	call INIT_ITEMS
 	call INIT_SOUND
@@ -94,6 +101,7 @@ INIT_FASE1:
 	call INIT_MARIO
 	call INIT_DK_DANCA
 	call INIT_LADY
+	call INIT_FIRES
 	call INIT_BONUS
 	call INIT_ITEMS
 	call INIT_SOUND
@@ -109,6 +117,7 @@ INIT_FASE2:
 	call INIT_MARIO
 	call INIT_DK_DANCA
 	call INIT_LADY
+	call INIT_FIRES
 	call INIT_BONUS
 	call INIT_ITEMS
 	call INIT_SOUND
@@ -124,6 +133,7 @@ INIT_FASE3:
 	call INIT_MARIO
 	call INIT_DK_DANCA
 	call INIT_LADY
+	call INIT_FIRES
 	call INIT_BONUS
 	call INIT_ITEMS
 	call INIT_SOUND
@@ -138,6 +148,7 @@ INIT_FASE4:
 	call INIT_MARIO
 	call INIT_DK_DANCA
 	call INIT_LADY
+	call INIT_FIRES
 	call INIT_BONUS
 	call INIT_ITEMS
 	call INIT_SOUND
@@ -362,6 +373,10 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	# Verifica se esta na posicao de vitoria
 	jal CHECK_VICTORY
 	
+	# Verifica se precisa mover os foguinhos
+	call MOVE_FOGUINHO1
+	call MOVE_FOGUINHO2
+	
 	jal CONTINUE_MOVEMENT
 	
 	la t0,mario_state
@@ -420,6 +435,7 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		call LADY_LOOP
 		call F3_CHECK_BLOCK
 		call MARIO_BARREL_COLLISION
+		call MARIO_FIRE_COLLISION
 		
 		###########################################
 		# Continuacao mudar display
@@ -445,6 +461,47 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	MPUP: tail MARIO_PULO_UP
 	MPDIR: tail MARIO_PULO_DIR
 	MPESQ: tail MARIO_PULO_ESQ
+	
+# Inicializa os fogos
+INIT_FIRES:
+	save_stack(ra)
+	# reseta variaveis
+	la t0,fogo1
+	sh zero,0(t0)
+	sh zero,2(t0)
+	sh zero,4(t0)
+	sh zero,6(t0)
+	sh zero,8(t0)
+	sh zero,10(t0)
+	la t0,fogo2
+	sh zero,0(t0)
+	sh zero,2(t0)
+	sh zero,4(t0)
+	sh zero,6(t0)
+	sh zero,8(t0)
+	sh zero,10(t0)
+	
+	la t0,fase
+	lb t1,0(t0)
+	li t0,1
+	beq t0,t1,INIT_FIRES_F1
+	li t0,2
+	beq t0,t1,INIT_FIRES_F2
+	li t0,4
+	beq t0,t1,INIT_FIRES_F4
+	j FIM_INIT_FIRES
+	
+	INIT_FIRES_F1:
+		j FIM_INIT_FIRES
+	INIT_FIRES_F2:
+		call FASE2_START_FOGUINHOS
+		j FIM_INIT_FIRES
+	INIT_FIRES_F4:
+		call FASE4_START_FOGUINHOS
+	
+	FIM_INIT_FIRES:
+		free_stack(ra)
+		ret
 
 # Reproduz som ambiente da fase
 AMBIENT_SOUND:
