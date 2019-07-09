@@ -1,9 +1,9 @@
 #####################################################
 # Responsavel por gerenciar as fases e loop de jogo #
 #####################################################
-.include "macros.s"    
+.include "macros.s"   
 .include "macros2.s" 
- 
+
 .data
 # Sons
 .include "../sounds/som.s"

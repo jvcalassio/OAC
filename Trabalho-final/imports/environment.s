@@ -835,8 +835,6 @@ PRINT_TEXT:
 	lb t1,0(t0) # carrega fase atual
 	li t0,3
 	beq t0,t1,PRINT_TEXT_BONUS3 # imprime bonus amarelo (fase3)
-	li t0,4
-	beq t0,t1,PRINT_TEXT_BONUS3 # imprime bonus amarelo (fase4)
 	li a3,0x00f9
 	j FIM_PRINT_TEXT
 	PRINT_TEXT_BONUS3:
