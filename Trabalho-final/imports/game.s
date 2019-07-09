@@ -70,8 +70,8 @@ INIT_GAME:
 	sw zero,0(t0)
 	
 	# Como o jogo comeca na fase 1, nao precisa passar por "init fase1", e consequentemente, carregar
-	#jal SET_FASE3
-	#call INIT_FASE2_ELEVATORS
+	jal SET_FASE2  
+	call INIT_FASE2_ELEVATORS
 	#call F3_ADD_BLOCKS
 	jal PRINT_FASE
 	call PRINT_TEXT_INITIAL
@@ -546,7 +546,7 @@ AMBIENT_SOUND:
 		sw a0,0(t0)
 		j FIM_AMBIENT_SOUND
 		
-	DELAY_SOUNDF3: # faz o atraso de 300ms da primeira nota do som da fase1
+	DELAY_SOUNDF3: # faz o atraso de 300ms da primeira nota do som da fase3
 		la t0,ambient_sound_timer
 		gettime()
 		addi a0,a0,200

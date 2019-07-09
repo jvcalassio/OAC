@@ -383,9 +383,9 @@ DK_DANCA_LOOP:
 	li	t0, 1
 	la	t1, fase
 	lb	t1, 0(t1)
-	bne	t0, t1, NAO_BARRIS	#se a fase não for a primeira, pula-se os frames responsáveis pelo spawn do barril
+	bne	t0, t1, NAO_BARRIS	#se a fase nï¿½o for a primeira, pula-se os frames responsï¿½veis pelo spawn do barril
 	
-	#checa se 6 barris já foram lancados
+	#checa se 6 barris jï¿½ foram lancados
 	la	t0, var_barris
 	li	t1,0	#t1 = i
 	loop_verifica_barris:
@@ -394,7 +394,7 @@ DK_DANCA_LOOP:
 	
 	lh	t2, 0(t0)	#x[i]
 	lh	t3, 2(t0)	#y[i]
-	add	t2, t2, t3	#se a soma de x e y é zero, então um novo barril pode ser lancado
+	add	t2, t2, t3	#se a soma de x e y ï¿½ zero, entï¿½o um novo barril pode ser lancado
 	beqz	t2, exit_verifica_barris
 	
 	addi	t0, t0, 4	#end++
@@ -932,9 +932,14 @@ INIT_BONUS:
 	addi t2,t1,-1 # -1 pra ajustar o bonus recebido por lvl
 	li t0,1000
 	mul t2,t2,t0 # x 1000
-	j CONT_STARTING_BONUS
+	j CONT0_STARTING_BONUS
 	STARTING_BONUS_8K:
 		li t2,3000
+	CONT0_STARTING_BONUS: # verifica se sons estao ligados
+		la t0,sounds
+		lb t1,0(t0)
+		beqz t1,CONT_STARTING_BONUS # se sons desligados, nao precisa adicionar 100
+		addi t2,t2,100 # se sons ligados, adiciona +100 p/ nao iniciar decrementado
 	CONT_STARTING_BONUS:
 		la t0,bonus
 		li t1,STARTING_BONUS
@@ -987,6 +992,29 @@ INIT_ITEMS:
 		j FIM_INIT_ITEMS
 		
 	INIT_ITEMS_F2:
+		# printa guarda chuva
+		li a0,45
+		li a1,95
+		la a2,display
+		lw a2,0(a2)
+		la a3,guardachuva
+		call PRINT_OBJ
+		# printa bolsa
+		li a0,265
+		li a1,68
+		la a2,display
+		lw a2,0(a2)
+		la a3,bolsa
+		call PRINT_OBJ
+		la t0,fase2_items
+		sb zero,0(t0)
+		la t0,points_timer
+		sw zero,0(t0)
+		la t0,points_pos
+		sh zero,0(t0)
+		sh zero,2(t0)
+		sh zero,4(t0)
+		sh zero,6(t0)
 		j FIM_INIT_ITEMS
 		
 	INIT_ITEMS_F3:
@@ -1084,7 +1112,33 @@ CHECK_ITEMS:
 			li a1,1 # fase 1
 			j REMOVE_ITEM
 	CHECK_ITEMS_F2:
+		la t0,pos_mario
+		lh t1,2(t0) # y do mario
+		li t0,105
+		bge t1,t0,FIM_CHECK_ITEMS # nenhum item abaixo desse nivel
+		li t0,80
+		bge t1,t0,CHECK_ITEMS_F2_ITEM1 # verifica se esta no X do item 1 (guarda chuva)
+		li t0,78
+		bge t1,t0,FIM_CHECK_ITEMS # nenhum item entre 91 e 78
+		li t0,50
+		bge t1,t0,CHECK_ITEMS_F2_ITEM2 # verifica se esta no X do item 2 (bolsa)
 		j FIM_CHECK_ITEMS
+		CHECK_ITEMS_F2_ITEM1:
+			la t0,pos_mario
+			lh t1,0(t0) # x do mario
+			li t0,59
+			bgt t1,t0,FIM_CHECK_ITEMS # se x > 61, nao esta no x do item
+			li a0,0 # item 1
+			li a1,2 # fase 2
+			j REMOVE_ITEM
+		CHECK_ITEMS_F2_ITEM2:
+			la t0,pos_mario
+			lh t1,0(t0) # x do mario
+			li t0,255
+			blt t1,t0,FIM_CHECK_ITEMS # se x < 266, nao esta no x do item
+			li a0,1 # item 2
+			li a1,2 # fase 2
+			j REMOVE_ITEM
 		
 	CHECK_ITEMS_F3:
 		la t0,pos_mario
@@ -1197,6 +1251,8 @@ CHECK_ITEMS:
 REMOVE_ITEM:
 	li t0,1
 	beq a1,t0,RMV_ITEM_F1
+	li t0,2
+	beq a1,t0,RMV_ITEM_F2
 	li t0,3
 	beq a1,t0,RMV_ITEM_F3
 	j FIM_REMOVE_ITEM
@@ -1242,6 +1298,57 @@ REMOVE_ITEM:
 			ori t1,t1,0x02 # adiciona bit do martelo 4 andar
 			sb t1,0(t0)
 			call MARIO_SET_HAMMER
+			j FIM_REMOVE_ITEM
+			
+	RMV_ITEM_F2: # verifica e remove itens da fase 2
+		li t1,1
+		sll t0,t1,a0 # procura bit do item desejado
+		la t1,fase2_items
+		lb t1,0(t1)
+		and t1,t1,t0 # pega bit do item desejado
+		bnez t1,FIM_REMOVE_ITEM # se item ja foi coletado, retorna
+		
+		# da os pontos
+		mv s0,a0
+		li a0,800
+		la t0,pos_mario
+		lh a1,0(t0) # x do mario
+		lh a2,2(t0) # y do mario
+		addi a2,a2,-10 # acima do mario
+		call GIVE_POINTS
+		mv a0,s0
+		
+		beqz a0,RMV_F2_ITEM1 # remove guarda chuva
+		li t0,1
+		beq a0,t0,RMV_F2_ITEM2 # remove bolsa
+		j FIM_REMOVE_ITEM
+		
+		RMV_F2_ITEM1:
+			li a0,45
+			li a1,95
+			la a2,display
+			lw a2,0(a2)
+			la a3,fase_current
+			la a4,guardachuva
+			call CLEAR_OBJPOS # remove sprite
+			la t0,fase2_items
+			lb t1,0(t0)
+			ori t1,t1,0x01 # adiciona bit do guarda chuva coletado
+			sb t1,0(t0)
+			j FIM_REMOVE_ITEM
+		
+		RMV_F2_ITEM2:
+			li a0,265
+			li a1,68
+			la a2,display
+			lw a2,0(a2)
+			la a3,fase_current
+			la a4,bolsa
+			call CLEAR_OBJPOS # remove sprite
+			la t0,fase2_items
+			lb t1,0(t0)
+			ori t1,t1,0x02 # adiciona bit da bolsa
+			sb t1,0(t0)
 			j FIM_REMOVE_ITEM
 	
 	RMV_ITEM_F3: # verifica e remove itens da fase 3

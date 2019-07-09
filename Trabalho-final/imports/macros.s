@@ -53,16 +53,14 @@
 # Constantes de jogo
 .eqv START_MARIO_X_FASE1 84
 .eqv START_MARIO_Y_FASE1 199
-#.eqv START_MARIO_X_FASE1 222 # retirar
-#.eqv START_MARIO_Y_FASE1 46 # retirar
-.eqv START_MARIO_X_FASE2 52
-.eqv START_MARIO_Y_FASE2 183
+.eqv START_MARIO_X_FASE2 52#235#52
+.eqv START_MARIO_Y_FASE2 183#71#183
 .eqv START_MARIO_X_FASE3 92
 .eqv START_MARIO_Y_FASE3 199
 .eqv START_MARIO_X_FASE4 38
 .eqv START_MARIO_Y_FASE4 200
 
-.eqv STARTING_BONUS 5100 # 100 adicionais por causa do tempo dos sons do comeco
+.eqv STARTING_BONUS 5000 # bonus inicial
 .eqv POINTS_TEXT_TIME 200 # tempo de exibicao do texto de pontos adquiridos
 .eqv HAMMER_TIME 16000 # tempo que o mario fica com o martelo (16s)
 

@@ -170,7 +170,7 @@ MOVE_MARIO_DIREITA:
 	li a0,1
 	call MARIO_COLLISIONS # verifica permissao do movimento
 	beqz a0,FIM_MVMD_RET # se nao for permitido, so retorna
-	
+
 	la t0,movement_counter
 	lw t1,0(t0) # contador de movimento
 	
@@ -311,7 +311,6 @@ MOVE_MARIO_DIREITA:
 		
 		j FIM_MVMD_PAROU
 	
-	# com isso, o mario se movimentou um total de 4px
 	FIM_MVMD_ANDANDO:
 		la t0,mario_state
 		lb t1,0(t0)
@@ -337,7 +336,7 @@ MOVE_MARIO_ESQUERDA:
 	li a0,2
 	call MARIO_COLLISIONS # verifica permissao do movimento
 	beq a0,zero,FIM_MVME_RET # se nao for permitido, retorna
-	
+
 	la t0,movement_counter
 	lw t1,0(t0) # contador de movimento
 	
@@ -477,7 +476,6 @@ MOVE_MARIO_ESQUERDA:
 		
 		j FIM_MVME_PAROU
 	
-	# com isso, o mario se movimentou um total de -4px
 	FIM_MVME_ANDANDO:
 		la t0,mario_state
 		lb t1,0(t0)
@@ -940,7 +938,7 @@ MARIO_PULO_DIR:
 		addi t1,t1,1 # desce 1px no pulopx
 		sb t1,0(t0)
 		
-		li t0,18
+		li t0,22
 		bge t1,t0,MARIO_PULO_DIR_RESET_DEATH # se cair mais q 1,5 x altura do mario, morre
 		
 		la t0,pos_mario
@@ -1178,7 +1176,7 @@ MARIO_PULO_ESQ:
 		addi t1,t1,1 # desce 1px no pulopx
 		sb t1,0(t0)
 		
-		li t0,18
+		li t0,22
 		bge t1,t0,MARIO_PULO_ESQ_RESET_DEATH # se cair mais q 1,5 x altura do mario, morre
 		
 		la t0,pos_mario
@@ -1476,15 +1474,13 @@ MARIO_GRAVITY:
 	
 	PRINT_FALL_MARIO_GRAVITY:
 		set_mario_move(0,4,mario_andando_p2)
-		call PRINT_OBJ # printa mario posicao abaixo
-		#sleep(20) # questionavel, avaliar desempenho
-		j FIM_MARIO_GRAVITY
+		j MARIO_GRAVITY_PRINT
 		
 	MARIO_GRAVITY_ELEVATOR:
 		la t0,pos_mario
 		lh s0,0(t0)
 		lh a1,2(t0)
-		addi a1,a1,17
+		addi a1,a1,18
 		li t2,16
 		addi s0,s0,1
 		LOOP_SEARCH_GROUND_MGE:
@@ -1496,7 +1492,7 @@ MARIO_GRAVITY:
 			lb t0,0(a0) # carrega byte do mapa nessa posicao
 			li t1,0x46
 			beq t0,t1,MARIO_GRAVITY_ELEVATOR_RISE
-			beqz t0,MARIO_GRAVITY_ELEVATOR_FALL
+			#beqz t0,MARIO_GRAVITY_ELEVATOR_FALL
 			addi t2,t2,-1
 			addi s0,s0,1
 			j LOOP_SEARCH_GROUND_MGE
@@ -1504,14 +1500,23 @@ MARIO_GRAVITY:
 		MARIO_GRAVITY_ELEVATOR_RISE:
 			rmv_mario(mario_parado)
 			set_mario_move(0,-1,mario_parado)
-			call PRINT_OBJ
-			j FIM_MARIO_GRAVITY
+			j MARIO_GRAVITY_PRINT
 		
 		MARIO_GRAVITY_ELEVATOR_FALL:
 			rmv_mario(mario_parado)
 			set_mario_move(0,2,mario_parado)
-			call PRINT_OBJ
+			j MARIO_GRAVITY_PRINT
 			
+	MARIO_GRAVITY_PRINT:
+		la t0,mario_state
+		lb t1,0(t0)
+		andi t1,t1,0x04 # verifica direcao
+		beqz t1,MARIO_GRAVITY_PRINT_RIGHT
+		call PRINT_OBJ_MIRROR
+		j FIM_MARIO_GRAVITY
+		MARIO_GRAVITY_PRINT_RIGHT:
+		call PRINT_OBJ
+		
 	FIM_MARIO_GRAVITY:
 		free_stack(s0)
 		free_stack(ra)
