@@ -16,7 +16,7 @@ var_dk:		.word 0
 var_lady:	.word 0
 var_barris:	.half 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 #posicoes de 6 barris, armazenados em pares x, y
 var_barris1:	.byte 0, 0, 0, 0, 0, 0	#armazena a direcao que os barris devem ir  (0 direita, 1 esquerda)
-var_barris2: 	.byte 0, 0, 0, 0, 0, 0 #armazena como o barril sera printado (0,1,2,3, 4) 4 formas de printar
+var_barris2: 	.byte 0, 0, 0, 0, 0, 0 #armazena como o barril sera printado (0,1,2,3, 4, 5) 4 e 5 são estados do barril na escada
 
 # strings de jogo
 victory_text: .string "PARABENS VC VENCEU"
@@ -108,12 +108,31 @@ MOV_BARRIS:
 		la	a2, display
 		lw	a2, 0(a2)
 		la	a3, fase_current
+		
+		#decidindo qual tipo de barril devemos apagar do mapa
+		la	a4, barril_lateral_p1
+		lb	t5, 0(t5)
+		li	t1, 4
+		beq	t5, t1, carregar_barril_lateral
+		li	t1, 5
+		beq	t5, t1, carregar_barril_lateral
 		la	a4, barril
+		
+		carregar_barril_lateral:
 		save_stack(t0)
 		save_stack(t4)
 		call	CLEAR_OBJPOS
 		free_stack(t4)
 		free_stack(t0)
+		
+		#se o barril estiver na escada, pular para a parte de print logo
+		free_stack(t5)
+		save_stack(t5)
+		lb	t5, 0(t5)
+		li	t1, 4
+		beq	t5, t1, continueMOV_BARRISfim
+		li	t1, 5
+		beq	t5, t1, continueMOV_BARRISfim
 		
 		#seta a direcao que o barril deve ir
 		lh	t1, 0(t0)
@@ -126,24 +145,89 @@ MOV_BARRIS:
 		#verifica x para saber se o barril deve desaparecer
 		li	t2, 62
 		ble	t1, t2, zerar_barril
-		
 		continuezerar_barril:
-		#checando se o barril est? em uma escada
-		lh	t1, 0(t0)
-		li	t2, 136
-		beq	t1, t2, escada0
-		li	t2, 137
-		beq	t1, t2, escada0
-		continue_escada0:
-		lh	t1, 0(t0)
-		li	t2, 232
-		beq	t1, t2, escada1
-		li	t2, 233
-		beq	t1,t2, escada1
-		continue_escada1:
 		
+		#checando se o barril esta em uma escada
+		lh	t1, 0(t0)
+		li	t2, 133
+		beq	t1, t2, escada0
+		li	t2, 134
+		beq	t1, t2, escada0
+		
+		lh	t1, 0(t0)
+		li	t2,228
+		beq	t1, t2, escada1
+		li	t2, 229
+		beq	t1,t2, escada1
+		
+		lh	t1, 0(t0)
+		li	t2, 211
+		beq	t1, t2, escada2
+		li	t2, 212
+		beq	t1, t2, escada2
+	
+		lh	t1, 0(t0)
+		li	t2, 115
+		beq	t1, t2, escada3
+		li	t2, 116
+		beq	t1, t2, escada3	#comentado para teste
+	
+		lh	t1, 0(t0)
+		li	t2, 76
+		beq	t1, t2, escada4
+		li	t2, 77
+		beq	t1, t2, escada4
+		
+		lh	t1, 0(t0)
+		li	t2, 108
+		beq	t1, t2, escada5
+		li	t2, 109
+		beq	t1, t2, escada5
+		
+		lh	t1, 0(t0)
+		li	t2, 156
+		beq	t1, t2, escada6
+		li	t2, 157
+		beq	t1, t2, escada6
+		
+		lh	t1, 0(t0)
+		li	t2, 228
+		beq	t1, t2, escada7
+		li	t2, 229
+		beq	t1, t2, escada7
+		
+		lh	t1, 0(t0)
+		li	t2, 140
+		beq	t1, t2, escada8
+		li	t2, 141
+		beq	t1, t2, escada8
+		
+		lh	t1, 0(t0)
+		li	t2, 76
+		beq	t1, t2, escada9
+		li	t2, 77
+		beq	t1, t2, escada9
+		
+		lh	t1, 0(t0)
+		li	t2, 124
+		beq	t1, t2, escada10
+		li	t2, 125
+		beq	t1, t2, escada10
+		
+		lh	t1, 0(t0)
+		li	t2, 228
+		beq	t1,t2,escada11
+		li	t2, 229
+		beq	t1, t2, escada11
+		
+		continue_escada:
 		lb	t4, 0(t4)
 		bnez	t4, esquerda_barris
+		free_stack(t5)
+		save_stack(t5)
+		lb	t5, 0(t5)
+		li	t1, 4
+		beq	t5, t1, continueMOV_BARRISfim
 		
 		#movimento para a direita
 		lh	a0, 0(t0)
@@ -225,6 +309,8 @@ MOV_BARRIS:
 		beq	t2, t1, print_barril2
 		li	t1, 3
 		beq	t2, t1, print_barril3
+		li	t1, 4
+		beq	t2, t1, print_barril4
 		
 		sb	zero, 0(t5)
 		j	back_to_print
@@ -254,24 +340,155 @@ MOV_BARRIS:
 		call	PRINT_OBJ
 		j	continueMOV_BARRIS
 		print_barril3:
+		lh	a0, 0(t0)
+		lh	a1, 2(t0)
+		la	a2, display
+		lw	a2, 0(a2)
 		addi	a0, a0, -1	#correcao de posicao no print
 		la	a3, barril_y
-		addi	t2, t2, 1
-		sb	t2, 0(t5)
+		#addi	t2, t2, 1
+		sb	zero, 0(t5)
 		call	PRINT_OBJ_MIRROR
 		j	continueMOV_BARRIS
+		
+		print_barril4:
+		#printando o barril dois pixels abaixo, caso não hajam tiles rosa
+		lh	a0, 0(t0)
+		lh	a1, 2(t0)
+		la	a2, display
+		lw	a2, 0(a2)
+		la	a3, barril_lateral_p1
+		addi	a1, a1, 2
+		sh	a1, 2(t0)
+		save_stack(t0)
+		save_stack(t5)
+		call	PRINT_OBJ
+		free_stack(t5)
+		free_stack(t0)
+		
+		lh	a0, 0(t0)
+		lh	a1, 2(t0)
+		addi	a1, a1, 12
+		la	a2, display
+		lw	a2, 0(a2)
+		save_stack(t5)
+		save_stack(t0)
+		call	GET_POSITION
+		free_stack(t0)
+		free_stack(t5)		
+		li	t1, 0x46
+		lb	a0, 0(a0)
+		beq	a0, t1, set_barril_fora_escada
+		
+		lh	a0, 0(t0)
+		lh	a1, 2(t0)
+		addi	a1, a1, 13
+		la	a2, display
+		lw	a2, 0(a2)
+		save_stack(t5)
+		save_stack(t0)
+		call	GET_POSITION
+		free_stack(t0)
+		free_stack(t5)		
+		li	t1, 0x46
+		lb	a0, 0(a0)
+		beq	a0, t1, set_barril_fora_escada
+		
+		continueset_barril_fora_escada:
+		j	continueMOV_BARRIS
+		
+		set_barril_fora_escada:
+			lh	a0, 0(t0)
+			lh	a1, 2(t0)
+			la	a2, display
+			lw	a2,0(a2)
+			la	a3, fase_current
+			la	a4, barril_lateral_p1
+			save_stack(t5)
+			call	CLEAR_OBJPOS
+			free_stack(t5)
+			sb	zero, 0(t5)
+			j	continueset_barril_fora_escada
 		
 		escada0:
 			lh	t1, 2(t0)
 			li	t2, 52
-			beq	t1, t2, escada0pt2
-			j	continue_escada0
-			escada0pt2:
-		#		li	a7, 10
-		#		ecall
-				j	continue_escada0
+			beq	t1, t2, escadapt2
+			j	continue_escada
 		escada1:
-			j	continue_escada1
+			lh	t1, 2(t0)
+			li	t2, 55
+			beq	t1, t2, escadapt2
+			j	continue_escada
+		escada2:
+			lh	t1, 2(t0)
+			li	t2, 80
+			beq	t1, t2, escadapt2
+			j	continue_escada
+		escada3:
+			lh	t1, 2(t0)
+			li	t2, 84
+			beq	t1, t2, escadapt2
+			j	continue_escada
+		escada4:
+			lh	t1, 2(t0)
+			li	t2, 85
+			beq	t1,t2, escadapt2
+			j	continue_escada
+		escada5:
+			lh	t1, 2(t0)
+			li	t2, 110
+			beq	t1,t2, escadapt2
+			j	continue_escada
+		escada6:
+			lh	t1, 2(t0)
+			li	t2, 112
+			beq	t1,t2, escadapt2
+			j	continue_escada
+		escada7:
+			lh	t1, 2(t0)
+			li	t2, 115
+			beq	t1, t2, escadapt2
+			j	continue_escada
+		escada8:
+			lh	t1, 2(t0)
+			li	t2, 143
+			beq	t1, t2, escadapt2
+			j	continue_escada
+		escada9:
+			lh	t1, 2(t0)
+			li	t2, 145
+			beq	t1, t2, escadapt2
+			j	continue_escada
+		escada10:
+			lh	t1, 2(t0)
+			li	t2, 171
+			beq	t1, t2, escadapt2
+			j	continue_escada	
+		escada11:
+			lh	t1, 2(t0)
+			li	t2, 175
+			beq	t1, t2, escadapt2
+			j	continue_escada
+			
+			escadapt2:
+				li	a7, 41
+				ecall	#random int
+				li	t1, 3
+				rem	a0, a0, t1				
+				bnez	a0, continue_escada
+				
+				free_stack(t5)
+				save_stack(t5)
+				lb	t1, 0(t4)
+				seqz	t1, t1	#inverte a direcao que o barril vai
+				sb	t1, 0(t4)
+				li	t1, 4
+				sb	t1, 0(t5)
+				lh	t1, 2(t0)
+				addi	t1, t1, 8
+				sh	t1, 2(t0)
+				j	continueMOV_BARRISfim
 			
 		
 		#verifica y pra saber se o barril deve desaparecer
@@ -835,6 +1052,8 @@ PRINT_TEXT:
 	lb t1,0(t0) # carrega fase atual
 	li t0,3
 	beq t0,t1,PRINT_TEXT_BONUS3 # imprime bonus amarelo (fase3)
+	li t0,4
+	beq t0,t1,PRINT_TEXT_BONUS3 # imprime bonus amarelo (fase4)
 	li a3,0x00f9
 	j FIM_PRINT_TEXT
 	PRINT_TEXT_BONUS3:
