@@ -70,9 +70,10 @@ INIT_GAME:
 	sw zero,0(t0)
 	
 	# Como o jogo comeca na fase 1, nao precisa passar por "init fase1", e consequentemente, carregar
-	jal SET_FASE2  
-	call INIT_FASE2_ELEVATORS
+	#jal SET_FASE2  
+	#call INIT_FASE2_ELEVATORS
 	#call F3_ADD_BLOCKS
+	jal SET_FASE4
 	jal PRINT_FASE
 	call PRINT_TEXT_INITIAL
 	call INIT_MARIO
@@ -712,5 +713,6 @@ GOTO_MARIO_DEATH:
 .include "environment.s"
 .include "fases/fase2_mechanics.s"
 .include "fases/fase3_mechanics.s"
+.include "fases/fase4_mechanics.s"
 .include "map_includes.s"
 .include "SYSTEMv14.s"

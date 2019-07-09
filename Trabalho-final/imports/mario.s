@@ -579,6 +579,7 @@ MOVE_MARIO_CIMA:
 
 # Faz movimento do Mario pra baixo, na escada
 MOVE_MARIO_BAIXO:
+	call F4_TELEPORT # verifica teleporte
 	li a0,6
 	call MARIO_COLLISIONS # verifica se pode descer
 	beqz a0,FIM_MOVE_MARIO_BAIXO # se for 0 (nao pode descer), soh sai
