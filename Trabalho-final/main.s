@@ -1,4 +1,5 @@
 .include "imports/macros2.s"  
+.include "imports/macros.s"
 
 .data
 str_start: .string "INICIAR"
@@ -6,6 +7,9 @@ str_sounds: .string "SONS:"
 str_sound_on: .string "ON "
 str_sound_off: .string "OFF"
 menu_selector: .byte 0
+
+donkey_title_map: .word 0x1cf4a5e9, 0x1296a909, 0x1295b1cf, 0x1294a906, 0x1cf4a5e6 # primeira palavra
+kong_title_map: .word 0x4bd2f, 0x525a8, 0x6256b, 0x52529, 0x4bd2f # segunda palavra
 .text
 	M_SetEcall(exceptionHandling)
 START_MENU:
@@ -17,6 +21,8 @@ START_MENU:
 	li a1,0
 	li a7,148
 	ecall
+	
+	jal DRAW_DK_TITLE
 	
 	# texto de start
 	la a0,str_start
@@ -148,6 +154,87 @@ CHECK_SOUND_TXT:
 		li a4,0
 		li a7,104
 		ecall
+		ret
+		
+# Desenha o titulo "Donkey Kong"
+DRAW_DK_TITLE:
+	save_stack(ra)
+	# desenha donkey
+	la s1,donkey_title_map # linha inicial
+	li s2,5 # contador de linhas
+	li s5,30 # y a ser impresso
+	LOOP_DRAW_DONKEY_LINE:
+		beqz s2,DRAW_KONG
+		li s3,29 # 29 colunas no total
+		li s4,0 # contador de colunas
+		li s6,40 # x a ser impresso
+		LOOP_DRAW_DONKEY_COL:
+			li s0,0x10000000 # starting
+			beq s4,s3,FIM_LOOP_DRAW_DONKEY_COL
+			lw t0,0(s1) # carrega word da linha
+			srl s0,s0,s4 # shifta j vezes
+			and t1,t0,s0 # verifica se precisa pintar ou nao
+			beqz t1,CONT_LDRAW_DONKEY_COL
+				mv a0,s6
+				mv a1,s5
+				li a2,DISPLAY0
+				la a3,fase3_blue_block
+				call PRINT_OBJ
+		CONT_LDRAW_DONKEY_COL:
+			addi s6,s6,8 # pula o tamanho do bloco
+			addi s4,s4,1
+			j LOOP_DRAW_DONKEY_COL
+				
+		FIM_LOOP_DRAW_DONKEY_COL:
+			addi s5,s5,8 # pula linha
+			addi s2,s2,-1 # decrementa i
+			addi s1,s1,4 # pula pra prox word
+			j LOOP_DRAW_DONKEY_LINE
+			
+	# desenha kong
+	DRAW_KONG:
+		la s1,kong_title_map # linha inicial
+		li s2,5 # contador de linhas
+		li s5,78 # y a ser impresso
+		LOOP_DRAW_KONG_LINE:
+			beqz s2,FIM_DRAW_DK_TITLE
+			li s3,19 # 19 colunas no total
+			li s4,0 # contador de colunas
+			li s6,80 # x a ser impresso
+			LOOP_DRAW_KONG_COL:
+				li s0,0x40000 # starting
+				beq s4,s3,FIM_LOOP_DRAW_KONG_COL
+				lw t0,0(s1) # carrega word da linha
+				srl s0,s0,s4 # shifta j vezes
+				and t1,t0,s0 # verifica se precisa pintar ou nao
+				beqz t1,CONT_LDRAW_KONG_COL
+					mv a0,s6
+					mv a1,s5
+					li a2,DISPLAY0
+					la a3,fase3_blue_block
+					call PRINT_OBJ
+			CONT_LDRAW_KONG_COL:
+				addi s6,s6,8 # pula o tamanho do bloco
+				addi s4,s4,1
+				j LOOP_DRAW_KONG_COL
+				
+			FIM_LOOP_DRAW_KONG_COL:
+				addi s5,s5,8 # pula linha
+				addi s2,s2,-1 # decrementa i
+				addi s1,s1,4 # pula pra prox word
+				j LOOP_DRAW_KONG_LINE
+		
+	
+	
+	FIM_DRAW_DK_TITLE:
+		# desenha sprite do dk no centro
+		li a0,125
+		li a1,130
+		li a2,DISPLAY0
+		la a3,dk_1
+		call PRINT_OBJ
+	
+		free_stack(ra)
 		ret
 
 .include "imports/game.s"
