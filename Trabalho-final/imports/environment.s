@@ -15,9 +15,11 @@
 .include "../sprites/bin/foguinho_p1.s"
 .include "../sprites/bin/foguinho_p2.s"
 
+# variaveis foguinhos
 fogo1: .half 0,0,0,0,0,0 # x, y, contador horizontal, contador vertical, sprite (0 ou 1), passo do movimento
 fogo2: .half 0,0,0,0,0,0 # x, y, contador horizontal, contador vertical, sprite (0 ou 1), passo do movimento
 
+# variaveis donkey kong/princesa/barris
 var_dk:		.word 0
 var_lady:	.word 0
 var_barris:	.half 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 #posicoes de 6 barris, armazenados em pares x, y
@@ -1961,6 +1963,10 @@ SOUND_CLEARSTAGE:
 # Faz movimento do foguinho 1
 MOVE_FOGUINHO1:
 	save_stack(ra)
+	la t0,fase
+	lb t1,0(t0)
+	li t0,3
+	beq t0,t1,FIM_MOVE_FOGUINHOS # fase 3 tem foguinho personalizado
 	la t0,fogo1
 	lh t1,0(t0) # x fogo 1
 	lh t2,2(t0) # y fogo 1
@@ -2360,6 +2366,10 @@ MOVE_FOGUINHO1:
 # Faz movimento do foguinho 2
 MOVE_FOGUINHO2:
 	save_stack(ra)
+	la t0,fase
+	lb t1,0(t0)
+	li t0,3
+	beq t0,t1,FIM_MOVE_FOGUINHOS # fase 3 tem foguinho personalizado
 	la t0,fogo2
 	lh t1,0(t0) # x fogo 1
 	lh t2,2(t0) # y fogo 1

@@ -61,8 +61,9 @@
 .eqv START_MARIO_Y_FASE4 200
 
 .eqv STARTING_BONUS 5000 # bonus inicial
-.eqv POINTS_TEXT_TIME 200 # tempo de exibicao do texto de pontos adquiridos
+.eqv POINTS_TEXT_TIME 300 # tempo de exibicao do texto de pontos adquiridos
 .eqv HAMMER_TIME 16000 # tempo que o mario fica com o martelo (16s)
+.eqv FASE3_FOGO_TIME 10000 # tempo de nascimento dos foguinhos (fase 3). 10s
 
 # Controlador USB
 .eqv USB_CTRL_ADDR 0xff200122

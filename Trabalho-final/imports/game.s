@@ -1,8 +1,8 @@
 #####################################################
 # Responsavel por gerenciar as fases e loop de jogo #
 #####################################################
-#.include "macros.s"   
-#.include "macros2.s"
+.include "macros.s"   
+.include "macros2.s"
 
 .data
 # Sons
@@ -70,9 +70,9 @@ INIT_GAME:
 	sw zero,0(t0)
 	
 	# Como o jogo comeca na fase 1, nao precisa passar por "init fase1", e consequentemente, carregar
-	#jal SET_FASE2  
+	jal SET_FASE3
 	#call INIT_FASE2_ELEVATORS
-	#call F3_ADD_BLOCKS
+	call F3_ADD_BLOCKS
 	#jal SET_FASE4
 	jal PRINT_FASE
 	call PRINT_TEXT_INITIAL
@@ -261,6 +261,9 @@ SET_FASE3:
 		sw zero,0(t0) # reseta timer do som
 		#la t0,fase3_given_blocks
 		#sb zero,0(t0) # reseta contador de golden blocks na fase 3
+		gettime()
+		la t0,foguinho_spawn_counter
+		sw a0,0(t0)
 	RET_LOADFASE3:
 		ret
 		
@@ -370,6 +373,7 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 	# Verifica se precisa mover os foguinhos
 	call MOVE_FOGUINHO1
 	call MOVE_FOGUINHO2
+	call MOVE_FOGUINHO_F3
 	
 	jal CONTINUE_MOVEMENT
 	
@@ -479,12 +483,17 @@ INIT_FIRES:
 	lb t1,0(t0)
 	li t0,2
 	beq t0,t1,INIT_FIRES_F2
+	li t0,3
+	beq t0,t1,INIT_FIRES_F3
 	li t0,4
 	beq t0,t1,INIT_FIRES_F4
 	j FIM_INIT_FIRES
 
 	INIT_FIRES_F2:
 		call FASE2_START_FOGUINHOS
+		j FIM_INIT_FIRES
+	INIT_FIRES_F3:
+		call FASE3_START_FOGUINHOS
 		j FIM_INIT_FIRES
 	INIT_FIRES_F4:
 		call FASE4_START_FOGUINHOS
@@ -714,7 +723,9 @@ GAME_OVER:
 	j FIM
 	
 FIM:
-	tail START_MENU # volta para o main menu
+	#tail START_MENU # volta para o main menu
+	li a7,10
+	ecall
 	
 # calls pra outras funcoes por causa dos 12bit
 BCALL_MV_MARIO_DIREITA:

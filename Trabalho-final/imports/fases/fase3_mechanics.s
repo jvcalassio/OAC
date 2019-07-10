@@ -10,10 +10,14 @@
 .include "../../sprites/bin/dk_5.s"
 .include "../../sprites/bin/dk_6.s"
 .include "../../sprites/bin/dk_7.s"
+.include "../../sprites/bin/foguinho_f3_p1.s"
+.include "../../sprites/bin/foguinho_f3_p2.s"
 fase3_given_blocks: .byte 0 # blocos removidos
 fase3_black_block: .word 8, 7 # bloco preto
 	     .byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,199
 fase3_passingthru: .byte 0 # flag p/ passagem no bloco
+
+foguinho_spawn_counter: .word 0 # tempo de nascimento do ultimo foguinho
 .text
 
 # Verifica se o jogador esta na posicao de um bloco dourado da fase 3
@@ -821,3 +825,337 @@ F3_WIN_ANIM:
 	FIM_F3_WIN_ANIM: # animacao finalizada, sleep (temporario) e retorna
 		free_stack(ra)
 		ret
+
+# Inicializa contador dos foguinhos da fase 3
+FASE3_START_FOGUINHOS:
+	save_stack(ra)
+	la t0,foguinho_spawn_counter
+	lw t0,0(t0)
+	gettime()
+	sub t1,a0,t0 # tempo atual - tempo do ultimo fogo
+	li t2,FASE3_FOGO_TIME # se maior q o tempo definido, spawna novo
+	ble t1,t2,FIM_F3_START_FOGUINHOS
+	
+	# se for maior, verifica qual fogo esta disponivel
+	la t0,fogo1
+	lh t1,0(t0)
+	lh t2,2(t0)
+	add t1,t1,t2 # soma x + y
+	beqz t1,SPAWN_F3_FOGO1
+	la t0,fogo2
+	lh t1,0(t0)
+	lh t2,2(t0)
+	add t1,t1,t2 # soma x + y fogo 2
+	beqz t1,SPAWN_F3_FOGO2
+	j FIM_F3_START_FOGUINHOS # se nenhum disponivel, nao faz nada
+	
+	SPAWN_F3_FOGO1:
+		la t0,foguinho_spawn_counter
+		gettime()
+		sw a0,0(t0) # salva contador atual
+	
+		# faz spawn do primeiro foguinho
+		# 239,95
+		la t0,fogo1
+		li a0,159
+		li a1,89
+		sh a0,0(t0) # grava x inicial
+		sh a1,2(t0) # grava y inicial
+		la a2,display
+		lw a2,0(a2) # carrega display
+		la a3,foguinho_f3_p1
+		call PRINT_OBJ
+		j FIM_F3_START_FOGUINHOS
+		
+	SPAWN_F3_FOGO2:
+		la t0,foguinho_spawn_counter
+		gettime()
+		sw a0,0(t0) # salva contador atual
+	
+		# faz spawn do segundo foguinho
+		# 239,95
+		la t0,fogo2
+		li a0,239
+		li a1,89	
+		sh a0,0(t0) # grava x inicial
+		sh a1,2(t0) # grava y inicial
+		la a2,display
+		lw a2,0(a2) # carrega display
+		la a3,foguinho_f3_p1
+		call PRINT_OBJ
+	
+	
+	FIM_F3_START_FOGUINHOS:
+		free_stack(ra)
+		ret
+	
+	
+# Manuseio dos foguinhos da fase 3
+# Esquema dos foguinhos modificado (para reutilizar a variavel) na fase 3
+# Cada half word agora significa:
+# x, y, contador horizontal, contador vertical, sprite (0 ou 1), status (normal 0, vulneravel 1)
+MOVE_FOGUINHO_F3:
+	save_stack(ra)
+	la t0,fase
+	lb t1,0(t0)
+	li t0,3
+	bne t0,t1,FIM_MOVE_FOGUINHO_F3 # se nao estiver na fase 3, nao faz nada
+	# nasce novo foguinho apos os 10s
+	call FASE3_START_FOGUINHOS
+	
+	# movimento do fogo 1
+	la t0,fogo1
+	lh s0,0(t0) # carrega x
+	lh s1,2(t0) # carrega y
+	add t1,s0,s1 # soma x + y
+	beqz t1,MOV_FOGO2_F3 # se estiver morto, verifica o fogo 2 direto
+		# verifica se movimento ja foi terminado
+		lh t1,4(t0) # verifica mov horizontal
+		bnez t1,FOGUINHO1_F3_REALIZE_MOVEMENT
+		lh t1,6(t0) # verifica mov vertical
+		bnez t1,FOGUINHO1_F3_REALIZE_MOVEMENT
+		# se sim, seta novo valor
+		
+		addi t0,s0,16 # +16 p/ alinhar com mapeamento
+		addi t1,s1,16 # +16 p/ alinhar com mapeamento
+		srli t0,t0,2 # x / 4 para manter proporcao
+		srli t1,t1,2 # y / 4 para manter proporcao
+		
+		la t2,fase3_obj # carrega obj
+		li t3,80
+		mul t3,t3,t1 # y * 80
+		add t3,t3,t0 # (y * 80) + x
+		add t2,t2,t3 # end inicial somado
+		
+		lb t1,0(t2) # carrega byte
+		lb t3,-80(t2) # carrega byte acima
+		
+		# precisa agora verificar pra qual direcao vai andar
+		# se piso acima = ar (0x00):
+			# se piso atual = g (0x02) vai sempre na direcao contraria do G
+			# se piso atual = c (0x01) vai pra direcao aleatoria
+		# se piso acima = escada (0x04):
+			# se piso atual = g (0x02) vai sempre pra cima
+			# se piso atual = c (0x01) decide se vai pra cima ou direcao aleatoria
+		# verifica piso abaixo depois
+		
+		beqz t3,FOGO1_F3_AIR # se piso acima for ar
+		li t0,0x04
+		beq t0,t3,FOGO1_F3_ESCADA # se piso acima for escada
+		#j MOV_FOGO2_F3 # se nenhum, considera q eh ar
+		
+		FOGO1_F3_AIR: # no caso do piso ser ar
+			# verifica qual o piso do chao
+			li t0,0x01
+			beq t0,t1,FOGO1_F3_AIR_CHAO
+			li t0,0x02
+			beq t0,t1,FOGO1_F3_AIR_GRAV
+			#j MOV_FOGO2_F3 # se nenhum, considera grav
+			j FOGO1_F3_AIR_GRAV
+			
+			FOGO1_F3_AIR_CHAO:
+				li a7,41
+				ecall # gera numero aletorio (pra decidir direcao)
+				li t0,2
+				remu a0,a0,t0 # numero mod 2
+				beqz a0,FOGO1_MOVE_ESQ # vai pra esquerda
+				j FOGO1_MOVE_DIR # vai pra direita
+				
+			FOGO1_F3_AIR_GRAV:
+				# verifica se a frente tbm eh gravity
+				lb t1,-1(t2) # byte atras
+				lb t3,1(t2) # byte a frente
+				li t0,0x02
+				beq t1,t3,FOGO1_MOVE_DIR # se atras (esq) for gravity, vai pra direita
+				j FOGO1_MOVE_ESQ # se a frente (dir) for gravity, vai pra esquerda
+				
+		FOGO1_F3_ESCADA: # no caso do piso ser escada
+			li t0,0x01
+			li t0,0x01
+			beq t0,t1,FOGO1_F3_ESC_CHAO
+			li t0,0x02
+			beq t0,t1,FOGO1_F3_AIR_GRAV
+			#j MOV_FOGO2_F3 # se nenhum, trava
+			j FOGO1_F3_AIR_GRAV # se nenhum, considera grav
+			
+			FOGO1_F3_ESC_CHAO:
+				li a7,41
+				ecall # gera numero rand
+				li t0,3
+				remu a0,a0,t0 # numero mod 3
+				beqz a0,FOGO1_MOVE_ESQ # vai pra esquerda
+				li t0,1
+				beq a0,t0,FOGO1_MOVE_DIR # vai pra direita
+				j FOGO1_MOVE_UP
+			
+		FOGO1_MOVE_ESQ:
+			# seta os mov horizontal
+			la t0,fogo1
+			li t1,-15 # move 5px pra esquerda
+			sh t1,4(t0)
+			j MOV_FOGO2_F3
+			
+		FOGO1_MOVE_DIR:
+			# seta os mov horizontal
+			la t0,fogo1
+			li t1,15 # move 5px pra direita
+			sh t1,4(t0)
+			j MOV_FOGO2_F3
+			
+		FOGO1_MOVE_UP:
+			la t0,fogo1
+			li t1,41 # move 5px pra cima
+			sh t1,6(t0)
+			j MOV_FOGO2_F3
+	
+	MOV_FOGO2_F3:
+	
+	FIM_MOVE_FOGUINHO_F3:
+		free_stack(ra)
+		ret
+		
+# Realiza os movimentos (como os outros foguinhos)
+FOGUINHO1_F3_REALIZE_MOVEMENT:
+	la t0,fogo1
+	lh t1,4(t0)
+	beqz t1,F1F3RM_VERT # terminado movimento horizontal, faz vertical
+		# realiza movimento horizontal
+		bgtz t1,F1F3RM_DECREASE
+			# increase
+			la t0,fogo1
+			lh a0,0(t0)
+			lh a1,2(t0)
+			la a2,display
+			lw a2,0(a2)
+			la a3,fase_current
+			la a4,foguinho_f3_p1
+			call CLEAR_OBJPOS # limpa foguinho
+		
+			la t0,fogo1
+			lh a0,0(t0) # carrega x
+			lh a1,2(t0) # carrega y
+			addi a0,a0,1
+			sh a0,0(t0) # salva x
+			la a2,display
+			lw a2,0(a2) # carrega display
+			# decide sprite
+			lb t1,8(t0)
+			beqz t1,F1F3RM_I_SP1
+			la a3,foguinho_f3_p1
+			j F1F3RM_I_CONT
+			F1F3RM_I_SP1:
+			la a3,foguinho_f3_p2
+			li t1,1
+			sb t1,8(t0) # salva novo sprite utilizado
+			F1F3RM_I_CONT:
+			lh t1,4(t0) # carrega mov horizontal
+			addi t1,t1,1
+			sh t1,4(t0) # salva mov horizontal
+			call PRINT_OBJ
+			j FIM_FOGUINHO1_F3_REALIZE_MOVEMENT
+			
+		F1F3RM_DECREASE:
+			# decrease
+			la t0,fogo1
+			lh a0,0(t0)
+			lh a1,2(t0)
+			la a2,display
+			lw a2,0(a2)
+			la a3,fase_current
+			la a4,foguinho_f3_p1
+			call CLEAR_OBJPOS # limpa foguinho
+		
+			la t0,fogo1
+			lh a0,0(t0) # carrega x
+			lh a1,2(t0) # carrega y
+			addi a0,a0,-1
+			sh a0,0(t0) # salva x
+			la a2,display
+			lw a2,0(a2) # carrega display
+			# decide sprite
+			lb t1,8(t0)
+			beqz t1,F1F3RM_D_SP1
+			la a3,foguinho_f3_p1
+			j F1F3RM_D_CONT
+			F1F3RM_D_SP1:
+			la a3,foguinho_f3_p2
+			li t1,1
+			sb t1,8(t0) # salva novo sprite utilizado
+			F1F3RM_D_CONT:
+			lh t1,4(t0) # carrega mov horizontal
+			addi t1,t1,-1
+			sh t1,4(t0) # salva mov horizontal
+			call PRINT_OBJ_MIRROR
+			j FIM_FOGUINHO1_F3_REALIZE_MOVEMENT
+		
+	F1F3RM_VERT:
+		lh t1,6(t0) # carrega contador vertical
+		beqz t1,FIM_FOGUINHO1_F3_REALIZE_MOVEMENT
+		bgtz t1,F1F3RM_VERT_DECREASE
+			# decrease
+			la t0,fogo1
+			lh a0,0(t0)
+			lh a1,2(t0)
+			la a2,display
+			lw a2,0(a2)
+			la a3,fase_current
+			la a4,foguinho_f3_p1
+			call CLEAR_OBJPOS # limpa foguinho
+		
+			la t0,fogo1
+			lh a0,0(t0) # carrega x
+			lh a1,2(t0) # carrega y
+			addi a1,a1,1
+			sh a1,2(t0) # salva x
+			la a2,display
+			lw a2,0(a2) # carrega display
+			# decide sprite
+			lb t1,8(t0)
+			beqz t1,F1F3RM_VERT_I_SP1
+			la a3,foguinho_f3_p1
+			j F1F3RM_VERT_I_CONT
+			F1F3RM_VERT_I_SP1:
+			la a3,foguinho_f3_p2
+			li t1,1
+			sb t1,8(t0) # salva novo sprite utilizado
+			F1F3RM_VERT_I_CONT:
+			lh t1,6(t0) # carrega mov horizontal
+			addi t1,t1,1
+			sh t1,6(t0) # salva mov horizontal
+			call PRINT_OBJ_MIRROR
+			j FIM_FOGUINHO1_F3_REALIZE_MOVEMENT
+		F1F3RM_VERT_DECREASE:
+			# decrease
+			la t0,fogo1
+			lh a0,0(t0)
+			lh a1,2(t0)
+			la a2,display
+			lw a2,0(a2)
+			la a3,fase_current
+			la a4,foguinho_f3_p1
+			call CLEAR_OBJPOS # limpa foguinho
+		
+			la t0,fogo1
+			lh a0,0(t0) # carrega x
+			lh a1,2(t0) # carrega y
+			addi a1,a1,-1
+			sh a1,2(t0) # salva x
+			la a2,display
+			lw a2,0(a2) # carrega display
+			# decide sprite
+			lb t1,8(t0)
+			beqz t1,F1F3RM_VERT_D_SP1
+			la a3,foguinho_f3_p1
+			j F1F3RM_VERT_D_CONT
+			F1F3RM_VERT_D_SP1:
+			la a3,foguinho_f3_p2
+			li t1,1
+			sb t1,8(t0) # salva novo sprite utilizado
+			F1F3RM_VERT_D_CONT:
+			lh t1,6(t0) # carrega mov horizontal
+			addi t1,t1,-1
+			sh t1,6(t0) # salva mov horizontal
+			call PRINT_OBJ_MIRROR
+	
+	FIM_FOGUINHO1_F3_REALIZE_MOVEMENT:
+		j MOV_FOGO2_F3
