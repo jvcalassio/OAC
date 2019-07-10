@@ -12,11 +12,17 @@
 .include "../sprites/bin/barril_lateral_p1.s"
 .include "../sprites/bin/barril.s"
 .include "../sprites/bin/barril_y.s"
+.include "../sprites/bin/foguinho_p1.s"
+.include "../sprites/bin/foguinho_p2.s"
+
+fogo1: .half 0,0,0,0,0,0 # x, y, contador horizontal, contador vertical, sprite (0 ou 1), passo do movimento
+fogo2: .half 0,0,0,0,0,0 # x, y, contador horizontal, contador vertical, sprite (0 ou 1), passo do movimento
+
 var_dk:		.word 0
 var_lady:	.word 0
 var_barris:	.half 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 #posicoes de 6 barris, armazenados em pares x, y
 var_barris1:	.byte 0, 0, 0, 0, 0, 0	#armazena a direcao que os barris devem ir  (0 direita, 1 esquerda)
-var_barris2: 	.byte 0, 0, 0, 0, 0, 0 #armazena como o barril sera printado (0,1,2,3, 4, 5) 4 e 5 são estados do barril na escada
+var_barris2: 	.byte 0, 0, 0, 0, 0, 0 #armazena como o barril sera printado (0,1,2,3, 4, 5) 4 e 5 sï¿½o estados do barril na escada
 
 # strings de jogo
 victory_text: .string "PARABENS VC VENCEU"
@@ -352,7 +358,7 @@ MOV_BARRIS:
 		j	continueMOV_BARRIS
 		
 		print_barril4:
-		#printando o barril dois pixels abaixo, caso não hajam tiles rosa
+		#printando o barril dois pixels abaixo, caso nao hajam tiles rosa
 		lh	a0, 0(t0)
 		lh	a1, 2(t0)
 		la	a2, display
@@ -502,6 +508,39 @@ MOV_BARRIS:
 			free_stack(t5)
 			sh	zero, 0(t0)
 			sh	zero, 2(t0)
+			# verifica se precisa gerar novo foguinho
+			la 	a0, fogo1
+			lh	a1, 0(a0)
+			lh 	a2, 2(a0)
+			add	a0, a1, a2 # soma x e y
+			bnez 	a0, zerar_barril1_fogo2 # se ja estiver em jogo, usa o fogo 2
+			la	a0, fogo1
+			li	a1, 84
+			sh	a1, 0(a0) # salva x
+			li 	a1, 200
+			sh 	a1, 2(a0) # salva y
+			li 	a1, -41
+			sh 	a1, 4(a0) # andar 41 pra direita
+			li 	a1, 33
+			sh 	a1, 6(a0) # andar 33 pra cima
+			j	continueMOV_BARRIS
+			
+			zerar_barril1_fogo2:
+			la	a0, fogo2
+			lh 	a1, 0(a0)
+			lh 	a2, 2(a0)
+			add	a0, a1, a2 # soma x e y
+			bnez	a0, continueMOV_BARRIS # se ja estiver em jogo, nao faz novo fogo
+			la	a0, fogo2
+			li	a1, 84
+			sh	a1, 0(a0) # salva x
+			li 	a1, 200
+			sh 	a1, 2(a0) # salva y
+			li 	a1, -41
+			sh 	a1, 4(a0) # andar 41 pra direita
+			li 	a1, 33
+			sh 	a1, 6(a0) # andar 33 pra cima
+			
 			j	continueMOV_BARRIS
 		
 		MOV_BARRIS_DIREITA:
@@ -1175,6 +1214,8 @@ INIT_ITEMS:
 	beq t0,t1,INIT_ITEMS_F2
 	li t0,3
 	beq t0,t1,INIT_ITEMS_F3
+	li t0,4
+	beq t0,t1,INIT_ITEMS_F4
 	j FIM_INIT_ITEMS
 	
 	INIT_ITEMS_F1:
@@ -1282,7 +1323,32 @@ INIT_ITEMS:
 		sw zero,0(t0)
 		la t0,mario_hammer_type
 		sb zero,0(t0)
-	
+		j FIM_INIT_ITEMS
+		
+	INIT_ITEMS_F4:
+		# printa guarda chuva
+		li a0,285
+		li a1,175
+		la a2,display
+		lw a2,0(a2)
+		la a3,guardachuva
+		call PRINT_OBJ
+		# printa bolsa
+		li a0,33
+		li a1,76
+		la a2,display
+		lw a2,0(a2)
+		la a3,bolsa
+		call PRINT_OBJ
+		la t0,fase2_items # usa o mesmo byte da fase 2
+		sb zero,0(t0)
+		la t0,points_timer
+		sw zero,0(t0)
+		la t0,points_pos
+		sh zero,0(t0)
+		sh zero,2(t0)
+		sh zero,4(t0)
+		sh zero,6(t0)
 	FIM_INIT_ITEMS:
 		free_stack(ra)
 		ret
@@ -1298,6 +1364,8 @@ CHECK_ITEMS:
 	beq t0,t1,CHECK_ITEMS_F2
 	li t0,3
 	beq t0,t1,CHECK_ITEMS_F3
+	li t0,4
+	beq t0,t1,CHECK_ITEMS_F4
 	j FIM_CHECK_ITEMS
 	
 	CHECK_ITEMS_F1:
@@ -1458,6 +1526,37 @@ CHECK_ITEMS:
 			li a1,3 # fase 3
 			li t2,1
 			beq t0,t2,REMOVE_ITEM
+			j FIM_CHECK_ITEMS
+			
+	CHECK_ITEMS_F4:
+		la t0,pos_mario
+		lh t1,2(t0) # y do mario
+		li t0,190
+		bge t1,t0,FIM_CHECK_ITEMS # nenhum item abaixo desse nivel
+		li t0,160
+		bge t1,t0,CHECK_ITEMS_F4_ITEM1 # verifica se esta no X do item 1 (guarda chuva)
+		li t0,88
+		bge t1,t0,FIM_CHECK_ITEMS # nenhum item entre 91 e 78
+		li t0,60
+		bge t1,t0,CHECK_ITEMS_F4_ITEM2 # verifica se esta no X do item 2 (bolsa)
+		j FIM_CHECK_ITEMS
+		CHECK_ITEMS_F4_ITEM1:
+			la t0,pos_mario
+			lh t1,0(t0) # x do mario
+			li t0,270
+			blt t1,t0,FIM_CHECK_ITEMS # se x < 270, nao esta no x do item
+			li a0,0 # item 1
+			li a1,4 # fase 2
+			j REMOVE_ITEM
+		CHECK_ITEMS_F4_ITEM2:
+			la t0,pos_mario
+			lh t1,0(t0) # x do mario
+			li t0,42
+			bge t1,t0,FIM_CHECK_ITEMS # se x > 42, nao esta no x do item
+			li a0,1 # item 2
+			li a1,4 # fase 2
+			j REMOVE_ITEM
+			
 	FIM_CHECK_ITEMS:
 		free_stack(ra)
 		ret
@@ -1472,6 +1571,8 @@ REMOVE_ITEM:
 	beq a1,t0,RMV_ITEM_F2
 	li t0,3
 	beq a1,t0,RMV_ITEM_F3
+	li t0,4
+	beq a1,t0,RMV_ITEM_F4
 	j FIM_REMOVE_ITEM
 	
 	RMV_ITEM_F1: # verifica e remove itens da fase 1
@@ -1481,9 +1582,8 @@ REMOVE_ITEM:
 		lb t1,0(t1)
 		and t1,t1,t0 # pega bit do item desejado
 		bnez t1,FIM_REMOVE_ITEM # se nao der 0, o item ja foi pego
+		beqz a0,RMV_F1_HAMMER1 # remove martelo 1
 		li t0,1
-		beq a0,t0,RMV_F1_HAMMER1 # remove martelo 1
-		li t0,2
 		beq a0,t0,RMV_F1_HAMMER2 # remove martelo 2
 		j FIM_REMOVE_ITEM
 		
@@ -1587,7 +1687,8 @@ REMOVE_ITEM:
 		la t0,pos_mario
 		lh a1,0(t0) # x do mario
 		lh a2,2(t0) # y do mario
-		addi a2,a2,18 # abaixo do y mario (p/ nao sobrepor)
+		#addi a2,a2,18 # abaixo do y mario (p/ nao sobrepor)
+		addi a2,a2,-10 # acima da cabeca do mario
 		call GIVE_POINTS
 		mv a0,s0
 		# remove o item a1
@@ -1669,6 +1770,58 @@ REMOVE_ITEM:
 			ori t1,t1,0x10 # adiciona bit do martelo 3 andar
 			sb t1,0(t0)
 			call MARIO_SET_HAMMER
+			j FIM_REMOVE_ITEM
+			
+	RMV_ITEM_F4: # verifica e remove itens da fase 2
+		li t1,1
+		sll t0,t1,a0 # procura bit do item desejado
+		la t1,fase2_items
+		lb t1,0(t1)
+		and t1,t1,t0 # pega bit do item desejado
+		bnez t1,FIM_REMOVE_ITEM # se item ja foi coletado, retorna
+		
+		# da os pontos
+		mv s0,a0
+		li a0,800
+		la t0,pos_mario
+		lh a1,0(t0) # x do mario
+		lh a2,2(t0) # y do mario
+		addi a2,a2,-10 # acima do mario
+		call GIVE_POINTS
+		mv a0,s0
+		
+		beqz a0,RMV_F4_ITEM1 # remove guarda chuva
+		li t0,1
+		beq a0,t0,RMV_F4_ITEM2 # remove bolsa
+		j FIM_REMOVE_ITEM
+		
+		RMV_F4_ITEM1:
+			li a0,285
+			li a1,175
+			la a2,display
+			lw a2,0(a2)
+			la a3,fase_current
+			la a4,guardachuva
+			call CLEAR_OBJPOS # remove sprite
+			la t0,fase2_items
+			lb t1,0(t0)
+			ori t1,t1,0x01 # adiciona bit do guarda chuva coletado
+			sb t1,0(t0)
+			j FIM_REMOVE_ITEM
+		
+		RMV_F4_ITEM2:
+			li a0,33
+			li a1,76
+			la a2,display
+			lw a2,0(a2)
+			la a3,fase_current
+			la a4,bolsa
+			call CLEAR_OBJPOS # remove sprite
+			la t0,fase2_items
+			lb t1,0(t0)
+			ori t1,t1,0x02 # adiciona bit da bolsa
+			sb t1,0(t0)
+			j FIM_REMOVE_ITEM
 	
 	FIM_REMOVE_ITEM:
 		j FIM_CHECK_ITEMS
@@ -1803,4 +1956,833 @@ SOUND_CLEARSTAGE:
 		addi t1,t1,-1
 		j FOR_SOUND_CLEARSTAGE
 	FIM_SOUND_CLEARSTAGE:
+	ret
+
+# Faz movimento do foguinho 1
+MOVE_FOGUINHO1:
+	save_stack(ra)
+	la t0,fogo1
+	lh t1,0(t0) # x fogo 1
+	lh t2,2(t0) # y fogo 1
+	add t3,t1,t2
+	beqz t3,FIM_MOVE_FOGUINHOS # se nao foi inicializado nessa fase, nao faz nada
+	
+	lh t3,4(t0) # contador horizontal
+	lh t4,6(t0) # contador vertical
+	
+	# esquema do movimento:
+	# o foguinho sempre tenta aproximar seu x,y em 0
+	# para movimentar 15px pra direita: seta contador horizontal em -15, assim ele vai aproximar a 0, andando 1px
+	# o mesmo pra esquerda (seta +15)
+	# e o mesmo na vertical
+	beqz t3,VERIF_FIRE_FASE_TO_STEP # so verifica vertical se movimento horizontal terminado
+	
+	VERIF_FIRE_HORIZONTAL:
+		slt t5,t3,zero # contador < 0 ? 1 : 0
+		# se for maior que 0, precisa decrementar
+		beqz t5,VERIF_FIRE_HORIZONTAL_DECREMENT
+			# do contrario, incrementa
+			mv a0,t1 # y antigo do fogo
+			mv a1,t2 # x antigo do fogo
+			la a2,display
+			lw a2,0(a2) # display atual
+			la a3,fase_current
+			la a4,foguinho_p1
+			call CLEAR_OBJPOS # limpa fogo antigo
+			
+			# verifica existencia de degrau (fase1)
+			la t0,fogo1
+			lh a0,0(t0) # x fogo
+			addi a0,a0,16
+			lh a1,2(t0) # y fogo
+			addi a1,a1,15
+			la a2,fase_current
+			call GET_POSITION # pega posicao
+			lb t1,0(a0) # carrega cor
+			li t0,0x46
+			beq t0,t1,ADD_VERIF_FIRE_HORIZONTAL # verifica a frente
+			j CONT_VERIF_FIRE_HORIZONTAL
+			ADD_VERIF_FIRE_HORIZONTAL:
+			la t0,fogo1
+			lh t1,2(t0) # carrega y
+			addi t1,t1,-1
+			sh t1,2(t0) # salva y-1, subido 1px
+			j CONT2_VERIF_FIRE_HORIZONTAL
+			
+			CONT_VERIF_FIRE_HORIZONTAL:
+			la t0,fogo1
+			lh a0,0(t0) # x fogo
+			lh a1,2(t0) # y fogo
+			addi a0,a0,17
+			addi a1,a1,17
+			la a2,fase_current
+			call GET_POSITION # pega pos
+			lb t1,0(a0) # carrega cor
+			beqz t1,RMV_VERIF_FIRE_HORIZONTAL # verifica a frente
+			j CONT2_VERIF_FIRE_HORIZONTAL
+			RMV_VERIF_FIRE_HORIZONTAL:
+			la t0,fogo1
+			lh t1,2(t0) # carrega y
+			addi t1,t1,1
+			sh t1,2(t0) # salva y+1, descido 1px
+			
+			CONT2_VERIF_FIRE_HORIZONTAL:
+			la t0,fogo1
+			lh a0,0(t0) # x do fogo
+			lh a1,2(t0) # y do fogo
+			addi a0,a0,1 # incrementa posicao
+			sh a0,0(t0)
+			la a2,display
+			lw a2,0(a2) # display atual
+			lh t1,8(t0) # carrega ultimo utilizado
+			not t2,t1
+			sh t2,8(t0) # salva novo utilizado
+			lh t2,4(t0) # carrega contador horizontal
+			addi t2,t2,1 # incrementa contador
+			sh t2,4(t0) # salva contador
+			beqz t1,PRINT_FIRE_P2_NORMAL
+			j PRINT_FIRE_P1_NORMAL
+			
+		VERIF_FIRE_HORIZONTAL_DECREMENT:
+			mv a0,t1 # y antigo do fogo
+			mv a1,t2 # x antigo do fogo
+			la a2,display
+			lw a2,0(a2) # display atual
+			la a3,fase_current
+			la a4,foguinho_p1
+			call CLEAR_OBJPOS # limpa fogo antigo
+			
+			# verifica existencia de degrau (fase1)
+			la t0,fogo1
+			lh a0,0(t0) # x fogo
+			addi a0,a0,-1
+			lh a1,2(t0) # y fogo
+			addi a1,a1,15
+			la a2,fase_current
+			call GET_POSITION # pega posicao
+			lb t1,0(a0) # carrega cor
+			li t0,0x46
+			beq t0,t1,ADD_VERIF_FIRE_HORIZONTAL2 # verifica a frente
+			j CONT_VERIF_FIRE_HORIZONTAL2
+			ADD_VERIF_FIRE_HORIZONTAL2:
+			la t0,fogo1
+			lh t1,2(t0) # carrega y
+			addi t1,t1,-1
+			sh t1,2(t0) # salva y-1, subido 1px
+			j CONT2_VERIF_FIRE_HORIZONTAL2
+			
+			CONT_VERIF_FIRE_HORIZONTAL2:
+			la t0,fogo1
+			lh a0,0(t0) # x fogo
+			lh a1,2(t0) # y fogo
+			addi a1,a1,17
+			la a2,fase_current
+			call GET_POSITION # pega pos
+			lb t1,0(a0) # carrega cor
+			beqz t1,RMV_VERIF_FIRE_HORIZONTAL2 # verifica a frente
+			j CONT2_VERIF_FIRE_HORIZONTAL2
+			RMV_VERIF_FIRE_HORIZONTAL2:
+			la t0,fogo1
+			lh t1,2(t0) # carrega y
+			addi t1,t1,1
+			sh t1,2(t0) # salva y+1, descido 1px
+			
+			CONT2_VERIF_FIRE_HORIZONTAL2:
+			la t0,fogo1
+			lh a0,0(t0) # x do fogo
+			lh a1,2(t0) # y do fogo
+			addi a0,a0,-1 # decrementa posicao
+			sh a0,0(t0)
+			la a2,display
+			lw a2,0(a2) # display atual
+			lh t1,8(t0) # carrega ultimo utilizado
+			not t2,t1
+			sh t2,8(t0) # salva novo utilizado
+			lh t2,4(t0) # carrega contador horizontal
+			addi t2,t2,-1 # decrementa contador
+			sh t2,4(t0) # salva contador
+			beqz t1,PRINT_FIRE_P2_MIRROR
+			j PRINT_FIRE_P1_MIRROR
+	
+	VERIF_FIRE_VERTICAL:
+		la t0,fogo1
+		lh t1,0(t0)
+		lh t2,2(t0)
+		lh t3,4(t0)
+		lh t4,6(t0)
+		slt t5,t4,zero # contador < 0 ? 1 : 0
+		# se for maior que 0, precisa decrementar
+		beqz t5,VERIF_FIRE_VERTICAL_DECREMENT
+			# do contrario, incrementa
+			mv a0,t1 # y antigo do fogo
+			mv a1,t2 # x antigo do fogo
+			la a2,display
+			lw a2,0(a2) # display atual
+			la a3,fase_current
+			la a4,foguinho_p1
+			call CLEAR_OBJPOS # limpa fogo antigo
+			
+			la t0,fogo1
+			lh a0,0(t0) # x do fogo
+			lh a1,2(t0) # y do fogo
+			addi a1,a1,1 # incrementa posicao
+			sh a1,2(t0)
+			la a2,display
+			lw a2,0(a2) # display atual
+			lh t1,8(t0) # carrega ultimo utilizado
+			not t2,t1
+			sh t2,8(t0) # salva novo utilizado
+			lh t2,6(t0) # carrega contador vertical
+			addi t2,t2,1 # incrementa contador
+			sh t2,6(t0) # salva contador
+			beqz t1,PRINT_FIRE_P2_NORMAL
+			j PRINT_FIRE_P1_NORMAL
+			
+		VERIF_FIRE_VERTICAL_DECREMENT:
+			mv a0,t1 # y antigo do fogo
+			mv a1,t2 # x antigo do fogo
+			la a2,display
+			lw a2,0(a2) # display atual
+			la a3,fase_current
+			la a4,foguinho_p1
+			call CLEAR_OBJPOS # limpa fogo antigo
+			
+			la t0,fogo1
+			lh a0,0(t0) # x do fogo
+			lh a1,2(t0) # y do fogo
+			addi a1,a1,-1 # decrementa posicao
+			sh a1,2(t0)
+			la a2,display
+			lw a2,0(a2) # display atual
+			lh t1,8(t0) # carrega ultimo utilizado
+			not t2,t1
+			sh t2,8(t0) # salva novo utilizado
+			lh t2,6(t0) # carrega contador vertical
+			addi t2,t2,-1 # decrementa contador
+			sh t2,6(t0) # salva contador
+			beqz t1,PRINT_FIRE_P2_MIRROR
+			j PRINT_FIRE_P1_MIRROR
+	
+	VERIF_FIRE_FASE_TO_STEP:
+		bnez t4,VERIF_FIRE_VERTICAL
+	
+		la t0,fase
+		lb t1,0(t0)
+		li t0,1
+		beq t1,t0,VERIF_FIRE_STEP_F1
+		li t0,2
+		beq t1,t0,VERIF_FIRE_STEP_F2
+		li t0,4
+		beq t1,t0,VERIF_FIRE_STEP_F4
+		j FIM_MOVE_FOGUINHOS
+		
+	VERIF_FIRE_STEP_F1:
+		la t0,fogo1
+		lh t1,10(t0)
+		beqz t1,VERIF_FIRE_STEP_F1_S1
+		li t0,1
+		beq t1,t0,VERIF_FIRE_STEP_F1_S2
+		li t0,2
+		beq t1,t0,VERIF_FIRE_STEP_F1_S3
+		j FIM_MOVE_FOGUINHOS
+		
+		VERIF_FIRE_STEP_F1_S1:
+			# verifica rng
+			li a7,41
+			ecall
+			li t0,2
+			remu t0,a0,t0 # numero mod 2
+			beqz t0,VFSTEP_F1_S1_1 # faz segunda possibilidade
+			# ou faz a primeira possibilidade
+			la t0,fogo1
+			li t1,60 # anda 60 px pra esquerda
+			sh t1,4(t0)
+			sh zero,6(t0)
+			li t1,1
+			sh t1,10(t0)
+			j FIM_MOVE_FOGUINHOS
+
+			VFSTEP_F1_S1_1:	# segunda possibilidade
+				la t0,fogo1
+				li t1,-105 # anda 105 px pra direita
+				sh t1,4(t0)
+				li t1,-24 # desce 24px
+				sh t1,6(t0)
+				li t1,2
+				sh t1,10(t0)
+				j FIM_MOVE_FOGUINHOS
+		
+		VERIF_FIRE_STEP_F1_S2:
+			la t0,fogo1
+			li t1,-60 # anda 60 px pra direita
+			sh t1,4(t0)
+			sh zero,6(t0)
+			li t1,0 # volta pro estado 0
+			sh t1,10(t0)
+			j FIM_MOVE_FOGUINHOS
+				
+		VERIF_FIRE_STEP_F1_S3:
+			la t0,fogo1
+			li t1,105 # anda 105 px pra esquerda
+			sh t1,4(t0)
+			li t1,33 # sobe 33px
+			sh t1,6(t0)
+			li t1,0 # volta pro estado 0
+			sh t1,10(t0)
+			j FIM_MOVE_FOGUINHOS
+		
+	VERIF_FIRE_STEP_F2:
+		la t0,fogo1
+		lh t1,10(t0)
+		beqz t1,VERIF_FIRE_STEP_F2_S1
+		li t0,1
+		beq t1,t0,VERIF_FIRE_STEP_F2_S2
+		li t0,2
+		beq t1,t0,VERIF_FIRE_STEP_F2_S3
+		li t0,3
+		beq t1,t0,VERIF_FIRE_STEP_F2_S4
+		j FIM_MOVE_FOGUINHOS
+		
+		VERIF_FIRE_STEP_F2_S1:
+			la t0,fogo1
+			li t1,-16
+			sh t1,4(t0) # 16 pixels horizontal
+			li t1,0
+			sh t1,6(t0) # -64 vertical
+			li t1,1
+			sh t1,10(t0)
+			j FIM_MOVE_FOGUINHOS
+			
+		VERIF_FIRE_STEP_F2_S2:
+			la t0,fogo1
+			li t1,20
+			sh t1,4(t0) # 16 pixels horizontal
+			li t1,0
+			sh t1,6(t0) # -64 vertical
+			li t1,2
+			sh t1,10(t0)
+			j FIM_MOVE_FOGUINHOS
+			
+		VERIF_FIRE_STEP_F2_S3:
+			la t0,fogo1
+			li t1,-20
+			sh t1,4(t0) # 16 pixels horizontal
+			li t1,-64
+			sh t1,6(t0) # -64 vertical
+			li t1,3
+			sh t1,10(t0)
+			j FIM_MOVE_FOGUINHOS
+		
+		VERIF_FIRE_STEP_F2_S4:
+			la t0,fogo1
+			li t1,16
+			sh t1,4(t0) # 16 pixels horizontal
+			li t1,64
+			sh t1,6(t0) # -64 vertical
+			li t1,0
+			sh t1,10(t0)
+			j FIM_MOVE_FOGUINHOS
+		
+	VERIF_FIRE_STEP_F4:
+		la t0,fogo1
+		lh t1,10(t0) # carrega passo atual do fogo 1
+		beqz t1,VERIF_FIRE_STEP_F4_S1
+		li t0,1
+		beq t1,t0,VERIF_FIRE_STEP_F4_S2
+		li t0,2
+		beq t1,t0,VERIF_FIRE_STEP_F4_S3
+		li t0,3
+		beq t1,t0,VERIF_FIRE_STEP_F4_S4
+		li t0,4
+		beq t1,t0,VERIF_FIRE_STEP_F4_S5
+		li t0,5
+		beq t1,t0,VERIF_FIRE_STEP_F4_S6
+		j FIM_MOVE_FOGUINHOS
+		
+		VERIF_FIRE_STEP_F4_S1:
+			la t0,fogo1
+			li t1,20
+			sh t1,4(t0) # 20 pixels horizontal
+			li t1,42
+			sh t1,6(t0) # 42 pixels vertical
+			li t1,1
+			sh t1,10(t0) # salva passo atual
+			j FIM_MOVE_FOGUINHOS
+			
+		VERIF_FIRE_STEP_F4_S2:
+			la t0,fogo1
+			li t1,-16
+			sh t1,4(t0) # -16 pixels horizontal
+			sh zero,6(t0) # 0 pixels vertical
+			li t1,2
+			sh t1,10(t0) # salva passo atual
+			j FIM_MOVE_FOGUINHOS
+			
+		VERIF_FIRE_STEP_F4_S3:
+			la t0,fogo1
+			li t1,16
+			sh t1,4(t0) # 16 pixels horizontal
+			li t1,-42
+			sh t1,6(t0) # -42 pixels vertical
+			li t1,3
+			sh t1,10(t0) # salva passo atual
+			j FIM_MOVE_FOGUINHOS
+			
+		VERIF_FIRE_STEP_F4_S4:
+			la t0,fogo1
+			li t1,-20
+			sh t1,4(t0) # -20 pixels horizontal
+			li t1,-42
+			sh t1,6(t0) # -42 pixels vertical
+			li t1,4
+			sh t1,10(t0) # salva passo atual
+			j FIM_MOVE_FOGUINHOS
+			
+		VERIF_FIRE_STEP_F4_S5: # seta o step 1
+			la t0,fogo1
+			li t1,35
+			sh t1,4(t0) # 35 pixels horizontal
+			sh zero,6(t0) # 0 pixels vertical
+			li t1,5
+			sh t1,10(t0) # salva passo atual
+			j FIM_MOVE_FOGUINHOS
+			
+		VERIF_FIRE_STEP_F4_S6: # seta o step 1
+			la t0,fogo1
+			li t1,-35
+			sh t1,4(t0) # -35 pixels horizontal
+			li t1,42
+			sh t1,6(t0) # 42 pixels vertical
+			li t1,0
+			sh t1,10(t0) # salva passo atual
+			j FIM_MOVE_FOGUINHOS
+
+# Faz movimento do foguinho 2
+MOVE_FOGUINHO2:
+	save_stack(ra)
+	la t0,fogo2
+	lh t1,0(t0) # x fogo 1
+	lh t2,2(t0) # y fogo 1
+	add t3,t1,t2
+	beqz t3,FIM_MOVE_FOGUINHOS # se nao foi inicializado nessa fase, nao faz nada
+	
+	lh t3,4(t0) # contador horizontal
+	lh t4,6(t0) # contador vertical
+	
+	# esquema do movimento:
+	# o foguinho sempre tenta aproximar seu x,y em 0
+	# para movimentar 15px pra direita: seta contador horizontal em -15, assim ele vai aproximar a 0, andando 1px
+	# o mesmo pra esquerda (seta +15)
+	# e o mesmo na vertical
+	beqz t3,VERIF_FIRE2_FASE_TO_STEP # so verifica vertical se movimento horizontal terminado
+	
+	VERIF_FIRE2_HORIZONTAL:
+		slt t5,t3,zero # contador < 0 ? 1 : 0
+		# se for maior que 0, precisa decrementar
+		beqz t5,VERIF_FIRE2_HORIZONTAL_DECREMENT
+			# do contrario, incrementa
+			mv a0,t1 # y antigo do fogo
+			mv a1,t2 # x antigo do fogo
+			la a2,display
+			lw a2,0(a2) # display atual
+			la a3,fase_current
+			la a4,foguinho_p1
+			call CLEAR_OBJPOS # limpa fogo antigo
+			
+			# verifica existencia de degrau (fase1)
+			la t0,fogo2
+			lh a0,0(t0) # x fogo
+			addi a0,a0,16
+			lh a1,2(t0) # y fogo
+			addi a1,a1,15
+			la a2,fase_current
+			call GET_POSITION # pega posicao
+			lb t1,0(a0) # carrega cor
+			li t0,0x46
+			beq t0,t1,ADD_VERIF_FIRE2_HORIZONTAL # verifica a frente
+			j CONT_VERIF_FIRE2_HORIZONTAL
+			ADD_VERIF_FIRE2_HORIZONTAL:
+			la t0,fogo2
+			lh t1,2(t0) # carrega y
+			addi t1,t1,-1
+			sh t1,2(t0) # salva y-1, subido 1px
+			j CONT2_VERIF_FIRE2_HORIZONTAL
+			
+			CONT_VERIF_FIRE2_HORIZONTAL:
+			la t0,fogo2
+			lh a0,0(t0) # x fogo
+			lh a1,2(t0) # y fogo
+			addi a0,a0,17
+			addi a1,a1,17
+			la a2,fase_current
+			call GET_POSITION # pega pos
+			lb t1,0(a0) # carrega cor
+			beqz t1,RMV_VERIF_FIRE2_HORIZONTAL # verifica a frente
+			j CONT2_VERIF_FIRE2_HORIZONTAL
+			RMV_VERIF_FIRE2_HORIZONTAL:
+			la t0,fogo2
+			lh t1,2(t0) # carrega y
+			addi t1,t1,1
+			sh t1,2(t0) # salva y+1, descido 1px
+			
+			CONT2_VERIF_FIRE2_HORIZONTAL:
+			la t0,fogo2
+			lh a0,0(t0) # x do fogo
+			lh a1,2(t0) # y do fogo
+			addi a0,a0,1 # incrementa posicao
+			sh a0,0(t0)
+			la a2,display
+			lw a2,0(a2) # display atual
+			lh t1,8(t0) # carrega ultimo utilizado
+			not t2,t1
+			sh t2,8(t0) # salva novo utilizado
+			lh t2,4(t0) # carrega contador horizontal
+			addi t2,t2,1 # incrementa contador
+			sh t2,4(t0) # salva contador
+			beqz t1,PRINT_FIRE_P2_NORMAL
+			j PRINT_FIRE_P1_NORMAL
+			
+		VERIF_FIRE2_HORIZONTAL_DECREMENT:
+			mv a0,t1 # y antigo do fogo
+			mv a1,t2 # x antigo do fogo
+			la a2,display
+			lw a2,0(a2) # display atual
+			la a3,fase_current
+			la a4,foguinho_p1
+			call CLEAR_OBJPOS # limpa fogo antigo
+			
+			# verifica existencia de degrau (fase1)
+			la t0,fogo2
+			lh a0,0(t0) # x fogo
+			addi a0,a0,-1
+			lh a1,2(t0) # y fogo
+			addi a1,a1,15
+			la a2,fase_current
+			call GET_POSITION # pega posicao
+			lb t1,0(a0) # carrega cor
+			li t0,0x46
+			beq t0,t1,ADD_VERIF_FIRE2_HORIZONTAL2 # verifica a frente
+			j CONT_VERIF_FIRE2_HORIZONTAL2
+			ADD_VERIF_FIRE2_HORIZONTAL2:
+			la t0,fogo2
+			lh t1,2(t0) # carrega y
+			addi t1,t1,-1
+			sh t1,2(t0) # salva y-1, subido 1px
+			j CONT2_VERIF_FIRE2_HORIZONTAL2
+			
+			CONT_VERIF_FIRE2_HORIZONTAL2:
+			la t0,fogo2
+			lh a0,0(t0) # x fogo
+			lh a1,2(t0) # y fogo
+			addi a1,a1,17
+			la a2,fase_current
+			call GET_POSITION # pega pos
+			lb t1,0(a0) # carrega cor
+			beqz t1,RMV_VERIF_FIRE2_HORIZONTAL2 # verifica a frente
+			j CONT2_VERIF_FIRE2_HORIZONTAL2
+			RMV_VERIF_FIRE2_HORIZONTAL2:
+			la t0,fogo2
+			lh t1,2(t0) # carrega y
+			addi t1,t1,1
+			sh t1,2(t0) # salva y+1, descido 1px
+			
+			CONT2_VERIF_FIRE2_HORIZONTAL2:
+			la t0,fogo2
+			lh a0,0(t0) # x do fogo
+			lh a1,2(t0) # y do fogo
+			addi a0,a0,-1 # decrementa posicao
+			sh a0,0(t0)
+			la a2,display
+			lw a2,0(a2) # display atual
+			lh t1,8(t0) # carrega ultimo utilizado
+			not t2,t1
+			sh t2,8(t0) # salva novo utilizado
+			lh t2,4(t0) # carrega contador horizontal
+			addi t2,t2,-1 # decrementa contador
+			sh t2,4(t0) # salva contador
+			beqz t1,PRINT_FIRE_P2_MIRROR
+			j PRINT_FIRE_P1_MIRROR
+	
+	VERIF_FIRE2_VERTICAL:
+		la t0,fogo2
+		lh t1,0(t0)
+		lh t2,2(t0)
+		lh t3,4(t0)
+		lh t4,6(t0)
+		slt t5,t4,zero # contador < 0 ? 1 : 0
+		# se for maior que 0, precisa decrementar
+		beqz t5,VERIF_FIRE2_VERTICAL_DECREMENT
+			# do contrario, incrementa
+			mv a0,t1 # y antigo do fogo
+			mv a1,t2 # x antigo do fogo
+			la a2,display
+			lw a2,0(a2) # display atual
+			la a3,fase_current
+			la a4,foguinho_p1
+			call CLEAR_OBJPOS # limpa fogo antigo
+			
+			la t0,fogo2
+			lh a0,0(t0) # x do fogo
+			lh a1,2(t0) # y do fogo
+			addi a1,a1,1 # incrementa posicao
+			sh a1,2(t0)
+			la a2,display
+			lw a2,0(a2) # display atual
+			lh t1,8(t0) # carrega ultimo utilizado
+			not t2,t1
+			sh t2,8(t0) # salva novo utilizado
+			lh t2,6(t0) # carrega contador vertical
+			addi t2,t2,1 # incrementa contador
+			sh t2,6(t0) # salva contador
+			beqz t1,PRINT_FIRE_P2_NORMAL
+			j PRINT_FIRE_P1_NORMAL
+			
+		VERIF_FIRE2_VERTICAL_DECREMENT:
+			mv a0,t1 # y antigo do fogo
+			mv a1,t2 # x antigo do fogo
+			la a2,display
+			lw a2,0(a2) # display atual
+			la a3,fase_current
+			la a4,foguinho_p1
+			call CLEAR_OBJPOS # limpa fogo antigo
+			
+			la t0,fogo2
+			lh a0,0(t0) # x do fogo
+			lh a1,2(t0) # y do fogo
+			addi a1,a1,-1 # decrementa posicao
+			sh a1,2(t0)
+			la a2,display
+			lw a2,0(a2) # display atual
+			lh t1,8(t0) # carrega ultimo utilizado
+			not t2,t1
+			sh t2,8(t0) # salva novo utilizado
+			lh t2,6(t0) # carrega contador vertical
+			addi t2,t2,-1 # decrementa contador
+			sh t2,6(t0) # salva contador
+			beqz t1,PRINT_FIRE_P2_MIRROR
+			j PRINT_FIRE_P1_MIRROR
+	
+	VERIF_FIRE2_FASE_TO_STEP:
+		bnez t4,VERIF_FIRE2_VERTICAL
+	
+		la t0,fase
+		lb t1,0(t0)
+		li t0,1
+		beq t1,t0,VERIF_FIRE2_STEP_F1
+		li t0,2
+		beq t1,t0,VERIF_FIRE2_STEP_F2
+		li t0,4
+		beq t1,t0,VERIF_FIRE2_STEP_F4
+		j FIM_MOVE_FOGUINHOS
+		
+	VERIF_FIRE2_STEP_F1:
+		la t0,fogo2
+		lh t1,10(t0)
+		beqz t1,VERIF_FIRE2_STEP_F1_S1
+		li t0,1
+		beq t1,t0,VERIF_FIRE2_STEP_F1_S2
+		li t0,2
+		beq t1,t0,VERIF_FIRE2_STEP_F1_S3
+		li t0,3
+		beq t1,t0,VERIF_FIRE2_STEP_F1_S4
+		li t0,4
+		beq t1,t0,VERIF_FIRE2_STEP_F1_S5
+		j FIM_MOVE_FOGUINHOS
+		
+		VERIF_FIRE2_STEP_F1_S1:
+			# verifica rng
+			li a7,41
+			ecall
+			li t0,2
+			remu t0,a0,t0 # numero mod 2
+			beqz t0,VF2STEP_F1_S1_1 # faz segunda possibilidade
+			# ou faz a primeira possibilidade
+			la t0,fogo2
+			li t1,48 # anda 48 px pra esquerda
+			sh t1,4(t0)
+			li t1,24 # sobe 24px
+			sh t1,6(t0)
+			li t1,1
+			sh t1,10(t0)
+			j FIM_MOVE_FOGUINHOS
+
+			VF2STEP_F1_S1_1:	# segunda possibilidade
+				la t0,fogo2
+				li t1,-16 # anda 16px pra direita
+				sh t1,4(t0)
+				li t1,29 # sobe 29px
+				sh t1,6(t0)
+				li t1,3
+				sh t1,10(t0)
+				j FIM_MOVE_FOGUINHOS
+		
+		VERIF_FIRE2_STEP_F1_S2:
+			la t0,fogo2
+			li t1,-64 # anda 64px pra direita
+			sh t1,4(t0)
+			li t1,-29 # desce 29px
+			sh t1,6(t0)
+			li t1,2 # volta pro estado 0
+			sh t1,10(t0)
+			j FIM_MOVE_FOGUINHOS
+				
+		VERIF_FIRE2_STEP_F1_S3:
+			la t0,fogo2
+			li t1,16 # anda 16 px pra esquerda
+			sh t1,4(t0)
+			sh zero,6(t0)
+			li t1,0 # volta pro estado 0
+			sh t1,10(t0)
+			j FIM_MOVE_FOGUINHOS
+			
+		VERIF_FIRE2_STEP_F1_S4:
+			la t0,fogo2
+			li t1,64 # anda 64px pra esquerda
+			sh t1,4(t0)
+			li t1,-24 # desce 24px
+			sh t1,6(t0)
+			li t1,4 # volta pro estado 0
+			sh t1,10(t0)
+			j FIM_MOVE_FOGUINHOS
+			
+		VERIF_FIRE2_STEP_F1_S5:
+			la t0,fogo2
+			li t1,-49 # anda 49px pra direita
+			sh t1,4(t0)
+			sh zero,6(t0)
+			li t1,0 # volta pro estado 0
+			sh t1,10(t0)
+			j FIM_MOVE_FOGUINHOS
+			
+	VERIF_FIRE2_STEP_F2:
+		la t0,fogo2
+		lh t1,10(t0) # carrega passo atual do fogo 1
+		beqz t1,VERIF_FIRE2_STEP_F2_S1
+		li t0,1
+		beq t1,t0,VERIF_FIRE2_STEP_F2_S2
+		li t0,2
+		beq t1,t0,VERIF_FIRE2_STEP_F2_S3
+		li t0,3
+		beq t1,t0,VERIF_FIRE2_STEP_F2_S4
+		li t0,4
+		beq t1,t0,VERIF_FIRE2_STEP_F2_S5
+		li t0,5
+		beq t1,t0,VERIF_FIRE2_STEP_F2_S6
+		j FIM_MOVE_FOGUINHOS
+		
+		VERIF_FIRE2_STEP_F2_S1:
+			la t0,fogo2
+			li t1,-8
+			sh t1,4(t0) # -8 pixels horizontal
+			sh zero,6(t0) # 0 pixels vertical
+			li t1,1
+			sh t1,10(t0) # salva passo atual
+			j FIM_MOVE_FOGUINHOS
+			
+		VERIF_FIRE2_STEP_F2_S2:
+			la t0,fogo2
+			li t1,8
+			sh t1,4(t0) # 8 pixels horizontal
+			li t1,-40
+			sh t1,6(t0) # -40 pixels vertical
+			li t1,2
+			sh t1,10(t0) # salva passo atual
+			j FIM_MOVE_FOGUINHOS
+			
+		VERIF_FIRE2_STEP_F2_S3:
+			la t0,fogo2
+			li t1,22
+			sh t1,4(t0) # 22 pixels horizontal
+			li t1,-32
+			sh t1,6(t0) # -32 pixels vertical
+			li t1,3
+			sh t1,10(t0) # salva passo atual
+			j FIM_MOVE_FOGUINHOS
+			
+		VERIF_FIRE2_STEP_F2_S4:
+			la t0,fogo2
+			li t1,-4
+			sh t1,4(t0) # -4 pixels horizontal
+			sh zero,6(t0) # 0 pixels vertical
+			li t1,4
+			sh t1,10(t0) # salva passo atual
+			j FIM_MOVE_FOGUINHOS
+			
+		VERIF_FIRE2_STEP_F2_S5:
+			la t0,fogo2
+			li t1,4
+			sh t1,4(t0) # 4 pixels horizontal
+			li t1,32
+			sh t1,6(t0) # 32 pixels vertical
+			li t1,5
+			sh t1,10(t0) # salva passo atual
+			j FIM_MOVE_FOGUINHOS
+			
+		VERIF_FIRE2_STEP_F2_S6:
+			la t0,fogo2
+			li t1,-22
+			sh t1,4(t0) # -22 pixels horizontal
+			li t1,40
+			sh t1,6(t0) # 40 pixels vertical
+			li t1,0
+			sh t1,10(t0) # salva passo atual
+			j FIM_MOVE_FOGUINHOS
+		
+	VERIF_FIRE2_STEP_F4:
+		la t0,fogo2
+		lh t1,10(t0) # carrega passo atual do fogo 1
+		beqz t1,VERIF_FIRE2_STEP_F4_S1
+		li t0,1
+		beq t1,t0,VERIF_FIRE2_STEP_F4_S2
+		li t0,2
+		beq t1,t0,VERIF_FIRE2_STEP_F4_S3
+		j FIM_MOVE_FOGUINHOS
+		
+		VERIF_FIRE2_STEP_F4_S1:
+			la t0,fogo2
+			li t1,113
+			sh t1,4(t0) # 113 pixels horizontal
+			sh zero,6(t0) # 0 pixels vertical
+			li t1,1
+			sh t1,10(t0) # salva passo atual
+			j FIM_MOVE_FOGUINHOS
+			
+		VERIF_FIRE2_STEP_F4_S2:
+			la t0,fogo2
+			li t1,-166
+			sh t1,4(t0) # -166 pixels horizontal
+			li t1,26
+			sh t1,6(t0) # 26 pixels vertical
+			li t1,2
+			sh t1,10(t0) # salva passo atual
+			j FIM_MOVE_FOGUINHOS
+			
+		VERIF_FIRE2_STEP_F4_S3:
+			la t0,fogo2
+			li t1,55
+			sh t1,4(t0) # 55 pixels horizontal
+			li t1,-26
+			sh t1,6(t0) # -26 pixels vertical
+			li t1,0
+			sh t1,10(t0) # salva passo atual
+			j FIM_MOVE_FOGUINHOS
+		
+PRINT_FIRE_P1_NORMAL:
+	la a3,foguinho_p1
+	call PRINT_OBJ
+	j FIM_MOVE_FOGUINHOS
+PRINT_FIRE_P2_NORMAL:
+	la a3,foguinho_p2
+	call PRINT_OBJ
+	j FIM_MOVE_FOGUINHOS
+PRINT_FIRE_P1_MIRROR:
+	la a3,foguinho_p1
+	call PRINT_OBJ_MIRROR
+	j FIM_MOVE_FOGUINHOS
+PRINT_FIRE_P2_MIRROR:
+	la a3,foguinho_p2
+	call PRINT_OBJ_MIRROR
+	j FIM_MOVE_FOGUINHOS		
+FIM_MOVE_FOGUINHOS:
+	free_stack(ra)
 	ret

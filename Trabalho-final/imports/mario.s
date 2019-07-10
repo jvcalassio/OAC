@@ -2140,6 +2140,21 @@ MARIO_DEATH:
 	
 	# se ainda tiver vidas, decrementa e volta para o comeco
 	FASE_RESET:
+		la t0,fogo1
+		sh zero,0(t0)
+		sh zero,2(t0)
+		sh zero,4(t0)
+		sh zero,6(t0)
+		sh zero,8(t0)
+		sh zero,10(t0) # reseta fogo 1
+		la t0,fogo2
+		sh zero,0(t0)
+		sh zero,2(t0)
+		sh zero,4(t0)
+		sh zero,6(t0)
+		sh zero,8(t0)
+		sh zero,10(t0) # reseta fogo 2
+		
 		la t0,fase
 		lb t1,0(t0) # carrega numero da fase atual
 		li t0,1
