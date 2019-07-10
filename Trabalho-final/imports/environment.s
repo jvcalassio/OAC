@@ -25,6 +25,7 @@ var_lady:	.word 0
 var_barris:	.half 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 #posicoes de 6 barris, armazenados em pares x, y
 var_barris1:	.byte 0, 0, 0, 0, 0, 0	#armazena a direcao que os barris devem ir  (0 direita, 1 esquerda)
 var_barris2: 	.byte 0, 0, 0, 0, 0, 0 #armazena como o barril sera printado (0,1,2,3, 4, 5) 4 e 5 sï¿½o estados do barril na escada
+var_primeirobar:.byte 0	#setado em 0 se for o primeiro barril, 1 caso contrario
 
 # strings de jogo
 victory_text: .string "PARABENS VC VENCEU"
@@ -65,8 +66,8 @@ INIT_NOVO_BARRIL:
 	fim_init_novo_barril:
 	sh	a0, 0(t0)
 	sh	a1, 2(t0)
-	sb	zero, 0(t4)
-	sb	zero, 0(t5)
+	#sb	zero, 0(t4)
+	#sb	zero, 0(t5)
 	ret
 
 #responsavel pelo movimento dos barris
@@ -224,18 +225,19 @@ MOV_BARRIS:
 		
 		lh	t1, 0(t0)
 		li	t2, 228
-		beq	t1,t2,escada11
+		beq	t1, t2, escada11
 		li	t2, 229
 		beq	t1, t2, escada11
 		
 		continue_escada:
 		lb	t4, 0(t4)
 		bnez	t4, esquerda_barris
-		free_stack(t5)
-		save_stack(t5)
-		lb	t5, 0(t5)
-		li	t1, 4
-		beq	t5, t1, continueMOV_BARRISfim
+		
+		#free_stack(t5)
+		#save_stack(t5)
+		#lb	t5, 0(t5)
+		#li	t1, 4	#se o barril estiver em escadas, vai direto pro print
+		#beq	t5, t1, continueMOV_BARRISfim
 		
 		#movimento para a direita
 		lh	a0, 0(t0)
@@ -319,6 +321,8 @@ MOV_BARRIS:
 		beq	t2, t1, print_barril3
 		li	t1, 4
 		beq	t2, t1, print_barril4
+		li	t1, 5
+		beq	t2, t1, print_barril5
 		
 		sb	zero, 0(t5)
 		j	back_to_print
@@ -418,6 +422,41 @@ MOV_BARRIS:
 			sb	zero, 0(t5)
 			j	continueset_barril_fora_escada
 		
+		print_barril5:
+		lh	a0, 0(t0)
+		lh	a1, 2(t0)
+		la	a2, display
+		lw	a2, 0(a2)
+		la	a3, barril_lateral_p1
+		addi	a1, a1, 2
+		sh	a1, 2(t0)
+		save_stack(t0)
+		save_stack(t5)
+		call	PRINT_OBJ
+		free_stack(t5)
+		free_stack(t0)
+		
+		lh	t1, 2(t0)
+		li	t2, 204
+		beq	t1, t2, prim_bar_paradecair
+		li	t2, 203
+		beq	t1, t2, prim_bar_paradecair
+		continueprim_bar_paradecair:
+		j	continueMOV_BARRIS
+		
+			prim_bar_paradecair:
+			lh	a0, 0(t0)
+			lh	a1, 2(t0)
+			la	a2, display
+			lw	a2,0(a2)
+			la	a3, fase_current
+			la	a4, barril_lateral_p1
+			save_stack(t5)
+			call	CLEAR_OBJPOS
+			free_stack(t5)
+			sb	zero, 0(t5)
+			j	continueprim_bar_paradecair
+		
 		escada0:
 			lh	t1, 2(t0)
 			li	t2, 52
@@ -510,6 +549,8 @@ MOV_BARRIS:
 			free_stack(t5)
 			sh	zero, 0(t0)
 			sh	zero, 2(t0)
+			sb	zero, 0(t4)
+			sb	zero, 0(t5)
 			# verifica se precisa gerar novo foguinho
 			la 	a0, fogo1
 			lh	a1, 0(a0)
@@ -817,13 +858,37 @@ DK_DANCA_LOOP:
 		la	a3, barril_lateral_p1
 		call	PRINT_OBJ
 		
+		la	t4, var_primeirobar
+		lb	t4, 0(t4)
+		beqz	t4, primeiro_barril
+		
 		la	t4, var_dk
 		lw	t0, 0(t4)
 		addi 	t0, t0, 1	#i++
 		sw	t0, 0(t4)
 		
 		j	FIM_DK_DANCA
-	
+		
+		primeiro_barril:
+			jal	DK_DANCA_RESET
+			la	t4, var_primeirobar
+			li	t0, 1
+			sb	t0, 0(t4)
+			
+			la	t4, var_barris2
+			li	t0, 5
+			sb	t0, 0(t4)	#setando o estado 5 como único para o primeiro barril
+			
+			la	t4, var_barris1
+			li	t0, 1
+			sb	t0, 0(t4)	#o primeiro barril deve ir pra esquerda quando atingir o chao, portanto seto logo aqui
+			
+			li	a0, 78
+			li	a1, 52
+			call INIT_NOVO_BARRIL
+			
+			j	FIM_DK_DANCA
+			
 	DK_DANCA_FRAME5:
 		jal	SET_POSDK
 		#li	a2, DISPLAY0
