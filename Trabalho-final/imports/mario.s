@@ -1988,6 +1988,8 @@ MARIO_BARREL_DESTROY:
 	sh zero,0(a1) # zera contador do barril x
 	sh zero,2(a1) # zera contador do barril y
 	
+	sleep(1000)
+	
 	li t0,6
 	sub t1,a0,t0 # 6 - numero do barril atual (decrescente)
 	la t0,var_barris1

@@ -2,7 +2,7 @@
 # Responsavel por gerenciar as fases e loop de jogo #
 #####################################################
 .include "macros.s"   
-.include "macros2.s"  
+#.include "macros2.s"
 
 .data
 # Sons
@@ -428,8 +428,8 @@ MAINLOOP: # loop de jogo, verificar se tecla esta pressionada
 		call DK_DANCA_LOOP
 		call LADY_LOOP
 		call F3_CHECK_BLOCK
-		#call MARIO_BARREL_COLLISION
-		#call MARIO_FIRE_COLLISION
+		call MARIO_BARREL_COLLISION
+		call MARIO_FIRE_COLLISION
 		
 		###########################################
 		# Continuacao mudar display
@@ -707,11 +707,14 @@ GAME_OVER:
 	li a4,0
 	li a7,104
 	ecall
+	
+	# sleep para mostrar tela de game over
+	sleep(5000)
+	
 	j FIM
 	
 FIM:
-	li a7,10
-	ecall
+	tail START_MENU # volta para o main menu
 	
 # calls pra outras funcoes por causa dos 12bit
 BCALL_MV_MARIO_DIREITA:
